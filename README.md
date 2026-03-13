@@ -14,12 +14,23 @@ PostForge AI is a modern SaaS marketing site and dashboard prototype for an AI-p
 
 - Website: https://postforge-ai.vercel.app
 - Repository: https://github.com/mouadhhhallem/postforge-ai
+- Community hub: https://postforge-ai.vercel.app/community
+- GitHub discussions: https://github.com/mouadhhhallem/postforge-ai/discussions
+- Good first issues: https://github.com/mouadhhhallem/postforge-ai/labels/good%20first%20issue
 
 ## Play With The Code
 
 - Open in GitHub Codespaces: https://codespaces.new/mouadhhhallem/postforge-ai
 - Open in StackBlitz: https://stackblitz.com/github/mouadhhhallem/postforge-ai
 - Run locally: clone repo, create `.env.local`, then run `npm install && npm run dev`
+
+## Community Sprint
+
+The first contributor sprint is live now.
+
+- Pick an issue: https://github.com/mouadhhhallem/postforge-ai/issues
+- Start with beginner tasks: https://github.com/mouadhhhallem/postforge-ai/labels/good%20first%20issue
+- Join discussions: https://github.com/mouadhhhallem/postforge-ai/discussions
 
 ## Pages
 

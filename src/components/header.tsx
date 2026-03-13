@@ -39,6 +39,7 @@ export default function Header() {
         <nav className="flex gap-6 text-sm font-medium items-center">
           <a href="/approach">Approach</a>
           <a href="/offerings">Offerings</a>
+          <a href="/community">Community</a>
           <a href="/pricing">Pricing</a>
           {user ? (
             <>

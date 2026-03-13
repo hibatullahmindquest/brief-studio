@@ -20,7 +20,7 @@ const editorialSerif = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://postforgeai.com"),
+  metadataBase: new URL("https://postforge-ai.vercel.app"),
   title: {
     default: "PostForge AI | AI Social Media Generator for Brands",
     template: "%s | PostForge AI",
@@ -41,12 +41,22 @@ export const metadata: Metadata = {
       "Create viral-ready social media posts, captions, ad copy, and promotions in seconds with AI.",
     siteName: "PostForge AI",
     type: "website",
+    url: "https://postforge-ai.vercel.app",
+    images: [
+      {
+        url: "/images/preview.png",
+        width: 1200,
+        height: 630,
+        alt: "PostForge AI website preview",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "PostForge AI",
     description:
       "Generate Instagram posts, captions, ad copy, promotions, and hashtags instantly.",
+    images: ["/images/preview.png"],
   },
 };
 

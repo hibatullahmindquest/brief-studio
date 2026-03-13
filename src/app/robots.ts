@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
     },
-    sitemap: "https://postforgeai.com/sitemap.xml",
+    sitemap: "https://postforge-ai.vercel.app/sitemap.xml",
   };
 }
