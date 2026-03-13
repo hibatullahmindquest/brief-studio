@@ -4,7 +4,7 @@ PostForge AI is a modern SaaS marketing site and dashboard prototype for an AI-p
 
 ## Live Demo
 
-- Production: https://weby-coral.vercel.app
+- Production: https://postforge-ai.vercel.app
 - Repository: https://github.com/mouadhhhallem/postforge-ai
 
 ## Pages
