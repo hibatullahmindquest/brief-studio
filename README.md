@@ -2,6 +2,11 @@
 
 PostForge AI is a modern SaaS marketing site and dashboard prototype for an AI-powered social media content generator. The site is designed for startups, creators, agencies, gyms, and ecommerce brands that want to generate posts, captions, ad copy, and promotions faster.
 
+## Live Demo
+
+- Production: https://weby-coral.vercel.app
+- Repository: https://github.com/mouadhhhallem/postforge-ai
+
 ## Pages
 
 - `/` — landing page with hero, problem/solution, feature sections, pricing preview, testimonials, revenue goal, and final CTA
@@ -81,3 +86,7 @@ npm run build
 - The pricing funnel is structured around a $39 Pro plan to support a $2k MRR goal
 - Basic OpenAI generation and Stripe checkout routes are wired and environment-driven.
 - Do not commit `.env` files; keep secrets in deployment provider environment settings.
+
+## License
+
+This project is open source under the MIT License. See the `LICENSE` file.
