@@ -11,6 +11,12 @@ Use this kit to promote PostForge AI quickly across social channels and communit
 - Discussions: https://github.com/mouadhhhallem/postforge-ai/discussions
 - Release: https://github.com/mouadhhhallem/postforge-ai/releases/tag/v0.1.0
 
+## One-click share links
+
+- X: https://x.com/intent/tweet?text=I%20just%20open-sourced%20PostForge%20AI%20-%20an%20AI%20social%20media%20generator%20built%20with%20Next.js%20and%20TypeScript.%20Try%20it%20here%3A%20https%3A%2F%2Fpostforge-ai.vercel.app%20%23opensource%20%23nextjs%20%23ai
+- LinkedIn: https://www.linkedin.com/feed/?shareActive=true&text=I%20just%20launched%20PostForge%20AI%20as%20an%20open-source%20AI%20social%20media%20platform.%20Live%20demo%3A%20https%3A%2F%2Fpostforge-ai.vercel.app%20Code%3A%20https%3A%2F%2Fgithub.com%2Fmouadhhhallem%2Fpostforge-ai
+- Reddit: https://www.reddit.com/submit?url=https%3A%2F%2Fgithub.com%2Fmouadhhhallem%2Fpostforge-ai&title=I%20open-sourced%20my%20AI%20social%20media%20generator%20built%20with%20Next.js
+
 ## X post (short)
 
 I just open-sourced PostForge AI 🚀
