@@ -1,10 +1,12 @@
 # PostForge AI
 
+[![PostForge AI website preview](public/images/github-preview.png)](https://postforge-ai.vercel.app)
+
 PostForge AI is a modern SaaS marketing site and dashboard prototype for an AI-powered social media content generator. The site is designed for startups, creators, agencies, gyms, and ecommerce brands that want to generate posts, captions, ad copy, and promotions faster.
 
 ## Live Demo
 
-- Production: https://postforge-ai.vercel.app
+- Website: https://postforge-ai.vercel.app
 - Repository: https://github.com/mouadhhhallem/postforge-ai
 
 ## Pages
