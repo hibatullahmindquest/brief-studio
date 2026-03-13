@@ -1,5 +1,11 @@
 # PostForge AI
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-postforge--ai.vercel.app-black?logo=vercel)](https://postforge-ai.vercel.app)
+[![CI](https://github.com/mouadhhhallem/postforge-ai/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/mouadhhhallem/postforge-ai/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/mouadhhhallem/postforge-ai?style=social)](https://github.com/mouadhhhallem/postforge-ai/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/mouadhhhallem/postforge-ai?style=social)](https://github.com/mouadhhhallem/postforge-ai/network/members)
+
 [![PostForge AI website preview](public/images/preview.png)](https://postforge-ai.vercel.app)
 
 PostForge AI is a modern SaaS marketing site and dashboard prototype for an AI-powered social media content generator. The site is designed for startups, creators, agencies, gyms, and ecommerce brands that want to generate posts, captions, ad copy, and promotions faster.
@@ -8,6 +14,12 @@ PostForge AI is a modern SaaS marketing site and dashboard prototype for an AI-p
 
 - Website: https://postforge-ai.vercel.app
 - Repository: https://github.com/mouadhhhallem/postforge-ai
+
+## Play With The Code
+
+- Open in GitHub Codespaces: https://codespaces.new/mouadhhhallem/postforge-ai
+- Open in StackBlitz: https://stackblitz.com/github/mouadhhhallem/postforge-ai
+- Run locally: clone repo, create `.env.local`, then run `npm install && npm run dev`
 
 ## Pages
 
@@ -88,6 +100,14 @@ npm run build
 - The pricing funnel is structured around a $39 Pro plan to support a $2k MRR goal
 - Basic OpenAI generation and Stripe checkout routes are wired and environment-driven.
 - Do not commit `.env` files; keep secrets in deployment provider environment settings.
+
+## Contributing
+
+Contributions are welcome. See `CONTRIBUTING.md` for setup, branch naming, and PR flow.
+
+Community standards are documented in `CODE_OF_CONDUCT.md`.
+
+If you like the project, please star it on GitHub and share the live demo.
 
 ## License
 

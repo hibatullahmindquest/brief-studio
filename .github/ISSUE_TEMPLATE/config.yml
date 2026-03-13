@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Live demo
+    url: https://postforge-ai.vercel.app
+    about: Try the app before opening an issue.
