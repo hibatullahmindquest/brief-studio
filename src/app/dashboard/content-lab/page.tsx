@@ -10,10 +10,17 @@ export const metadata: Metadata = {
 
 export default async function DashboardContentLabPage() {
   const user = await requireUser();
-  const [stats, preference] = await Promise.all([
-    prisma.stats.findUnique({ where: { userId: user.id } }),
-    prisma.userPreference.findUnique({ where: { userId: user.id } }),
-  ]);
+  let stats: Awaited<ReturnType<typeof prisma.stats.findUnique>> = null;
+  let preference: Awaited<ReturnType<typeof prisma.userPreference.findUnique>> = null;
+
+  try {
+    [stats, preference] = await Promise.all([
+      prisma.stats.findUnique({ where: { userId: user.id } }),
+      prisma.userPreference.findUnique({ where: { userId: user.id } }),
+    ]);
+  } catch {
+    // Keep content-lab page available in demo mode even when DB is unreachable.
+  }
 
   const company = stats?.brandName ?? user.name;
   const defaultTone = (preference?.defaultTone as "Bold" | "Luxury" | "Hype") ?? "Hype";

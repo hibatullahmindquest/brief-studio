@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { isDatabaseUnavailableError, prisma } from "@/lib/prisma";
 import { SessionUser } from "./session";
 
 export type UserStats = {
@@ -66,65 +66,88 @@ function deriveScores(
   };
 }
 
-/** Returns stats row for this user, creating an empty placeholder if it doesn't exist yet */
-export async function ensureStatsForUser(user: SessionUser): Promise<UserStats> {
-  let stats = await prisma.stats.findUnique({ where: { userId: user.id } });
-  if (!stats) {
-    stats = await prisma.stats.create({
-      data: {
-        userId: user.id,
-        leadsThisWeek: 0,
-        revenue: 0,
-        avgCtr: 0,
-        postsPublished: 0,
-        onboardingDone: false,
-      },
-    });
-  }
-
-  const igFollowers = stats.onboardingDone ? (stats.igFollowers ?? null) : null;
-  const igPosts = stats.onboardingDone ? (stats.igPosts ?? null) : null;
-  const igEngagementRate = stats.onboardingDone ? (stats.igEngagementRate ?? null) : null;
-  const igAvgLikes = stats.onboardingDone ? (stats.igAvgLikes ?? null) : null;
-  const igAvgComments = stats.onboardingDone ? (stats.igAvgComments ?? null) : null;
-
-  const scores = deriveScores(user.id, igFollowers, igPosts, igEngagementRate);
-
-  // Recompute KPIs live from real IG data when available
-  const leadsThisWeek = igFollowers
-    ? Math.max(1, Math.round(igFollowers * 0.0005))
-    : stats.leadsThisWeek;
-
-  const adSpend = stats.adSpend ?? 0;
-  let avgCtr = stats.avgCtr;
-  if (igEngagementRate != null) {
-    // Use real engagement rate to derive a realistic CTR
-    avgCtr = parseFloat((igEngagementRate * 0.6).toFixed(2));
-  } else if (adSpend === 0 && igFollowers) {
-    avgCtr = parseFloat((igFollowers > 5000 ? 2.1 : 1.4).toFixed(2));
-  }
-
-  const postsPublished = igPosts ?? stats.postsPublished;
+function buildFallbackStats(user: SessionUser): UserStats {
+  const scores = deriveScores(user.id, null, null, null);
 
   return {
-    leadsThisWeek,
-    revenue: stats.revenue,
-    avgCtr,
-    postsPublished,
-    summary: stats.summary ?? undefined,
-    brandName: stats.brandName ?? undefined,
-    instagramHandle: stats.instagramHandle ?? undefined,
-    onboardingDone: stats.onboardingDone,
-    industry: stats.industry ?? undefined,
-    monthlyRevenue: stats.monthlyRevenue ?? undefined,
-    adSpend: stats.adSpend ?? undefined,
-    teamSize: stats.teamSize ?? undefined,
-    mainGoal: stats.mainGoal ?? undefined,
-    igFollowers: igFollowers ?? undefined,
-    igPosts: igPosts ?? undefined,
-    igAvgLikes: igAvgLikes ?? undefined,
-    igAvgComments: igAvgComments ?? undefined,
-    igEngagementRate: igEngagementRate ?? undefined,
+    leadsThisWeek: 0,
+    revenue: 0,
+    avgCtr: 0,
+    postsPublished: 0,
+    summary: "Running in demo mode while persistent database access is unavailable.",
+    brandName: user.name,
+    onboardingDone: false,
     ...scores,
   };
+}
+
+/** Returns stats row for this user, creating an empty placeholder if it doesn't exist yet */
+export async function ensureStatsForUser(user: SessionUser): Promise<UserStats> {
+  try {
+    let stats = await prisma.stats.findUnique({ where: { userId: user.id } });
+    if (!stats) {
+      stats = await prisma.stats.create({
+        data: {
+          userId: user.id,
+          leadsThisWeek: 0,
+          revenue: 0,
+          avgCtr: 0,
+          postsPublished: 0,
+          onboardingDone: false,
+        },
+      });
+    }
+
+    const igFollowers = stats.onboardingDone ? (stats.igFollowers ?? null) : null;
+    const igPosts = stats.onboardingDone ? (stats.igPosts ?? null) : null;
+    const igEngagementRate = stats.onboardingDone ? (stats.igEngagementRate ?? null) : null;
+    const igAvgLikes = stats.onboardingDone ? (stats.igAvgLikes ?? null) : null;
+    const igAvgComments = stats.onboardingDone ? (stats.igAvgComments ?? null) : null;
+
+    const scores = deriveScores(user.id, igFollowers, igPosts, igEngagementRate);
+
+    // Recompute KPIs live from real IG data when available
+    const leadsThisWeek = igFollowers
+      ? Math.max(1, Math.round(igFollowers * 0.0005))
+      : stats.leadsThisWeek;
+
+    const adSpend = stats.adSpend ?? 0;
+    let avgCtr = stats.avgCtr;
+    if (igEngagementRate != null) {
+      // Use real engagement rate to derive a realistic CTR
+      avgCtr = parseFloat((igEngagementRate * 0.6).toFixed(2));
+    } else if (adSpend === 0 && igFollowers) {
+      avgCtr = parseFloat((igFollowers > 5000 ? 2.1 : 1.4).toFixed(2));
+    }
+
+    const postsPublished = igPosts ?? stats.postsPublished;
+
+    return {
+      leadsThisWeek,
+      revenue: stats.revenue,
+      avgCtr,
+      postsPublished,
+      summary: stats.summary ?? undefined,
+      brandName: stats.brandName ?? undefined,
+      instagramHandle: stats.instagramHandle ?? undefined,
+      onboardingDone: stats.onboardingDone,
+      industry: stats.industry ?? undefined,
+      monthlyRevenue: stats.monthlyRevenue ?? undefined,
+      adSpend: stats.adSpend ?? undefined,
+      teamSize: stats.teamSize ?? undefined,
+      mainGoal: stats.mainGoal ?? undefined,
+      igFollowers: igFollowers ?? undefined,
+      igPosts: igPosts ?? undefined,
+      igAvgLikes: igAvgLikes ?? undefined,
+      igAvgComments: igAvgComments ?? undefined,
+      igEngagementRate: igEngagementRate ?? undefined,
+      ...scores,
+    };
+  } catch (error) {
+    if (!isDatabaseUnavailableError(error)) {
+      throw error;
+    }
+
+    return buildFallbackStats(user);
+  }
 }

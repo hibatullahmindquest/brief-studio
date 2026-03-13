@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Home() {
   const serviceLines = [
@@ -57,6 +58,25 @@ export default function Home() {
         </div>
       </section>
       <div className="editorial-container space-y-12">
+        <section className="editorial-panel rounded-4xl p-6 sm:p-8">
+          <div className="flex items-center justify-between gap-3">
+            <p className="editorial-kicker">Website Preview</p>
+            <a href="https://postforge-ai.vercel.app" className="text-xs editorial-muted hover:text-foreground">
+              Open live site
+            </a>
+          </div>
+          <div className="mt-5 overflow-hidden rounded-3xl border border-white/10 bg-[rgba(255,255,255,0.02)]">
+            <Image
+              src="/images/preview.png"
+              alt="PostForge AI website preview"
+              width={1600}
+              height={900}
+              className="h-auto w-full object-cover"
+              priority
+            />
+          </div>
+        </section>
+
         <section className="mesh-card glow-ring editorial-panel rounded-4xl px-6 py-6 sm:px-8 sm:py-8">
           <nav className="flex flex-col gap-6 border-b border-white/10 pb-8 sm:flex-row sm:items-center sm:justify-between">
             <div>

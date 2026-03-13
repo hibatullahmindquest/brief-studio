@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import Image from "next/image";
 
 type ApiUser = {
   id: string;
@@ -10,7 +11,6 @@ type ApiUser = {
 } | null;
 
 export default function Header() {
-  const eyeRef = useRef<HTMLDivElement>(null);
   const [user, setUser] = useState<ApiUser>(null);
 
   useEffect(() => {
@@ -21,29 +21,18 @@ export default function Header() {
       .catch(() => setUser(null));
   }, []);
 
-  useEffect(() => {
-    const handleMouse = (e: MouseEvent) => {
-      if (!eyeRef.current) return;
-      const rect = eyeRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left - rect.width / 2;
-      const y = e.clientY - rect.top - rect.height / 2;
-      const angle = Math.atan2(y, x);
-      eyeRef.current.style.transform = `rotate(${angle}rad)`;
-    };
-    window.addEventListener("mousemove", handleMouse);
-    return () => window.removeEventListener("mousemove", handleMouse);
-  }, []);
-
   return (
     <header className="fixed top-0 inset-x-0 z-50 bg-background/80 backdrop-blur-sm border-b border-white/10">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-4">
-          <div
-            ref={eyeRef}
-            className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"
-            style={{ transform: "rotate(0)" }}
-          >
-            <div className="w-4 h-4 rounded-full bg-white" />
+          <div className="w-10 h-10 overflow-hidden rounded-full border border-white/20">
+            <Image
+              src="/images/preview.png"
+              alt="PostForge AI preview"
+              width={40}
+              height={40}
+              className="h-full w-full object-cover"
+            />
           </div>
           <span className="text-lg font-bold">PostForge AI</span>
         </div>

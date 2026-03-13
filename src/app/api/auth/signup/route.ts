@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
-import { prisma } from "@/lib/prisma";
+import { isDatabaseUnavailableError, prisma } from "@/lib/prisma";
 import { AUTH_COOKIE_NAME, authCookieOptions, createSessionToken } from "@/lib/session";
 import { ensureStatsForUser } from "@/lib/stats";
 import { enforceRateLimit } from "@/lib/rate-limit";
+import { buildDemoUser } from "@/lib/demo-user";
 
 export async function POST(req: Request) {
   const rateLimited = enforceRateLimit(req, {
@@ -55,40 +56,62 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
   }
 
-  const existing = await prisma.user.findFirst({
-    where: {
-      OR: [{ email: normalizedEmail }, { username: normalizedUsername }],
-    },
-  });
-  if (existing) {
-    if (!isJson) {
-      return NextResponse.redirect(new URL("/signup?error=user-exists", req.url));
-    }
-    return NextResponse.json({ error: "User exists" }, { status: 409 });
-  }
+  let demoMode = false;
+  let sessionUser: { id: string; email: string; name: string; username: string };
 
-  const hashed = await bcrypt.hash(password, 10);
-  const user = await prisma.user.create({
-    data: {
+  try {
+    const existing = await prisma.user.findFirst({
+      where: {
+        OR: [{ email: normalizedEmail }, { username: normalizedUsername }],
+      },
+    });
+    if (existing) {
+      if (!isJson) {
+        return NextResponse.redirect(new URL("/signup?error=user-exists", req.url));
+      }
+      return NextResponse.json({ error: "User exists" }, { status: 409 });
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: {
+        email: normalizedEmail,
+        password: hashed,
+        name: normalizedName,
+        username: normalizedUsername,
+      },
+    });
+
+    sessionUser = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      username: user.username,
+    };
+
+    // create an initial stats snapshot for the brand on signup as well
+    await ensureStatsForUser(sessionUser);
+  } catch (error) {
+    if (!isDatabaseUnavailableError(error)) {
+      console.error("Signup failed", error);
+      if (!isJson) {
+        return NextResponse.redirect(new URL("/signup?error=server", req.url));
+      }
+      return NextResponse.json({ error: "Unable to sign up right now" }, { status: 500 });
+    }
+
+    demoMode = true;
+    sessionUser = buildDemoUser({
       email: normalizedEmail,
-      password: hashed,
       name: normalizedName,
       username: normalizedUsername,
-    },
-  });
-
-  // create an initial stats snapshot for the brand on signup as well
-  await ensureStatsForUser({
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    username: user.username,
-  });
+    });
+  }
 
   const response = isJson
-    ? NextResponse.json({ success: true })
-    : NextResponse.redirect(new URL("/dashboard", req.url));
+    ? NextResponse.json({ success: true, mode: demoMode ? "demo" : "database" })
+    : NextResponse.redirect(new URL(demoMode ? "/dashboard?mode=demo" : "/dashboard", req.url));
 
-  response.cookies.set(AUTH_COOKIE_NAME, createSessionToken(user.id), authCookieOptions);
+  response.cookies.set(AUTH_COOKIE_NAME, createSessionToken(sessionUser), authCookieOptions);
   return response;
 }

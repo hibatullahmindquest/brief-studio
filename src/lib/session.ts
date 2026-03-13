@@ -4,7 +4,8 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 
 export const AUTH_COOKIE_NAME = "postforge_session";
-const SESSION_VERSION = "v1";
+const SESSION_VERSION = "v2";
+const LEGACY_SESSION_VERSION = "v1";
 
 export const authCookieOptions = {
   httpOnly: true,
@@ -20,6 +21,14 @@ export type SessionUser = {
   name: string;
   username: string;
 };
+
+type ParsedSession =
+  | {
+      user: SessionUser;
+    }
+  | {
+      userId: string;
+    };
 
 function getSessionSecret() {
   const secret = process.env.SESSION_SECRET;
@@ -39,7 +48,7 @@ function signPayload(payload: string) {
   return createHmac("sha256", getSessionSecret()).update(payload).digest("base64url");
 }
 
-function parseUserIdFromToken(token: string): string | null {
+function parseSessionFromToken(token: string): ParsedSession | null {
   const separator = token.lastIndexOf(".");
   if (separator <= 0) return null;
 
@@ -58,16 +67,51 @@ function parseUserIdFromToken(token: string): string | null {
     return null;
   }
 
-  const [version, userId] = payload.split(":");
-  if (version !== SESSION_VERSION || !userId) {
+  const payloadSeparator = payload.indexOf(":");
+  if (payloadSeparator <= 0) {
     return null;
   }
 
-  return userId;
+  const version = payload.slice(0, payloadSeparator);
+  const value = payload.slice(payloadSeparator + 1);
+
+  if (version === LEGACY_SESSION_VERSION) {
+    return value ? { userId: value } : null;
+  }
+
+  if (version !== SESSION_VERSION) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as Partial<SessionUser>;
+    if (
+      typeof parsed.id !== "string" ||
+      typeof parsed.email !== "string" ||
+      typeof parsed.name !== "string" ||
+      typeof parsed.username !== "string"
+    ) {
+      return null;
+    }
+
+    return {
+      user: {
+        id: parsed.id,
+        email: parsed.email,
+        name: parsed.name,
+        username: parsed.username,
+      },
+    };
+  } catch {
+    return null;
+  }
 }
 
-export function createSessionToken(userId: string) {
-  const payload = `${SESSION_VERSION}:${userId}`;
+export function createSessionToken(user: SessionUser | string) {
+  const payload =
+    typeof user === "string"
+      ? `${LEGACY_SESSION_VERSION}:${user}`
+      : `${SESSION_VERSION}:${Buffer.from(JSON.stringify(user)).toString("base64url")}`;
   const signature = signPayload(payload);
   return `${payload}.${signature}`;
 }
@@ -75,23 +119,31 @@ export function createSessionToken(userId: string) {
 export async function getCurrentUser(): Promise<SessionUser | null> {
   const cookieStore = await cookies();
   const rawToken = cookieStore.get(AUTH_COOKIE_NAME)?.value;
-  const userId = rawToken ? parseUserIdFromToken(rawToken) : null;
+  const session = rawToken ? parseSessionFromToken(rawToken) : null;
 
-  if (!userId) {
+  if (!session) {
     return null;
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      username: true,
-    },
-  });
+  if ("user" in session) {
+    return session.user;
+  }
 
-  return user;
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        username: true,
+      },
+    });
+
+    return user;
+  } catch {
+    return null;
+  }
 }
 
 export async function requireUser(): Promise<SessionUser> {
