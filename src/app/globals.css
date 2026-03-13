@@ -1,26 +1,192 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #11110f;
+  --foreground: #f0e8d8;
+  --muted: #b5ab98;
+  --border: rgba(240, 232, 216, 0.12);
+  --panel: #181715;
+  --panel-soft: #201f1b;
+  --accent: #d4b78f;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-editorial-serif);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
+}
+
+* {
+  border-color: var(--border);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-image:
+    radial-gradient(circle at top left, rgba(212, 183, 143, 0.12), transparent 26%),
+    radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.05), transparent 22%);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+a,
+button {
+  cursor: pointer;
+}
+
+::selection {
+  background: rgba(34, 211, 238, 0.28);
+  color: #e0f2fe;
+}
+
+.mesh-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.mesh-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgba(212, 183, 143, 0.12), transparent 40%),
+    linear-gradient(315deg, rgba(255, 255, 255, 0.05), transparent 35%);
+  pointer-events: none;
+}
+
+.glow-ring {
+  box-shadow: 0 0 0 1px rgba(240, 232, 216, 0.08), 0 24px 80px rgba(0, 0, 0, 0.28);
+}
+
+/* utility animations for scroll reveal */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fadeInUp {
+  animation: fadeInUp 1s ease-out forwards;
+}
+
+/* hero background pattern (subtle noise) */
+.hero-bg {
+  background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%),
+    radial-gradient(circle at center, rgba(240,232,216,0.08), transparent 70%),
+    var(--background);
+}
+
+/* bigger headings */
+.huge-title {
+  font-size: clamp(3rem, 8vw + 1rem, 6rem);
+  line-height: 1.05;
+}
+
+.editorial-page {
+  min-height: 100vh;
+  padding: 1.5rem;
+}
+
+.editorial-container {
+  margin-inline: auto;
+  max-width: 90rem;
+}
+
+.editorial-panel {
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.01));
+  backdrop-filter: blur(10px);
+}
+
+.editorial-kicker {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.editorial-title {
+  font-family: var(--font-editorial-serif), Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.editorial-rule {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(240, 232, 216, 0.3), rgba(240, 232, 216, 0));
+}
+
+.editorial-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.9rem 1.4rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  transition: 200ms ease;
+}
+
+.editorial-button-primary {
+  background: var(--foreground);
+  color: #11110f;
+}
+
+.editorial-button-primary:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+.editorial-button-secondary {
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.editorial-button-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.editorial-muted {
+  color: var(--muted);
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 4s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
 }

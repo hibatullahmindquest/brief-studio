@@ -1,0 +1,94 @@
+import { NextResponse } from "next/server";
+import bcrypt from "bcrypt";
+import { prisma } from "@/lib/prisma";
+import { AUTH_COOKIE_NAME, authCookieOptions, createSessionToken } from "@/lib/session";
+import { ensureStatsForUser } from "@/lib/stats";
+import { enforceRateLimit } from "@/lib/rate-limit";
+
+export async function POST(req: Request) {
+  const rateLimited = enforceRateLimit(req, {
+    keyPrefix: "auth:signup",
+    limit: 5,
+    windowMs: 10 * 60 * 1000,
+    message: "Too many signup attempts. Please try again in a few minutes.",
+  });
+  if (rateLimited) return rateLimited;
+
+  // accept JSON or form data
+  let email: string | null = null;
+  let password: string | null = null;
+  let name: string | null = null;
+  let username: string | null = null;
+  const contentType = req.headers.get("content-type") || "";
+  const isJson = contentType.includes("application/json");
+
+  if (isJson) {
+    ({ email, password, name, username } = await req.json());
+  } else {
+    const form = await req.formData();
+    email = (form.get("email") as string) || null;
+    password = (form.get("password") as string) || null;
+    name = (form.get("name") as string) || null;
+    username = (form.get("username") as string) || null;
+  }
+  const normalizedEmail = email?.trim().toLowerCase() ?? "";
+  const normalizedName = name?.trim() ?? "";
+  const normalizedUsername = username?.trim().toLowerCase() ?? "";
+
+  if (!normalizedEmail || !password) {
+    if (!isJson) {
+      return NextResponse.redirect(new URL("/signup?error=missing-fields", req.url));
+    }
+    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  }
+  if (!normalizedName || !normalizedUsername) {
+    if (!isJson) {
+      return NextResponse.redirect(new URL("/signup?error=missing-fields", req.url));
+    }
+    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  }
+
+  if (password.length < 8) {
+    if (!isJson) {
+      return NextResponse.redirect(new URL("/signup?error=password-too-short", req.url));
+    }
+    return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
+  }
+
+  const existing = await prisma.user.findFirst({
+    where: {
+      OR: [{ email: normalizedEmail }, { username: normalizedUsername }],
+    },
+  });
+  if (existing) {
+    if (!isJson) {
+      return NextResponse.redirect(new URL("/signup?error=user-exists", req.url));
+    }
+    return NextResponse.json({ error: "User exists" }, { status: 409 });
+  }
+
+  const hashed = await bcrypt.hash(password, 10);
+  const user = await prisma.user.create({
+    data: {
+      email: normalizedEmail,
+      password: hashed,
+      name: normalizedName,
+      username: normalizedUsername,
+    },
+  });
+
+  // create an initial stats snapshot for the brand on signup as well
+  await ensureStatsForUser({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    username: user.username,
+  });
+
+  const response = isJson
+    ? NextResponse.json({ success: true })
+    : NextResponse.redirect(new URL("/dashboard", req.url));
+
+  response.cookies.set(AUTH_COOKIE_NAME, createSessionToken(user.id), authCookieOptions);
+  return response;
+}

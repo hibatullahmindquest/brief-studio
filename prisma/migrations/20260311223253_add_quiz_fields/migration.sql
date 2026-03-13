@@ -1,0 +1,8 @@
+-- AlterTable
+ALTER TABLE "Stats" ADD COLUMN "adSpend" REAL;
+ALTER TABLE "Stats" ADD COLUMN "igFollowers" INTEGER;
+ALTER TABLE "Stats" ADD COLUMN "igPosts" INTEGER;
+ALTER TABLE "Stats" ADD COLUMN "industry" TEXT;
+ALTER TABLE "Stats" ADD COLUMN "mainGoal" TEXT;
+ALTER TABLE "Stats" ADD COLUMN "monthlyRevenue" REAL;
+ALTER TABLE "Stats" ADD COLUMN "teamSize" TEXT;

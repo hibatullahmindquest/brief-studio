@@ -1,0 +1,139 @@
+// prisma/schema.prisma
+// Run `npx prisma generate` after editing
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String   // user's full name
+  username  String   @unique
+  createdAt DateTime @default(now())
+  stats     Stats?
+  featureRuns    FeatureRun[]
+  notes          Note[]
+  campaigns      Campaign[]
+  calendarEvents CalendarEvent[]
+  preference     UserPreference?
+}
+
+// store a snapshot of performance metrics created the first time a user logs in
+model Stats {
+  id             String   @id @default(cuid())
+  user           User     @relation(fields: [userId], references: [id])
+  userId         String   @unique
+  leadsThisWeek  Int
+  revenue        Float
+  avgCtr         Float
+  postsPublished Int
+  // brand onboarding data
+  brandName       String?
+  instagramHandle String?
+  onboardingDone  Boolean  @default(false)
+  // short marketing-style summary generated once when onboarding is completed
+  summary         String?
+  // quiz answers — used to derive accurate stats
+  industry        String?   // e.g. "Fashion", "Fitness", "Food & Beverage"
+  monthlyRevenue  Float?    // user's current monthly revenue in GBP
+  adSpend         Float?    // monthly ad spend in GBP
+  teamSize        String?   // "solo", "2-5", "6-20", "20+"
+  mainGoal        String?   // "grow_followers", "increase_sales", "launch_product", "build_brand"
+  // Instagram data stored for stats derivation
+  igFollowers     Int?
+  igPosts         Int?
+  // Meta (Instagram) OAuth tokens for official Graph API
+  igUserId        String?  // IG Business/Creator account user ID
+  igAccessToken   String?  // long-lived page access token
+  igTokenExpiry   DateTime?
+  // Official Meta stats (refreshed via /api/instagram/stats)
+  igImpressions   Int?
+  igReach         Int?
+  igProfileViews  Int?
+  igWebsiteClicks Int?
+  igEngagementRate Float?
+  igAvgLikes      Float?
+  igAvgComments   Float?
+  createdAt       DateTime @default(now())
+}
+
+model FeatureRun {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  feature   String
+  subtype   String?
+  inputJson String?
+  outputJson String
+  createdAt DateTime @default(now())
+
+  @@index([userId, feature, createdAt])
+  @@index([userId, feature, subtype, createdAt])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  title     String   @default("")
+  body      String   @default("")
+  colour    String   @default("zinc")
+  tag       String   @default("")
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, pinned, updatedAt])
+}
+
+model Campaign {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  name      String
+  channel   String
+  stage     String
+  budget    String   @default("")
+  roi       String   @default("")
+  goal      String   @default("")
+  notes     String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, stage, updatedAt])
+}
+
+model CalendarEvent {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  day       String
+  month     Int
+  year      Int
+  title     String
+  time      String
+  type      String
+  note      String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, year, month, day, time])
+}
+
+model UserPreference {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String   @unique
+  brandName   String?
+  defaultTone String   @default("Bold")
+  coreOffer   String   @default("AI-powered social media copy system")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
