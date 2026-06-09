@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -14,10 +14,12 @@ model User {
   id        String   @id @default(cuid())
   email     String   @unique
   password  String
-  name      String   // user's full name
+  name      String
   username  String   @unique
+  teamRole  String   @default("marketing") // "marketing" | "creative"
+  isAdmin   Boolean  @default(false)
   createdAt DateTime @default(now())
-  stats     Stats?
+  stats          Stats?
   featureRuns    FeatureRun[]
   notes          Note[]
   campaigns      Campaign[]
@@ -65,17 +67,44 @@ model Stats {
 }
 
 model FeatureRun {
-  id        String   @id @default(cuid())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  feature   String
-  subtype   String?
-  inputJson String?
-  outputJson String
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  brand       Brand?   @relation(fields: [brandId], references: [id])
+  brandId     String?
+  feature     String   // "poster" | "copy" | "storyboard" | "script" | "shooting_plan" | "ideas" | "plan" | "virality"
+  subtype     String?
+  title       String   @default("")
+  inputJson   String?
+  outputJson  String
+  feedback    Int?     // 1 = thumbs up, -1 = thumbs down, null = no feedback
+  feedbackNote String?
+  createdAt   DateTime @default(now())
 
   @@index([userId, feature, createdAt])
-  @@index([userId, feature, subtype, createdAt])
+  @@index([userId, brandId, feature, createdAt])
+}
+
+model Brand {
+  id          String   @id @default(cuid())
+  name        String   @unique // "SifuTutor" | "NakNgaji"
+  slug        String   @unique // "sifututor" | "nakngaji"
+  logoUrl     String?
+  primaryColor    String   @default("#000000")
+  secondaryColor  String   @default("#ffffff")
+  tone        String   @default("professional")
+  targetAudience  String   @default("")
+  coreOffer   String   @default("")
+  keyMessages String   @default("")
+  dontSay     String   @default("")
+  tagline     String   @default("")
+  instagramHandle String?
+  facebookHandle  String?
+  tiktokHandle    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  featureRuns FeatureRun[]
 }
 
 model Note {
