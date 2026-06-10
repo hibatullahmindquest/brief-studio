@@ -1,5 +1,19 @@
 # brief-studio — Claude Code Configuration
 
+## Session Start — Read These First
+
+**Every session, before any work:**
+1. Read `GOALS.md` — current phase, active task, blockers
+2. Read `AGENTS.md` — critical rules, command index
+3. Check `RULES.md` — rules Claude follows every session
+4. Check `.claude/tasks/active.json` — resume any in-progress task
+
+**Full references:**
+- `CONTEXT.md` — domain glossary (Brand, FeatureRun, output types, team roles)
+- `WORKFLOW.md` — task routes, step definitions, quality gates
+- `CHANGELOG.md` — release history
+- `.claude/memory/MEMORY.md` — accumulated session learnings
+
 ## Project identity
 
 - **Path**: `C:\claude\workspace\brief-studio`

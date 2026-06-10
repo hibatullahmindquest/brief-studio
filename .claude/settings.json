@@ -1,0 +1,21 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/validate-branch-name.py",
+            "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/conventional-commits.py",
+            "timeout": 5000
+          }
+        ]
+      }
+    ]
+  }
+}

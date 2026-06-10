@@ -44,3 +44,8 @@ prisma/*.db-journal
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# claude harness — override global gitignore (.claude/ excluded globally, include project harness)
+!.claude/
+!.claude/**
+.claude/settings.local.json
