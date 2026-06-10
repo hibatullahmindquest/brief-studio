@@ -1,34 +1,25 @@
 # STATUS — brief-studio
 
 ## Current Phase
-Phase 0 — Project setup selesai, belum start development
+Phase 1 — Harness setup selesai, OpenAI generation working
 
 ## Last Done
-- Forked `mouadhhhallem/postforge-ai` → `hibatullahmindquest/brief-studio`
-- Remove Stripe (routes, package, stripe.ts, checkout-form.tsx)
-- Switch SQLite → PostgreSQL dalam Prisma schema
-- Tambah `Brand` model (SifuTutor/NakNgaji)
-- Extend `FeatureRun`: brandId, feedback, feedbackNote, title
-- Tambah `teamRole` + `isAdmin` ke `User` model
-- Remove old SQLite migrations, generate fresh PostgreSQL migration
-- Docker PostgreSQL container running (brief-studio-db, port 5432)
-- Prisma migrate dev — DB `brief_studio` synced
-- Admin user created: admin@local.com (credentials dalam .env.local)
-- CLAUDE.md, GOALS.md, STATUS.md updated dan accurate
-- Root C:\claude\CLAUDE.md updated — brief-studio registered dalam workspace
+- Set up full project harness (.claude/ skills, hooks, workflow, memory)
+- Upgraded OpenAI model gpt-4o-mini → gpt-5 (env-var configurable via OPENAI_MODEL)
+- Fixed `max_tokens` → `max_completion_tokens` (gpt-5 requirement)
+- Fixed empty output bug: gpt-5 is a reasoning model — internal reasoning consumes tokens first. Bumped `max_completion_tokens` 1200 → 5000 to give room for reasoning + output
+- Confirmed full copy generation working (primaryPost, caption, CTA, hashtags, strategyNote all populated)
+- `.env.example` OPENAI_API_KEY kept empty (placeholder only) — key in `.env.local` only
 
 ## Next Todo
-- [ ] Test login di localhost:3001 dengan admin credentials
-- [ ] Explore existing `generate` + `ideas` API routes — faham current flow
-- [ ] Explore existing `studio` page — faham current UI
-- [ ] Build `src/lib/brand-context.ts` — brand context builder untuk AI calls
-- [ ] Build `src/app/api/brand/` — CRUD untuk brand profiles (SifuTutor/NakNgaji)
-- [ ] Build brief intake API + UI (core feature — soalan demi soalan)
+- [ ] Build `src/lib/brand-context.ts` — brand context builder (inject SifuTutor/NakNgaji guidelines into AI calls)
+- [ ] Build `src/app/api/brand/` — CRUD untuk brand profiles
 - [ ] Seed brand data (SifuTutor + NakNgaji) via script atau admin UI
-- [ ] Create docs/plans/ folder untuk design docs
+- [ ] Rebuild studio page — brand picker → output type → brief intake → generate
+- [ ] Build brief intake flow API + UI (soalan demi soalan)
 
 ## Blockers
-- OPENAI_API_KEY belum diisi dalam .env.local — perlu isi sebelum test generation
+- none
 
 ## Technical Notes
 

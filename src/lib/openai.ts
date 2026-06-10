@@ -58,15 +58,15 @@ export async function generateCopy(
   const userPrompt = `Create a ${contentType} for brand="${brandName}" tone="${tone}" product="${product}" variant=${variant}. Hook the audience immediately.`;
   try {
     const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: process.env.OPENAI_MODEL ?? "gpt-5",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userPrompt },
       ],
-      max_tokens: 600,
+      max_completion_tokens: 5000,
       response_format: { type: "json_object" },
     });
-    const raw = response.choices[0]?.message?.content?.trim() ?? "{}";
+    const raw = response.choices[0]?.message?.content?.trim() || "{}";
     const parsed = JSON.parse(raw) as Partial<GeneratedCopy>;
     return {
       primaryPost: parsed.primaryPost ?? "",
