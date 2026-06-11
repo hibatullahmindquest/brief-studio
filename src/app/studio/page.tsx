@@ -2,7 +2,7 @@ import { requireUser } from "@/lib/session";
 import { StudioWizard } from "@/components/studio/StudioWizard";
 
 export default async function StudioPage() {
-  const user = await requireUser();
+  await requireUser();
   return (
     <div className="space-y-6">
       <section className="editorial-panel rounded-4xl p-6 sm:p-8">
@@ -14,7 +14,7 @@ export default async function StudioPage() {
           Pilih brand dan output — AI akan tanya soalan yang betul untuk hasilkan brief yang tepat.
         </p>
       </section>
-      <StudioWizard userId={user.id} />
+      <StudioWizard />
     </div>
   );
 }

@@ -36,7 +36,7 @@ export type GeneratedOutput = {
 
 const PROGRESS_STEPS = ["Brand", "Output", "Brief", "Review"];
 
-export function StudioWizard({ userId: _userId }: { userId: string }) {
+export function StudioWizard() {
   const [stage, setStage] = useState<Stage>("SELECT_BRAND");
   const [brand, setBrand] = useState<BrandSummary | null>(null);
   const [outputTypeId, setOutputTypeId] = useState<string | null>(null);
