@@ -1,22 +1,19 @@
 # STATUS — brief-studio
 
 ## Current Phase
-Phase 1 — Harness setup selesai, OpenAI generation working
+Phase 2 — Brand context wired, studio page rebuild next
 
 ## Last Done
-- Set up full project harness (.claude/ skills, hooks, workflow, memory)
-- Upgraded OpenAI model gpt-4o-mini → gpt-5 (env-var configurable via OPENAI_MODEL)
-- Fixed `max_tokens` → `max_completion_tokens` (gpt-5 requirement)
-- Fixed empty output bug: gpt-5 is a reasoning model — internal reasoning consumes tokens first. Bumped `max_completion_tokens` 1200 → 5000 to give room for reasoning + output
-- Confirmed full copy generation working (primaryPost, caption, CTA, hashtags, strategyNote all populated)
-- `.env.example` OPENAI_API_KEY kept empty (placeholder only) — key in `.env.local` only
+- Built `src/lib/brand-context.ts` — load brand dari DB, build AI prompt block
+- Updated `src/lib/openai.ts` — generateCopy() kini terima BrandContext, inject brand guidelines ke system prompt
+- Updated `src/app/api/generate/route.ts` — terima brandSlug, load context dari DB, pass ke AI
+- Seeded SifuTutor + NakNgaji brand data ke DB via `scripts/seed-brands.ts`
+- TypeScript clean — zero errors
 
 ## Next Todo
-- [ ] Build `src/lib/brand-context.ts` — brand context builder (inject SifuTutor/NakNgaji guidelines into AI calls)
-- [ ] Build `src/app/api/brand/` — CRUD untuk brand profiles
-- [ ] Seed brand data (SifuTutor + NakNgaji) via script atau admin UI
 - [ ] Rebuild studio page — brand picker → output type → brief intake → generate
-- [ ] Build brief intake flow API + UI (soalan demi soalan)
+- [ ] Build brief intake flow API + UI (soalan demi soalan, Cara C)
+- [ ] Build `src/app/api/brand/` — CRUD untuk brand profiles (admin UI Phase B)
 
 ## Blockers
 - none

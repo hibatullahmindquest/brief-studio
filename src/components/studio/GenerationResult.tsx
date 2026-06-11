@@ -13,7 +13,6 @@ export function GenerationResult({
   result: GeneratedOutput;
   brand: BrandSummary;
   outputType: OutputType;
-  answers: Record<string, string>;
   onReset: () => void;
   onRegenerate: () => void;
 }) {

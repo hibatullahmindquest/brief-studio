@@ -186,6 +186,7 @@ export function StudioWizard() {
 
       {stage === "CONVERSATION" && outputType && brand && (
         <ConversationStep
+          key={outputType.questions[currentQuestionIndex].id}
           question={outputType.questions[currentQuestionIndex]}
           questionNumber={currentQuestionIndex + 1}
           totalQuestions={outputType.questions.length}
@@ -226,7 +227,6 @@ export function StudioWizard() {
           result={result}
           brand={brand}
           outputType={outputType}
-          answers={answers}
           onReset={reset}
           onRegenerate={handleGenerate}
         />

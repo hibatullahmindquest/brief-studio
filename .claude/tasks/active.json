@@ -1,5 +1,5 @@
 {
-  "activeTask": null,
-  "taskFile": null,
-  "route": null
+  "activeTask": "studio-wizard",
+  "taskFile": ".claude/tasks/studio-wizard.json",
+  "route": "feature"
 }

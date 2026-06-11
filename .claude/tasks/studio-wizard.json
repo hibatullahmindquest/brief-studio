@@ -1,0 +1,132 @@
+{
+  "id": "studio-wizard",
+  "route": "feature",
+  "created": "2026-06-11",
+  "branch": "feat/studio-wizard",
+  "description": "Studio Wizard — conversation-driven brief wizard with brand picker, output type selection, scripted Q&A, brief review, and generation",
+  "steps": [
+    {
+      "name": "brainstorm",
+      "status": "done",
+      "at": "2026-06-11",
+      "evidence": "Flow designed in session — 5-step conversation wizard, Option 1 scripted Q&A for MVP"
+    },
+    {
+      "name": "plan",
+      "status": "done",
+      "at": "2026-06-11",
+      "evidence": "docs/plans/2026-06-11-studio-wizard.md — 11 tasks with full code"
+    },
+    {
+      "name": "build-task-1",
+      "label": "Brand API — GET /api/brand",
+      "status": "done",
+      "at": "2026-06-11",
+      "evidence": "src/app/api/brand/route.ts — returns active brands, tsc clean"
+    },
+    {
+      "name": "build-task-2",
+      "label": "Conversation Engine — question trees",
+      "status": "done",
+      "at": null,
+      "evidence": null
+    },
+    {
+      "name": "build-task-3",
+      "label": "Studio page shell",
+      "status": "done",
+      "at": "2026-06-11",
+      "evidence": "src/app/studio/page.tsx"
+    },
+    {
+      "name": "build-task-4",
+      "label": "StudioWizard state machine",
+      "status": "done",
+      "at": "2026-06-11",
+      "evidence": "src/components/studio/StudioWizard.tsx"
+    },
+    {
+      "name": "build-task-5",
+      "label": "BrandPicker component",
+      "status": "done",
+      "at": "2026-06-11",
+      "evidence": "src/components/studio/BrandPicker.tsx"
+    },
+    {
+      "name": "build-task-6",
+      "label": "OutputTypePicker component",
+      "status": "done",
+      "at": "2026-06-11",
+      "evidence": "src/components/studio/OutputTypePicker.tsx"
+    },
+    {
+      "name": "build-task-7",
+      "label": "ConversationStep component",
+      "status": "done",
+      "at": "2026-06-11",
+      "evidence": "src/components/studio/ConversationStep.tsx"
+    },
+    {
+      "name": "build-task-8",
+      "label": "BriefReview component",
+      "status": "done",
+      "at": "2026-06-11",
+      "evidence": "src/components/studio/BriefReview.tsx"
+    },
+    {
+      "name": "build-task-9",
+      "label": "GenerationResult component",
+      "status": "done",
+      "at": "2026-06-11",
+      "evidence": "src/components/studio/GenerationResult.tsx"
+    },
+    {
+      "name": "build-task-10",
+      "label": "Wire briefAnswers into generate API",
+      "status": "done",
+      "at": "2026-06-11",
+      "evidence": "src/lib/openai.ts + src/app/api/generate/route.ts"
+    },
+    {
+      "name": "build-task-11",
+      "label": "Add Studio to nav + E2E verify",
+      "status": "done",
+      "at": "2026-06-11",
+      "evidence": "src/lib/dashboard-data.ts — Studio link added"
+    },
+    {
+      "name": "verify",
+      "status": "done",
+      "at": "2026-06-11",
+      "evidence": {
+        "lint": "passed",
+        "tsc": "passed",
+        "build": "passed"
+      }
+    },
+    {
+      "name": "review",
+      "status": "done",
+      "at": "2026-06-11",
+      "evidence": "Fixed: ConversationStep state bleed between questions (key={question.id}). Removed unused answers prop from GenerationResult."
+    },
+    {
+      "name": "release-notes",
+      "status": "done",
+      "at": "2026-06-11",
+      "evidence": "See CHANGELOG.md"
+    },
+    {
+      "name": "commit",
+      "status": "pending",
+      "at": null,
+      "evidence": null
+    }
+  ],
+  "metadata": {
+    "outputType": "hook-copy, poster, storyboard, video-script",
+    "brand": "both",
+    "affectedFiles": [],
+    "planFile": "docs/plans/2026-06-11-studio-wizard.md"
+  }
+}
