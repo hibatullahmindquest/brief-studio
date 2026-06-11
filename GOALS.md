@@ -150,7 +150,7 @@ Features yang dah dibincangkan tapi keluar dari MVP scope:
 |---------|------|
 | **Brief template library** | Saved briefs untuk reuse — macam Jasper |
 | **Variation count** | Generate 3/5/10 variations serentak — macam AdCreative.ai |
-| **History sidebar** | Recent generations visible semasa brief session |
+| **History sidebar** | Phase 1: collapsible panel bawah wizard (done when built). Phase 2: 2-panel Studio layout (macam ChatGPT) — remind user once history panel validated by team |
 | **Bulk generation** | 5+ variations serentak |
 | **Feedback loop** | Thumbs up/down pada output untuk train quality |
 | **Admin UI untuk brand** | Edit brand guidelines via web form (bukan seed script) |

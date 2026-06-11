@@ -1,5 +1,5 @@
 {
-  "activeTask": "studio-wizard",
-  "taskFile": ".claude/tasks/studio-wizard.json",
+  "activeTask": "history-sidebar",
+  "taskFile": ".claude/tasks/history-sidebar.json",
   "route": "feature"
 }
