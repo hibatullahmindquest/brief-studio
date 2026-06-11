@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import type { BrandContext } from "@/lib/brand-context";
 
 export type GeneratedCopy = {
   primaryPost: string;
@@ -37,7 +38,7 @@ function mockResponse(brandName: string, tone: string, product: string, contentT
   };
 }
 
-const SYSTEM_PROMPT = `You are a world-class social media copywriter. When asked to generate content, always respond with ONLY valid JSON matching this exact shape (no markdown, no extra keys):
+const BASE_SYSTEM_PROMPT = `You are a world-class social media copywriter specialising in Malaysian education brands. When asked to generate content, always respond with ONLY valid JSON matching this exact shape (no markdown, no extra keys):
 {
   "primaryPost": "<main social media post text>",
   "caption": "<secondary caption angle, 1-2 sentences>",
@@ -48,19 +49,27 @@ const SYSTEM_PROMPT = `You are a world-class social media copywriter. When asked
 Hashtags should be plain words without the # symbol. Return 8-12 hashtags.`;
 
 export async function generateCopy(
-  brandName: string,
-  tone: string,
+  brand: BrandContext,
   product: string,
   contentType: string,
-  variant: number
+  variant: number,
+  briefAnswers?: Record<string, string>
 ): Promise<GeneratedCopy> {
   const client = getClient();
-  const userPrompt = `Create a ${contentType} for brand="${brandName}" tone="${tone}" product="${product}" variant=${variant}. Hook the audience immediately.`;
+  const systemPrompt = `${BASE_SYSTEM_PROMPT}\n\n## Brand Guidelines\n${brand.promptBlock}`;
+  const briefBlock = briefAnswers
+    ? "\n\nBrief dari user:\n" +
+      Object.entries(briefAnswers)
+        .filter(([, v]) => v && v !== "—")
+        .map(([k, v]) => `- ${k}: ${v}`)
+        .join("\n")
+    : "";
+  const userPrompt = `Create a ${contentType} about "${product}" for the ${brand.name} brand. Variant ${variant}. Hook the audience immediately. Follow the brand guidelines strictly.${briefBlock}`;
   try {
     const response = await client.chat.completions.create({
       model: process.env.OPENAI_MODEL ?? "gpt-5",
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
       max_completion_tokens: 5000,
@@ -82,7 +91,7 @@ export async function generateCopy(
         : null;
     if (code === "insufficient_quota") {
       console.warn("[openai] quota exceeded — returning mock response");
-      return mockResponse(brandName, tone, product, contentType);
+      return mockResponse(brand.name, brand.tone, product, contentType);
     }
     throw err;
   }

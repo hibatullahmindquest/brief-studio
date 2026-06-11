@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateCopy } from "@/lib/openai";
+import { getBrandContext } from "@/lib/brand-context";
 import { getLatestFeatureRun, saveFeatureRun } from "@/lib/feature-store";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { requireUser } from "@/lib/session";
 
 type GenerateBody = {
-  brandName?: string;
-  tone?: string;
+  brandSlug?: string;
   product?: string;
   contentType?: string;
   variant?: number;
+  briefAnswers?: Record<string, string>;
 };
 
 export async function GET(req: NextRequest) {
@@ -43,20 +44,25 @@ export async function POST(req: NextRequest) {
 
   try {
     const user = await requireUser();
-    const { brandName, tone, product, contentType, variant } = (await req.json()) as GenerateBody;
+    const { brandSlug, product, contentType, variant, briefAnswers } = (await req.json()) as GenerateBody;
 
-    if (!brandName || !tone || !product || !contentType) {
+    if (!brandSlug || !product || !contentType) {
       return NextResponse.json({ error: "Missing required generation fields" }, { status: 400 });
     }
 
-    const copy = await generateCopy(brandName, tone, product, contentType, variant ?? 1);
+    const brand = await getBrandContext(brandSlug);
+    if (!brand) {
+      return NextResponse.json({ error: "Brand not found" }, { status: 404 });
+    }
+
+    const copy = await generateCopy(brand, product, contentType, variant ?? 1, briefAnswers);
     const generatedAt = new Date().toISOString();
 
     await saveFeatureRun({
       userId: user.id,
       feature: "generate",
       subtype: contentType,
-      input: { brandName, tone, product, contentType, variant: variant ?? 1 },
+      input: { brandSlug, brandId: brand.id, product, contentType, variant: variant ?? 1, briefAnswers },
       output: { ...copy, generatedAt },
     });
 
