@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/session";
 import { StudioWizard } from "@/components/studio/StudioWizard";
+import { GenerationHistory } from "@/components/studio/GenerationHistory";
 
 export default async function StudioPage() {
   await requireUser();
@@ -15,6 +16,7 @@ export default async function StudioPage() {
         </p>
       </section>
       <StudioWizard />
+      <GenerationHistory />
     </div>
   );
 }
