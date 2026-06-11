@@ -118,9 +118,9 @@
     },
     {
       "name": "commit",
-      "status": "pending",
-      "at": null,
-      "evidence": null
+      "status": "done",
+      "at": "2026-06-11",
+      "evidence": "284f1df — fix(studio): reset ConversationStep state between questions and clean up unused props"
     }
   ],
   "metadata": {
