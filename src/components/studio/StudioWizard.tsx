@@ -123,6 +123,7 @@ export function StudioWizard() {
       }
       setResult(data as GeneratedOutput);
       setStage("RESULT");
+      window.dispatchEvent(new CustomEvent("generation:complete"));
     } catch {
       setError("Network error. Semak sambungan internet.");
       setStage("REVIEW");
