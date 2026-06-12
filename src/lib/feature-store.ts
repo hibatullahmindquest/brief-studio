@@ -57,12 +57,14 @@ export type HistoryRun = {
 
 export async function getRecentFeatureRuns(
   userId: string,
-  limit = 20
+  limit = 10,
+  cursor?: string
 ): Promise<HistoryRun[]> {
   const rows = await prisma.featureRun.findMany({
     where: { userId, feature: "generate" },
     orderBy: { createdAt: "desc" },
     take: limit,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });
 
   return rows.flatMap((row) => {
