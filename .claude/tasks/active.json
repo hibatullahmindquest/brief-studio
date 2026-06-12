@@ -1,5 +1,5 @@
 {
-  "activeTask": null,
-  "taskFile": null,
-  "route": null
+  "activeTask": "history-drawer-upgrade",
+  "taskFile": ".claude/tasks/history-drawer-upgrade.json",
+  "route": "feature"
 }

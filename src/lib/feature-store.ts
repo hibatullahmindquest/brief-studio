@@ -39,6 +39,51 @@ export async function saveFeatureRun(params: SaveFeatureRunParams) {
   });
 }
 
+export type HistoryRun = {
+  id: string;
+  subtype: string | null;
+  brandSlug: string | null;
+  primaryPostExcerpt: string;
+  fullOutput: {
+    primaryPost: string;
+    caption: string;
+    callToAction: string;
+    hashtags: string[];
+    strategyNote: string;
+    generatedAt: string;
+  };
+  createdAt: string;
+};
+
+export async function getRecentFeatureRuns(
+  userId: string,
+  limit = 10,
+  cursor?: string
+): Promise<HistoryRun[]> {
+  const rows = await prisma.featureRun.findMany({
+    where: { userId, feature: "generate" },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+  });
+
+  return rows.flatMap((row) => {
+    const output = safeParse<HistoryRun["fullOutput"]>(row.outputJson);
+    if (!output) return [];
+    const input = safeParse<{ brandSlug?: string }>(row.inputJson);
+    return [
+      {
+        id: row.id,
+        subtype: row.subtype,
+        brandSlug: input?.brandSlug ?? null,
+        primaryPostExcerpt: (output.primaryPost ?? "").slice(0, 120),
+        fullOutput: output,
+        createdAt: row.createdAt.toISOString(),
+      },
+    ];
+  });
+}
+
 export async function getLatestFeatureRun<TOutput = unknown, TInput = unknown>(params: {
   userId: string;
   feature: PersistedFeature;

@@ -1,22 +1,25 @@
 # STATUS — brief-studio
 
 ## Current Phase
-Phase 1 — Harness setup selesai, OpenAI generation working
+Phase 2 — Studio Wizard DONE, ready for browser verification + PR
 
 ## Last Done
-- Set up full project harness (.claude/ skills, hooks, workflow, memory)
-- Upgraded OpenAI model gpt-4o-mini → gpt-5 (env-var configurable via OPENAI_MODEL)
-- Fixed `max_tokens` → `max_completion_tokens` (gpt-5 requirement)
-- Fixed empty output bug: gpt-5 is a reasoning model — internal reasoning consumes tokens first. Bumped `max_completion_tokens` 1200 → 5000 to give room for reasoning + output
-- Confirmed full copy generation working (primaryPost, caption, CTA, hashtags, strategyNote all populated)
-- `.env.example` OPENAI_API_KEY kept empty (placeholder only) — key in `.env.local` only
+- Studio Wizard fully built and committed to `feat/studio-wizard`
+- Brand picker, output type picker, scripted Q&A (4 output types, 20 questions), brief review, generation result
+- Brand context injection wired: getBrandContext() → AI system prompt
+- Scripted conversation engine: conversation-engine.ts
+- GET /api/brand endpoint
+- briefAnswers passed into generateCopy prompt
+- Studio added to nav
+- Brand data seeded (SifuTutor + NakNgaji) via scripts/seed-brands.ts
+- verify gate passed: lint ✅ tsc ✅ build ✅
+- review: fixed ConversationStep state bleed between questions (key={question.id})
+- All committed: 284f1df
 
 ## Next Todo
-- [ ] Build `src/lib/brand-context.ts` — brand context builder (inject SifuTutor/NakNgaji guidelines into AI calls)
-- [ ] Build `src/app/api/brand/` — CRUD untuk brand profiles
-- [ ] Seed brand data (SifuTutor + NakNgaji) via script atau admin UI
-- [ ] Rebuild studio page — brand picker → output type → brief intake → generate
-- [ ] Build brief intake flow API + UI (soalan demi soalan)
+- [ ] Start dev server + browser test Studio wizard full flow (`npm run dev` → localhost:3000/studio)
+- [ ] Create PR: feat/studio-wizard → master (`gh pr create`)
+- [ ] Phase 3 planning (see GOALS.md for deferred decisions + KIV list)
 
 ## Blockers
 - none

@@ -6,6 +6,7 @@ export type DashboardNavItem = {
 
 export const dashboardNavItems: DashboardNavItem[] = [
   { href: "/dashboard", label: "Overview", description: "Performance at a glance" },
+  { href: "/studio", label: "Studio", description: "AI-powered creative brief wizard" },
   { href: "/dashboard/analytics", label: "Analytics", description: "Growth, reach, and engagement" },
   { href: "/dashboard/campaigns", label: "Campaigns", description: "Active launches and offers" },
   { href: "/dashboard/calendar", label: "Calendar", description: "Weekly publishing rhythm" },

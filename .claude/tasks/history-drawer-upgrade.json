@@ -1,0 +1,41 @@
+{
+  "id": "history-drawer-upgrade",
+  "route": "feature",
+  "created": "2026-06-12",
+  "branch": "feat/history-sidebar",
+  "description": "Upgrade history sidebar from inline collapsible to slide-over drawer with cursor pagination, search, brand filter, and infinite scroll",
+  "steps": [
+    { "step": 1, "name": "Update getRecentFeatureRuns for cursor pagination", "status": "done" },
+    { "step": 2, "name": "Update GET /api/history — cursor + limit params", "status": "done" },
+    { "step": 3, "name": "Rewrite GenerationHistory as slide-over drawer", "status": "done" },
+    { "step": 4, "name": "Update studio/page.tsx — floating trigger button", "status": "done" },
+    {
+      "step": 5,
+      "name": "bs-verify gate (lint + tsc + build)",
+      "status": "done",
+      "at": "2026-06-12",
+      "evidence": { "lint": "passed", "tsc": "passed", "build": "passed" }
+    },
+    {
+      "step": 6,
+      "name": "bs-review",
+      "status": "done",
+      "at": "2026-06-12",
+      "evidence": {
+        "stage1": "passed",
+        "stage2": "passed — 1 bug fixed (parseInt NaN guard in /api/history)"
+      }
+    },
+    { "step": 7, "name": "Commit", "status": "in_progress" }
+  ],
+  "metadata": {
+    "outputType": "none",
+    "brand": "both",
+    "affectedFiles": [
+      "src/lib/feature-store.ts",
+      "src/app/api/history/route.ts",
+      "src/components/studio/GenerationHistory.tsx",
+      "src/app/studio/page.tsx"
+    ]
+  }
+}

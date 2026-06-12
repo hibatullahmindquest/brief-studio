@@ -114,10 +114,65 @@ Interface seperti ChatGPT — **Recent Chats / Projects** view. Setiap session d
 
 ---
 
+## Automation Thresholds
+
+Setiap session start, Claude kena check conditions ni. Kalau tercapai, bagitahu user sebelum sambung kerja.
+
+| Condition | Threshold | Action bila tercapai |
+|-----------|-----------|---------------------|
+| Files dalam `docs/plans/` | > 5 | Upgrade `bs-save-session` — tambah deferred decision review step |
+| Items dalam Deferred Decisions | > 10 | Pindahkan ke fail berasingan `docs/DECISIONS.md` |
+| Items dalam Future Plans (KIV) | > 15 | Kategorikan mengikut phase (Phase 2, Phase 3, Someday) |
+| Working sessions (anggaran) | > 20 | Cadangkan setup claude-mem memory folder untuk project ni |
+
+---
+
+## Deferred Decisions (revisit after MVP validated)
+
+Keputusan ini sengaja ditangguhkan — bukan dilupakan. Revisit selepas Studio MVP divalidate dengan team.
+
+| Decision | MVP (sekarang) | Phase 2 (selepas validate) |
+|----------|---------------|---------------------------|
+| **Studio location** | `/studio` dalam Dashboard sidebar (`/dashboard`) | Promote ke top-level section berasingan — Studio jadi landing utama, Dashboard jadi monitoring |
+| **Conversation engine** | Scripted question trees (static per output type) | True AI conversation — AI decide soalan seterusnya berdasarkan jawapan sebelum (`POST /api/studio/next-question`) |
+| **Output scope** | Satu output per session | Campaign-based — multiple outputs linked ke satu brief/campaign |
+| **Team handoff** | Tiada — sorang guna sorang | Marketing buat brief → Creative ambil brief yang sama → generate poster/storyboard |
+| **Output lifecycle** | Generate → papar → habis | Draft → Review → Approved → Archived |
+| **Brief persistence** | Tiada — fresh start setiap kali | Brief disimpan, boleh reuse dan fork |
+
+---
+
+## Future Plans (KIV)
+
+Features yang dah dibincangkan tapi keluar dari MVP scope:
+
+| Feature | Nota |
+|---------|------|
+| **Brief template library** | Saved briefs untuk reuse — macam Jasper |
+| **Variation count** | Generate 3/5/10 variations serentak — macam AdCreative.ai |
+| **History sidebar** | Phase 1: collapsible panel bawah wizard (done when built). Phase 2: 2-panel Studio layout (macam ChatGPT) — remind user once history panel validated by team |
+| **Bulk generation** | 5+ variations serentak |
+| **Feedback loop** | Thumbs up/down pada output untuk train quality |
+| **Admin UI untuk brand** | Edit brand guidelines via web form (bukan seed script) |
+
+---
+
+## Plans Archive
+
+Semua implementation plans disimpan di `docs/plans/`:
+
+| Plan | Scope |
+|------|-------|
+| `2026-06-11-studio-wizard.md` | Studio conversation wizard — brand picker → output type → Q&A → brief review → generate |
+
+---
+
 ## Active Task (update every session)
 
-> Last updated: 2026-06-09
+> Last updated: 2026-06-11
 
-**Phase:** Harness setup — pre-development
-**Next:** Create AGENTS.md → design doc → Next.js scaffold
+**Phase:** Phase 2 — History Sidebar
+**Task:** History sidebar — slide-over drawer redesign (not yet started)
+**Status:** All 6 tasks dari `docs/plans/2026-06-11-history-sidebar.md` complete (inline collapsible version). Branch: `feat/history-sidebar`. User reviewed prototype, decided to upgrade to slide-over drawer + infinite scroll before PR.
+**Next:** Replace current `GenerationHistory.tsx` (inline collapsible) dengan `HistoryDrawer.tsx` (slide-over kanan, search, cursor pagination, Intersection Observer infinite scroll). Update `/api/history` to support `?cursor=<id>&limit=10`. Update `studio/page.tsx` trigger button.
 **Blockers:** None
