@@ -171,6 +171,8 @@ Semua implementation plans disimpan di `docs/plans/`:
 
 > Last updated: 2026-06-11
 
-**Phase:** Phase 2 — Studio Wizard build
-**Next:** Execute `docs/plans/2026-06-11-studio-wizard.md` — Task 1 (Brand API)
+**Phase:** Phase 2 — History Sidebar
+**Task:** History sidebar — slide-over drawer redesign (not yet started)
+**Status:** All 6 tasks dari `docs/plans/2026-06-11-history-sidebar.md` complete (inline collapsible version). Branch: `feat/history-sidebar`. User reviewed prototype, decided to upgrade to slide-over drawer + infinite scroll before PR.
+**Next:** Replace current `GenerationHistory.tsx` (inline collapsible) dengan `HistoryDrawer.tsx` (slide-over kanan, search, cursor pagination, Intersection Observer infinite scroll). Update `/api/history` to support `?cursor=<id>&limit=10`. Update `studio/page.tsx` trigger button.
 **Blockers:** None

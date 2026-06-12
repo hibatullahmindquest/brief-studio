@@ -1,0 +1,24 @@
+{
+  "id": "history-sidebar",
+  "route": "feature",
+  "created": "2026-06-11",
+  "branch": "feat/history-sidebar",
+  "description": "History sidebar — show recent AI generations for current user on Studio page",
+  "steps": [
+    { "name": "brainstorm", "status": "in_progress", "at": "2026-06-11", "evidence": null },
+    { "name": "plan", "status": "pending", "at": null, "evidence": null },
+    { "name": "build-task-1", "label": "GET /api/history endpoint", "status": "pending", "at": null, "evidence": null },
+    { "name": "build-task-2", "label": "HistoryCard component", "status": "pending", "at": null, "evidence": null },
+    { "name": "build-task-3", "label": "GenerationHistory component (list + collapsible)", "status": "pending", "at": null, "evidence": null },
+    { "name": "build-task-4", "label": "Integrate into Studio page", "status": "pending", "at": null, "evidence": null },
+    { "name": "verify", "status": "pending", "at": null, "evidence": null },
+    { "name": "review", "status": "pending", "at": null, "evidence": null },
+    { "name": "release-notes", "status": "pending", "at": null, "evidence": null },
+    { "name": "commit", "status": "pending", "at": null, "evidence": null }
+  ],
+  "metadata": {
+    "outputType": "none",
+    "brand": "both",
+    "affectedFiles": []
+  }
+}
