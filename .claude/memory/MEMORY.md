@@ -5,6 +5,27 @@ Add entries via `/bs-save-session` at end of each session.
 
 ---
 
+## 2026-06-12 — browser_screenshot tidak share cookie dengan browser_run
+
+**Context:** Cuba screenshot Studio page (authenticated) guna Playwright MCP tools.
+**Discovery:** `mcp__browser__browser_screenshot` dan `mcp__browser__browser_run` adalah browser instances berasingan — cookie/session dari `browser_run` tidak persist ke `browser_screenshot`. Workaround: login via fetch API dalam same `browser_run` session sebelum navigate, guna evaluate untuk inspect DOM.
+**Impact:** Untuk screenshot authenticated pages, kena login dan navigate dalam satu `browser_run` call chain. `browser_screenshot` hanya berguna untuk public pages.
+**Source:** Observed semasa debug UI overlap issue.
+
+## 2026-06-12 — Fixed drawer bertindan dengan nav header
+
+**Context:** GenerationHistory slide-over drawer `top-0 z-40` tapi nav header `fixed top-0 z-50 h-[73px]`.
+**Discovery:** Drawer header tertutup di belakang nav. Fix: `top-[73px] h-[calc(100vh-73px)]` untuk drawer, `inset-x-0 top-[73px] bottom-0` untuk backdrop. Nilai 73px dari `getBoundingClientRect()` pada header element.
+**Impact:** Semua fixed panels/drawers kena offset 73px dari top. Kalau header height berubah, kena update semua arbitrary values.
+**Source:** Observed via DOM inspection dalam browser_run.
+
+## 2026-06-12 — gh branch protection via API
+
+**Context:** GitHub warning master branch tidak protected selepas PR created.
+**Discovery:** `gh api repos/<owner>/<repo>/branches/master/protection --method PUT --input -` dengan JSON body. `required_pull_request_reviews` mesti object (bukan null). `required_status_checks: null` untuk skip CI requirement.
+**Impact:** Branch protection boleh set terus via CLI tanpa masuk GitHub settings UI.
+**Source:** Observed during PR creation workflow.
+
 ## 2026-06-11 — Prisma DLL lock on Windows blocks `npm run build`
 
 **Context:** Running full build gate selepas implement history sidebar.

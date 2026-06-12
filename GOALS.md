@@ -169,10 +169,10 @@ Semua implementation plans disimpan di `docs/plans/`:
 
 ## Active Task (update every session)
 
-> Last updated: 2026-06-11
+> Last updated: 2026-06-12
 
-**Phase:** Phase 2 — History Sidebar
-**Task:** History sidebar — slide-over drawer redesign (not yet started)
-**Status:** All 6 tasks dari `docs/plans/2026-06-11-history-sidebar.md` complete (inline collapsible version). Branch: `feat/history-sidebar`. User reviewed prototype, decided to upgrade to slide-over drawer + infinite scroll before PR.
-**Next:** Replace current `GenerationHistory.tsx` (inline collapsible) dengan `HistoryDrawer.tsx` (slide-over kanan, search, cursor pagination, Intersection Observer infinite scroll). Update `/api/history` to support `?cursor=<id>&limit=10`. Update `studio/page.tsx` trigger button.
+**Phase:** Phase 2 — complete. Planning next phase.
+**Task:** History sidebar — SHIPPED. PR #1 merged to master.
+**Status:** Done — slide-over drawer, cursor pagination, search, brand filter, infinite scroll, nav overlap fix. `docs/REQUIREMENTS.md` extracted from PRD v1.2. Master branch protected.
+**Next:** Decide next task. Candidates from PRD Phase 1: (1) Brand Settings UI — logo upload, tone rules, banned phrases editable via web; (2) APIUsageLog — track OpenAI tokens + cost per brand/module; (3) Output Library page `/dashboard/library` — full Library per PRD.
 **Blockers:** None
