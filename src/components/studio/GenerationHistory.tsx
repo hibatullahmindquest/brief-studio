@@ -147,14 +147,14 @@ export function GenerationHistory() {
       {/* Backdrop */}
       {open && (
         <div
-          className="fixed inset-0 z-30 bg-black/30"
+          className="fixed inset-x-0 top-[73px] bottom-0 z-30 bg-black/30"
           onClick={() => setOpen(false)}
         />
       )}
 
       {/* Drawer */}
       <aside
-        className={`fixed top-0 right-0 z-40 flex h-full w-full max-w-sm flex-col border-l border-white/8 bg-[var(--color-panel)] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.32,0,0.15,1)] ${
+        className={`fixed top-[73px] right-0 z-40 flex h-[calc(100vh-73px)] w-full max-w-sm flex-col border-l border-white/8 bg-[var(--color-panel)] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.32,0,0.15,1)] ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
