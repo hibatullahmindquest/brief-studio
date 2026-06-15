@@ -169,10 +169,10 @@ Semua implementation plans disimpan di `docs/plans/`:
 
 ## Active Task (update every session)
 
-> Last updated: 2026-06-12
+> Last updated: 2026-06-15
 
-**Phase:** Phase 2 — complete. Planning next phase.
-**Task:** History sidebar — SHIPPED. PR #1 merged to master.
-**Status:** Done — slide-over drawer, cursor pagination, search, brand filter, infinite scroll, nav overlap fix. `docs/REQUIREMENTS.md` extracted from PRD v1.2. Master branch protected.
-**Next:** Decide next task. Candidates from PRD Phase 1: (1) Brand Settings UI — logo upload, tone rules, banned phrases editable via web; (2) APIUsageLog — track OpenAI tokens + cost per brand/module; (3) Output Library page `/dashboard/library` — full Library per PRD.
-**Blockers:** None
+**Phase:** SCIS transformation. Master = PRD v2 + v6 redesign + Meta paid analytics + real NakNgaji data (PR #2 merged). Branch `feat/visual-generation` = visual gen + supporting features (8 commits, UNPUSHED).
+**Task:** `generate-visual-later` — DONE (closed). Last in a chain of visual-gen work on `feat/visual-generation`.
+**Status:** On branch `feat/visual-generation`, 8 commits ahead of master, all gates green, working tree clean. Shipped this session on the branch: visual generation (gpt-4o director → gpt-image-2), APIUsageLog + `/dashboard/usage`, error logging + `/dashboard/settings/logs`, empty-prompt fix, uncropped display + categorized failures, generation timer, generate-visual-later from history.
+**Next:** Decide: (1) **push `feat/visual-generation` + open PR → merge to master** (recommended — big chunk ready); then (2) candidates: Isu 3 async generation jobs (parked, `docs/plans/2026-06-15-async-generation-jobs-FUTURE.md`), generation timeout/cancel hardening, Organic analytics (needs Graph organic pull), Daily Signals engine, full Library page.
+**Blockers:** None. Note: live image gen needs `OPENAI_API_KEY` with gpt-image-2 access + billing (confirmed working this session).
