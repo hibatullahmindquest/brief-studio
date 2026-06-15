@@ -1,7 +1,15 @@
 # STATUS — brief-studio
 
 ## Current Phase
-SCIS MVP — P1 (Schema) + P2 (Meta OAuth) + real-data ETL + P4 Paid Analytics DONE on branch `feat/scis-meta-analytics`. Next: P3 (live Sync) / Organic analytics / Daily Signals.
+SCIS MVP on branch `feat/scis-meta-analytics`. DONE: P1 schema, P2 Meta OAuth, real-data ETL, P4 Paid Analytics, full v6 redesign + PostForge removal. Next: P3 live Sync / Organic analytics / Daily Signals engine.
+
+## v6 redesign + de-PostForge (2026-06-15)
+- DELETED inherited PostForge feature modules entirely (overrides PRD v2 "keep"): analytics(IG growth), calendar, campaigns, content-lab, ideas, plan, virality, notes — pages + API routes + components. App is SCIS-only (25 routes, was 40).
+- globals.css → v6 light design system (bg #f2f5fd, white cards, ink #00262a, brand #3b4ee2, orange #fd8549, teal sidebar). editorial-* classes remapped to light. Fonts: Poppins + JetBrains Mono.
+- header: light v6, hidden on /dashboard + /studio (sidebar-only shell). sidebar: SCIS nav (Workspace/Create/Admin) + SOON badges.
+- /dashboard = SCIS Today (real paid pulse + organic/signals placeholders). settings de-PostForged (+ Meta link). landing/login/signup = v6. Studio 8 components restyled to v6 (zero invisible white text).
+- Verified live: login + landing screenshots clean; Today bg #f2f5fd + real paid data; Studio anyWhiteText=0. Build 25 routes, lint+tsc+build green.
+- Commits: 2b17e1c shell, a73346c theme+deletes, b6a5ea6 landing/login, f8ac27e studio.
 
 ## P4 Paid Analytics (2026-06-15)
 - `src/lib/analytics.ts` — getPaidAnalytics(brandId, period): rolls up AdDailyMetric to T-1/T-7 windows anchored to latest data date (asOf), deltas vs prior equal window, top creatives by spend, rule-based fatigue flag (freq>=2.5 & CTR fell vs prior).
