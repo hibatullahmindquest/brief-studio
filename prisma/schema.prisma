@@ -25,6 +25,7 @@ model User {
   campaigns      Campaign[]
   calendarEvents CalendarEvent[]
   preference     UserPreference?
+  apiUsageLogs   APIUsageLog[]
 }
 
 // store a snapshot of performance metrics created the first time a user logs in
@@ -279,6 +280,46 @@ model Report {
   createdAt   DateTime @default(now())
 
   @@index([brandId, periodType, periodStart])
+}
+
+// AI usage + cost tracking — one row per gpt-4o / gpt-image call.
+model APIUsageLog {
+  id           String   @id @default(cuid())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  brandId      String?
+  featureRunId String?
+  module       String   // "visual" | "copy"
+  model        String   // "gpt-4o" | "gpt-5" | "gpt-image-2"
+  inputTokens  Int      @default(0)
+  outputTokens Int      @default(0)
+  imageCount   Int      @default(0)
+  imageSize    String   @default("")
+  costUsd      Float    @default(0)
+  costMyr      Float    @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([brandId, module, createdAt])
+}
+
+// Persistent error capture — one row per logged failure (esp. OpenAI calls).
+model ErrorLog {
+  id           String   @id @default(cuid())
+  source       String   // "visual.render" | "generate.copy" | "meta.callback" | ...
+  level        String   @default("error") // "error" | "warn"
+  message      String
+  code         String   @default("")
+  httpStatus   Int?
+  detail       String   @default("") // stack + extracted OpenAI body, capped
+  userId       String?
+  brandId      String?
+  featureRunId String?
+  contextJson  String?  // sanitized JSON — never secrets
+  createdAt    DateTime @default(now())
+
+  @@index([source, createdAt])
+  @@index([level, createdAt])
 }
 
 model Note {

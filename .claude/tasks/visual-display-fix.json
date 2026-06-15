@@ -1,0 +1,62 @@
+{
+  "id": "visual-display-fix",
+  "route": "bugfix",
+  "created": "2026-06-15",
+  "branch": "feat/visual-generation",
+  "description": "Isu 1: image rendered cropped \u00e2\u20ac\u201d show uncropped at native ratio (drop false 9:16/16:9 container + object-fit cover). Isu 2: vague failure message \u00e2\u20ac\u201d categorize errors (moderated/quota/api/system) with clear reason + retryable vs terminal action. Exact-size crop deferred (FUTURE plan).",
+  "steps": [
+    {
+      "step": 1,
+      "name": "describe",
+      "status": "done",
+      "at": "2026-06-15",
+      "evidence": {
+        "file": ".claude/plans/2026-06-15-image-display-failure-handling-brainstorm.md"
+      }
+    },
+    {
+      "step": 2,
+      "name": "diagnose",
+      "status": "done",
+      "at": "2026-06-15",
+      "evidence": {
+        "isu1": "container 9:16 vs real 2:3 + object-fit cover crops top/bottom",
+        "isu2": "guessed moderation codes; no category/retryable surfaced to UI"
+      }
+    },
+    {
+      "step": 3,
+      "name": "fix",
+      "status": "done",
+      "at": "2026-06-15"
+    },
+    {
+      "step": 4,
+      "name": "verify (lint + tsc + build)",
+      "status": "done",
+      "at": "2026-06-15"
+    },
+    {
+      "step": 5,
+      "name": "review (spec + code quality)",
+      "status": "done",
+      "at": "2026-06-15"
+    },
+    {
+      "step": 6,
+      "name": "release-notes (CHANGELOG)",
+      "status": "done",
+      "at": "2026-06-15"
+    },
+    {
+      "step": 7,
+      "name": "commit",
+      "status": "done", "at": "2026-06-15", "evidence": { "sha": "c4fc76f" }
+    }
+  ],
+  "metadata": {
+    "outputType": "poster, storyboard, video-script",
+    "brand": "both",
+    "affectedFiles": []
+  }
+}

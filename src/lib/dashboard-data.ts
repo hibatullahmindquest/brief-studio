@@ -35,6 +35,8 @@ export const dashboardNav: DashboardNavGroup[] = [
     items: [
       { href: "/dashboard/settings", label: "Settings", description: "Brand & preferences" },
       { href: "/dashboard/settings/meta", label: "Meta Connections", description: "Connect accounts", admin: true },
+      { href: "/dashboard/usage", label: "Usage", description: "AI cost tracking", admin: true },
+      { href: "/dashboard/settings/logs", label: "Error Logs", description: "Diagnostics", admin: true },
     ],
   },
 ];

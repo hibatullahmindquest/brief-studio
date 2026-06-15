@@ -5,6 +5,41 @@ Add entries via `/bs-save-session` at end of each session.
 
 ---
 
+## 2026-06-15 — gpt-image-2 only outputs 3 sizes (not true 9:16/16:9)
+**Context:** Generated visual rendered cropped.
+**Discovery:** gpt-image-2 supports only 1024×1024 (1:1), 1024×1536 (2:3), 1536×1024 (3:2). We labelled brief sizes 9:16/16:9 and set the CSS container to that ratio with `object-fit: cover` → mismatch (2:3≠9:16) cropped the image. Fix = display native ratio (no fixed aspect + no cover). True 9:16/16:9 needs a crop/pad/outpaint post-step (deferred, FUTURE plan).
+**Impact:** Image-display code must use the real output ratio, not the requested social label.
+**Source:** debugging (user reported crop).
+
+## 2026-06-15 — gpt-5 reasoning model: low max_completion_tokens → empty content
+**Context:** "Gagal jana visual" — empty image prompt.
+**Discovery:** OPENAI_MODEL defaults to gpt-5 (reasoning). With `max_completion_tokens: 1500`, reasoning ate the budget → empty `content` → planVisual returned empty `imagePrompt` → gpt-image-2 threw `400 Invalid 'prompt': empty string`. Fix: 4000 tokens + deterministic fallback prompt + guard renderImage against empty. (generateCopy already used 5000.)
+**Impact:** Reasoning models need generous completion budgets; always guard downstream against empty LLM output.
+**Source:** debugging via the new ErrorLog.
+
+## 2026-06-15 — Persistent error logging = fastest diagnosis
+**Context:** Couldn't see why image gen failed.
+**Discovery:** `ErrorLog` + `logError()` normalizes OpenAI APIError (status/code/type/body) into `detail`. The empty-prompt 400 was found instantly from one row. View at `/dashboard/settings/logs` (admin) or `SELECT ... FROM "ErrorLog"`.
+**Impact:** Wire logError into every AI/integration catch; pays off immediately.
+**Source:** built + used same session.
+
+## 2026-06-15 — Prisma accessor + Windows DLL lock + client/server boundary
+**Discovery:** (1) Prisma camelCases models → `prisma.aPIUsageLog`, `prisma.errorLog` (first letter lowercased). (2) Windows: a running `next dev` holds `query_engine-windows.dll.node` → `prisma generate` EPERM; stop dev before migrate/generate. (3) `visual.ts` imports `fs/promises` → can't be imported by a `"use client"` component; replicate tiny helpers (visualKind) client-side, import only pure libs (pricing); `import type {…}` from a server lib is erased → safe in client. (4) `react-hooks/purity` flags `Date.now()` in a server-component render body → put time logic in lib functions.
+**Impact:** Avoids repeated build/lint failures.
+**Source:** debugging.
+
+## 2026-06-15 — Real NakNgaji Meta data was in marketing-ai-agent's LOCAL docker pg
+**Discovery:** That project's `SUPABASE_URL` was a local Docker Postgres DSN (`db:5432`), not cloud. Real NakNgaji paid data (17,055 daily rows, RM520k, Jan'25–May'26) + a **non-expiring BM System User token** ("Analytics") lived in the `marketing-ai-agent_pgdata` volume. Imported via `scripts/import-meta-history.ts`. node-pg parses DATE (OID 1082) at local midnight → day shifts on UTC+8; fix = `types.setTypeParser(1082, v=>v)` + build UTC date.
+**Impact:** System-user token (non-expiring) is simplest Meta auth for an internal tool; data is reusable.
+**Source:** investigation + ETL.
+
+## 2026-06-15 — /api/generate/visual is featureRunId-based → "generate later" is free
+**Discovery:** The visual route loads brand/brief/output from DB by `featureRunId` only — never needs live wizard state. Surfacing `VisualPanel` in HistoryModal made "generate image later from a saved run" a pure UI-reuse job, zero backend change.
+**Impact:** Keep generation endpoints DB-keyed (not session-coupled) → enables history/Library reuse + future async jobs.
+**Source:** design + build.
+
+---
+
 ## 2026-06-12 — browser_screenshot tidak share cookie dengan browser_run
 
 **Context:** Cuba screenshot Studio page (authenticated) guna Playwright MCP tools.

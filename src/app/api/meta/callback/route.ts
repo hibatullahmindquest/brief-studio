@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { encrypt, isEncryptionConfigured } from "@/lib/crypto";
+import { logError } from "@/lib/error-log";
 import {
   exchangeCode,
   exchangeLongLived,
@@ -139,7 +140,7 @@ export async function GET(req: NextRequest) {
     return settingsRedirect(req, "connected");
   } catch (e) {
     // Graph error — surface a generic status, never the token or raw error to the client URL.
-    console.error("[meta/callback] failed:", e instanceof Error ? e.message : e);
+    await logError({ source: "meta.callback", error: e, brandId, context: { stage: "oauth_exchange" } });
     return settingsRedirect(req, "error");
   }
 }

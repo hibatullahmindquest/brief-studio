@@ -2,6 +2,9 @@
 
 import { useEffect } from "react";
 import type { HistoryRun } from "@/lib/feature-store";
+import { VisualPanel } from "./VisualPanel";
+
+const VISUAL_TYPES = new Set(["poster", "storyboard", "video_script"]);
 
 const BRAND_NAMES: Record<string, string> = {
   sifututor: "SifuTutor",
@@ -30,7 +33,7 @@ export function HistoryModal({
 
   const brandName = run.brandSlug ? (BRAND_NAMES[run.brandSlug] ?? run.brandSlug) : "—";
   const brandColor = run.brandSlug ? (BRAND_COLORS[run.brandSlug] ?? "#888") : "#888";
-  const { fullOutput } = run;
+  const { fullOutput, image } = run;
 
   return (
     <div
@@ -64,6 +67,43 @@ export function HistoryModal({
             Tutup ✕
           </button>
         </div>
+
+        {image && (
+          <div className="rounded-3xl border border-[var(--line)] p-5">
+            <p className="text-xs uppercase tracking-[0.2em] editorial-muted">
+              Visual · {image.kind === "poster" ? "Poster" : "Storyboard"}
+            </p>
+            <div className="mt-3 flex items-start gap-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={image.urlPath}
+                alt="Generated visual"
+                className="rounded-xl border border-[var(--line-2)]"
+                style={{
+                  display: "block",
+                  height: "auto",
+                  width: image.kind === "poster" ? "auto" : "100%",
+                  maxWidth: image.kind === "poster" ? "180px" : "100%",
+                }}
+              />
+            </div>
+            {image.scenes?.length > 0 && (
+              <div className="mt-3">
+                {image.scenes.map((s) => (
+                  <div key={s.no} className="flex gap-3 border-b border-[var(--line)] py-1.5 text-xs last:border-0">
+                    <b className="shrink-0 text-[var(--brand)]" style={{ width: 52 }}>Scene {s.no}</b>
+                    <span className="editorial-muted">{s.caption}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* No image yet + a visual output type → let the user generate it now. */}
+        {!image && VISUAL_TYPES.has(run.outputTypeId) && (
+          <VisualPanel featureRunId={run.id} outputTypeId={run.outputTypeId} />
+        )}
 
         <div className="rounded-3xl border border-[var(--line)] p-5">
           <p className="text-xs uppercase tracking-[0.2em] editorial-muted">Primary Post</p>

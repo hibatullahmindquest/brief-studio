@@ -1,7 +1,7 @@
 # STATUS — brief-studio
 
 ## Current Phase
-SCIS MVP on branch `feat/scis-meta-analytics`. DONE: P1 schema, P2 Meta OAuth, real-data ETL, P4 Paid Analytics, full v6 redesign + PostForge removal. Next: P3 live Sync / Organic analytics / Daily Signals engine.
+SCIS shipped to master (PR #2: PRD v2 + v6 redesign + Meta paid analytics + real NakNgaji data). Now on branch `feat/visual-generation` — visual gen + supporting features, **8 commits UNPUSHED**. See GOALS.md "Active Task" for full detail + next steps. Next: push branch + PR to master.
 
 ## v6 redesign + de-PostForge (2026-06-15)
 - DELETED inherited PostForge feature modules entirely (overrides PRD v2 "keep"): analytics(IG growth), calendar, campaigns, content-lab, ideas, plan, virality, notes — pages + API routes + components. App is SCIS-only (25 routes, was 40).

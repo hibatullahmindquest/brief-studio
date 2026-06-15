@@ -1,0 +1,14 @@
+{
+  "id": "generation-timer",
+  "route": "small-change",
+  "created": "2026-06-15",
+  "branch": "feat/visual-generation",
+  "description": "Live elapsed-seconds counter while generating a visual; show final generation time next to the cost label on the result. Client-only, no usage tracking.",
+  "steps": [
+    { "step": 1, "name": "describe", "status": "done", "at": "2026-06-15" },
+    { "step": 2, "name": "fix", "status": "done", "at": "2026-06-15" },
+    { "step": 3, "name": "verify (lint + tsc + build)", "status": "done", "at": "2026-06-15" },
+    { "step": 4, "name": "commit", "status": "done", "at": "2026-06-15" }
+  ],
+  "metadata": { "outputType": "poster, storyboard, video-script", "brand": "both", "affectedFiles": ["src/components/studio/VisualPanel.tsx"] }
+}
