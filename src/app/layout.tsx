@@ -22,11 +22,11 @@ const editorialSerif = Cormorant_Garamond({
 export const metadata: Metadata = {
   metadataBase: new URL("https://postforge-ai.vercel.app"),
   title: {
-    default: "PostForge AI | AI Social Media Generator for Brands",
-    template: "%s | PostForge AI",
+    default: "SCIS — Creative Intelligence System",
+    template: "%s | SCIS",
   },
   description:
-    "PostForge AI is an AI social media generator that creates Instagram posts, captions, ad copy, gym promotions, and startup marketing content in seconds.",
+    "SCIS is an internal AI marketing and creative platform — Meta organic/paid analytics, daily decision signals, reports, and AI creative generation for SifuTutor and NakNgaji.",
   keywords: [
     "AI social media generator",
     "AI caption generator",
