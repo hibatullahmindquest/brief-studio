@@ -23,6 +23,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - `generateCopy` now returns `{ copy, usage }` so token usage can be logged
 - `saveFeatureRun` returns the created run (for usage `featureRunId` + client run id)
 
+### Fixed
+- **Visual generation "empty prompt" failure** — the gpt-5 director sometimes returned no `imagePrompt` (reasoning truncation at 1500 tokens), and the empty string was passed to gpt-image-2 → `400 Invalid 'prompt'`. Fixed: bumped director budget to 4000 tokens, added a deterministic brand-aware fallback prompt, and guarded `renderImage` against empty prompts. (Diagnosed via the new error log.)
+
 ## [0.2.0] - 2026-06-11
 
 ### Added

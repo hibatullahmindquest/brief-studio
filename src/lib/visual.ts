@@ -83,7 +83,7 @@ ${brief || "(none)"}`;
       { role: "system", content: PLAN_SYSTEM },
       { role: "user", content: user },
     ],
-    max_completion_tokens: 1500,
+    max_completion_tokens: 4000,
     response_format: { type: "json_object" },
   });
 
@@ -101,13 +101,17 @@ ${brief || "(none)"}`;
     ? p.scenes.map((s, i) => ({ no: typeof s?.no === "number" ? s.no : i + 1, caption: String(s?.caption ?? "") }))
     : [];
 
+  // The director occasionally returns no prompt (e.g. reasoning model truncation).
+  // Fall back to a deterministic brand-aware prompt so rendering never gets "".
+  const imagePrompt = String(p.imagePrompt ?? "").trim() || fallbackPrompt(kind, args.brand, args.outputText, scenes);
+
   return {
     plan: {
       shouldRender: p.shouldRender !== false,
       kind, // forced from output type
       aspect,
       brandNotes: String(p.brandNotes ?? ""),
-      imagePrompt: String(p.imagePrompt ?? ""),
+      imagePrompt,
       scenes,
     },
     usage: {
@@ -118,6 +122,18 @@ ${brief || "(none)"}`;
   };
 }
 
+// Deterministic prompt when the director returns nothing — keeps the brand
+// voice and the actual output topic so the image is still on-brief.
+function fallbackPrompt(kind: VisualKind, brand: BrandContext, outputText: string, scenes: VisualScene[]): string {
+  const topic = outputText.replace(/\s+/g, " ").slice(0, 400);
+  const base = `${brand.tone} marketing visual for ${brand.name}. Use brand colours ${brand.primaryColor} and ${brand.secondaryColor}. Clean composition, leave clear negative space for a logo, minimal or no text in the image.`;
+  if (kind === "storyboard") {
+    const n = scenes.length || 5;
+    return `A storyboard sheet with ${n} numbered panels in a grid, consistent art style and recurring characters across all panels, illustrating this story: ${topic}. ${base}`;
+  }
+  return `A poster-style key visual illustrating: ${topic}. ${base}`;
+}
+
 export type RenderResult = { urlPath: string; size: ImageSize; imageCount: number };
 
 export async function renderImage(args: {
@@ -125,6 +141,9 @@ export async function renderImage(args: {
   size: ImageSize;
   runId: string;
 }): Promise<RenderResult> {
+  if (!args.prompt.trim()) {
+    throw new Error("Empty image prompt — refusing to call the image API");
+  }
   const client = getClient();
   const res = await client.images.generate({
     model: IMAGE_MODEL,
