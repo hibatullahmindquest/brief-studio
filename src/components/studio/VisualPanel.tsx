@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { estimateVisual, type ImageSize } from "@/lib/pricing";
 
 // Client-safe copy of the output-type → visual family mapping
@@ -23,6 +23,26 @@ export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: stri
   const [cost, setCost] = useState<number | null>(null);
   const [errMsg, setErrMsg] = useState("");
   const [retryable, setRetryable] = useState(true);
+  const [elapsed, setElapsed] = useState(0); // seconds, live while generating then frozen
+  const startRef = useRef<number | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Clear the ticking interval on unmount.
+  useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
+
+  function startTimer() {
+    startRef.current = Date.now();
+    setElapsed(0);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
+      if (startRef.current) setElapsed(Math.round((Date.now() - startRef.current) / 1000));
+    }, 500);
+  }
+
+  function stopTimer() {
+    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+    if (startRef.current) setElapsed(Math.round((Date.now() - startRef.current) / 1000));
+  }
 
   if (kind === "none") return null;
 
@@ -33,6 +53,7 @@ export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: stri
   async function generate() {
     setStage("planning");
     setErrMsg("");
+    startTimer();
     const timer = setTimeout(() => setStage((s) => (s === "planning" ? "rendering" : s)), 1200);
     try {
       const res = await fetch("/api/generate/visual", {
@@ -45,6 +66,7 @@ export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: stri
         image?: { urlPath: string; aspect: string }; scenes?: Scene[]; costMyr?: number;
       };
       clearTimeout(timer);
+      stopTimer();
       if (!res.ok) {
         setErrMsg(data.error ?? "Gagal jana visual.");
         setRetryable(data.retryable !== false);
@@ -59,6 +81,7 @@ export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: stri
       window.dispatchEvent(new CustomEvent("generation:complete"));
     } catch {
       clearTimeout(timer);
+      stopTimer();
       setErrMsg("Ralat rangkaian. Cuba semula.");
       setRetryable(true);
       setStage("error");
@@ -97,6 +120,7 @@ export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: stri
           <p className="mt-1 text-sm text-[#7b8698]">
             {stage === "planning" ? "gpt-4o baca output → tentukan panel & gaya" : "gpt-image-2 · 15–30 saat"}
           </p>
+          <p className="mono mt-2 text-base font-bold text-[var(--brand)]">{elapsed}s</p>
         </div>
       )}
 
@@ -109,6 +133,11 @@ export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: stri
               {cost !== null && (
                 <span className="rounded-md bg-[var(--ok-soft)] px-2 py-1 mono text-[11px] font-bold text-[var(--ok)]">
                   RM{cost.toFixed(2)}
+                </span>
+              )}
+              {elapsed > 0 && (
+                <span className="rounded-md bg-[var(--card-2)] px-2 py-1 mono text-[11px] text-[#7b8698]">
+                  ⏱ {elapsed}s
                 </span>
               )}
               <button onClick={generate} className="rounded-xl border border-[var(--line-2)] px-3 py-1.5 text-sm font-semibold text-[#33414f] hover:bg-[var(--card-2)]">

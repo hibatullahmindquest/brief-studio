@@ -1,5 +1,5 @@
 {
-  "activeTask": "visual-display-fix",
-  "taskFile": ".claude/tasks/visual-display-fix.json",
+  "activeTask": "generation-timer",
+  "taskFile": ".claude/tasks/generation-timer.json",
   "route": "feature"
 }
