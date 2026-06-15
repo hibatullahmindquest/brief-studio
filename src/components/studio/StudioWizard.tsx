@@ -140,7 +140,7 @@ export function StudioWizard() {
   return (
     <div className="space-y-4">
       {showProgress && (
-        <div className="editorial-panel rounded-4xl p-5">
+        <div className="editorial-panel rounded-3xl p-5">
           <div className="flex items-center justify-between mb-2">
             <div className="flex gap-2">
               {PROGRESS_STEPS.map((label, i) => (
@@ -148,7 +148,7 @@ export function StudioWizard() {
                   key={label}
                   className={`text-xs font-medium px-3 py-1 rounded-full border transition ${
                     i === progressIndex
-                      ? "border-(--accent) bg-[rgba(212,183,143,0.12)] text-foreground"
+                      ? "border-[var(--brand)] bg-[var(--brand-soft)] text-foreground"
                       : i < progressIndex
                       ? "border-[var(--line-2)] text-[#7b8698]"
                       : "border-[var(--line)] text-[#a6aebb]"
@@ -166,7 +166,7 @@ export function StudioWizard() {
           </div>
           <div className="h-1 w-full rounded-full bg-[var(--card-2)]">
             <div
-              className="h-full rounded-full bg-[rgba(212,183,143,0.9)] transition-all duration-500"
+              className="h-full rounded-full bg-[var(--brand)] transition-all duration-500"
               style={{ width: `${(progressIndex / (PROGRESS_STEPS.length - 1)) * 100}%` }}
             />
           </div>
@@ -216,8 +216,8 @@ export function StudioWizard() {
       )}
 
       {stage === "GENERATING" && (
-        <div className="editorial-panel rounded-4xl p-10 text-center space-y-4">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[var(--line-2)] border-t-white/80" />
+        <div className="editorial-panel rounded-3xl p-10 text-center space-y-4">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[var(--line-2)] border-t-[var(--brand)]" />
           <p className="editorial-title text-3xl">AI sedang menjana output...</p>
           <p className="text-sm editorial-muted">Mengambil masa 10–30 saat</p>
         </div>

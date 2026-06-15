@@ -17,15 +17,15 @@ export function BrandPicker({ onSelect }: { onSelect: (brand: BrandSummary) => v
 
   if (loading) {
     return (
-      <div className="editorial-panel rounded-4xl p-8 text-center">
-        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-[var(--line-2)] border-t-white/80" />
+      <div className="editorial-panel rounded-3xl p-8 text-center">
+        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-[var(--line-2)] border-t-[var(--brand)]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="editorial-panel rounded-4xl p-8 text-center text-sm text-red-400">{error}</div>
+      <div className="editorial-panel rounded-3xl p-8 text-center text-sm text-red-400">{error}</div>
     );
   }
 
@@ -44,7 +44,7 @@ export function BrandPicker({ onSelect }: { onSelect: (brand: BrandSummary) => v
             key={brand.id}
             type="button"
             onClick={() => onSelect(brand)}
-            className="rounded-3xl border border-[var(--line)] bg-white p-6 text-left transition hover:border-[rgba(212,183,143,0.4)] hover:bg-[var(--card-2)]"
+            className="rounded-3xl border border-[var(--line)] bg-white p-6 text-left transition hover:border-[var(--brand-line)] hover:bg-[var(--card-2)]"
           >
             <div
               className="mb-4 h-2 w-12 rounded-full"

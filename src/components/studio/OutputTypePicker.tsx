@@ -55,7 +55,7 @@ export function OutputTypePicker({
                   key={ot.id}
                   type="button"
                   onClick={() => onSelect(ot.id)}
-                  className="rounded-3xl border border-[var(--line)] bg-white p-5 text-left transition hover:border-[rgba(212,183,143,0.4)] hover:bg-[var(--card-2)]"
+                  className="rounded-3xl border border-[var(--line)] bg-white p-5 text-left transition hover:border-[var(--brand-line)] hover:bg-[var(--card-2)]"
                 >
                   <p className="font-semibold">{ot.label}</p>
                   <p className="mt-1 text-sm editorial-muted">{ot.description}</p>

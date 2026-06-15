@@ -81,7 +81,7 @@ export function ConversationStep({
                 onClick={() => handleChipClick(option)}
                 className={`rounded-full border px-5 py-2.5 text-sm font-medium transition ${
                   active
-                    ? "border-(--accent) bg-[rgba(212,183,143,0.15)] text-foreground"
+                    ? "border-[var(--brand)] bg-[var(--brand-soft)] text-foreground"
                     : "border-[var(--line)] bg-white editorial-muted hover:border-[var(--line-2)]"
                 }`}
               >
@@ -105,7 +105,7 @@ export function ConversationStep({
             }}
             placeholder={question.placeholder}
             rows={3}
-            className="w-full rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm outline-none transition placeholder:text-muted focus:border-(--accent) resize-none"
+            className="w-full rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm outline-none transition placeholder:text-muted focus:border-[var(--brand)] resize-none"
           />
         </div>
       )}
