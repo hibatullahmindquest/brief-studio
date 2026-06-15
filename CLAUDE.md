@@ -162,10 +162,20 @@ ADMIN_NAME="..."
 ```bash
 git checkout -b <type>/<short-desc>
 git push -u origin <branch>
-gh pr create
+gh pr create --repo hibatullahmindquest/brief-studio --base master
 ```
 
 No direct push ke `master`. Default branch: `master` (inherited dari PostForge fork).
+
+### ⚠️ FORK — HARD RULE for PRs
+
+This repo is a **fork** of `mouadhhhallem/postforge-ai`. `gh pr create`/the GitHub web banner **default to the upstream parent**, so an unpinned PR can mistakenly target PostForge.
+
+- **ALWAYS pin the fork** on create/merge:
+  `gh pr create --repo hibatullahmindquest/brief-studio --base master`
+  `gh pr merge <n> --repo hibatullahmindquest/brief-studio --merge`
+- **NEVER** open/merge a PR against `mouadhhhallem/postforge-ai`.
+- Guards in place: `gh repo set-default` (this clone) + a PreToolUse hook (`.claude/hooks/guard-pr-repo.py`) that blocks unpinned `gh pr create/merge`.
 
 ## Secret-handling — HARD RULE
 

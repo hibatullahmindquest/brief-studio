@@ -178,7 +178,22 @@ git checkout -b <type>/<short-desc>     # e.g. feat/poster-generation
 /bs-commit
 # Ask user permission before push
 git push -u origin <branch>
-gh pr create
+gh pr create --repo hibatullahmindquest/brief-studio --base master
 ```
 
 **Never push without explicit user permission.**
+
+### ⚠️ FORK WARNING — pin the repo on every PR
+
+This repo is a **GitHub fork** of `mouadhhhallem/postforge-ai`. `gh pr create`
+and the GitHub "Compare & pull request" banner **default the base to the
+upstream parent** — so an unpinned PR can land on PostForge by mistake.
+
+**ALWAYS pin the fork** on PR create/merge:
+```
+gh pr create --repo hibatullahmindquest/brief-studio --base master --head <branch>
+gh pr merge <n> --repo hibatullahmindquest/brief-studio --merge
+```
+- `gh repo set-default hibatullahmindquest/brief-studio` is set in this clone (re-run after a fresh clone).
+- A PreToolUse hook (`.claude/hooks/guard-pr-repo.py`) **blocks** unpinned `gh pr create/merge`.
+- NEVER open/merge a PR against `mouadhhhallem/postforge-ai`.
