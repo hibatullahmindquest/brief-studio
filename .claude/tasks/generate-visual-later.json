@@ -59,7 +59,7 @@
     {
       "step": 9,
       "name": "commit",
-      "status": "in_progress"
+      "status": "done", "at": "2026-06-15"
     }
   ],
   "metadata": {
