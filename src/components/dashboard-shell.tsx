@@ -29,7 +29,7 @@ export function DashboardShell({
     <div className="editorial-page text-foreground">
       <div className="editorial-container grid gap-6 lg:grid-cols-[270px_1fr]">
         {/* v6 SCIS sidebar — teal panel */}
-        <aside className="rounded-4xl bg-[#00262a] p-5 text-[#aebfc4] lg:sticky lg:top-28 lg:h-[calc(100vh-8rem)] lg:overflow-y-auto">
+        <aside className="rounded-4xl bg-[#00262a] p-5 text-[#aebfc4] lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)] lg:overflow-y-auto">
           {/* Brand mark */}
           <div className="mb-6 flex items-center gap-3">
             <div className="grid h-11 w-11 place-items-center rounded-xl bg-[#3b4ee2] text-lg font-bold text-white shadow-lg shadow-[#3b4ee2]/40">

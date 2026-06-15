@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 type ApiUser = {
   id: string;
@@ -11,6 +12,7 @@ type ApiUser = {
 
 export default function Header() {
   const [user, setUser] = useState<ApiUser>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -19,16 +21,23 @@ export default function Header() {
       .catch(() => setUser(null));
   }, []);
 
+  // The app shell (dashboard/studio) has its own sidebar brand — no top bar there.
+  if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/studio")) {
+    return null;
+  }
+
   return (
-    <header className="fixed top-0 inset-x-0 z-50 border-b border-white/10 bg-background/80 backdrop-blur-sm">
+    <>
+    <div className="h-[60px]" aria-hidden />
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-[var(--line)] bg-white/85 backdrop-blur-sm">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3.5">
         <a href={user ? "/dashboard" : "/"} className="flex items-center gap-3">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#3b4ee2] text-base font-bold text-white shadow-lg shadow-[#3b4ee2]/40">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#3b4ee2] text-base font-bold text-white shadow-lg shadow-[#3b4ee2]/30">
             S
           </span>
           <span className="flex flex-col leading-tight">
-            <span className="text-base font-bold">SCIS</span>
-            <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-white/45">
+            <span className="text-base font-bold text-[#00262a]">SCIS</span>
+            <span className="mono text-[9px] uppercase tracking-[0.16em] text-[#7b8698]">
               Creative Intelligence
             </span>
           </span>
@@ -37,14 +46,8 @@ export default function Header() {
         <nav className="flex items-center gap-5 text-sm font-medium">
           {user ? (
             <>
-              <a href="/dashboard" className="text-white/70 hover:text-white">
+              <a href="/dashboard" className="text-[#33414f] hover:text-[#00262a]">
                 Dashboard
-              </a>
-              <a
-                href="/dashboard/settings"
-                className="rounded-full border border-white/15 px-3 py-1.5 text-xs hover:border-white/35"
-              >
-                {user.name}
               </a>
               <form method="post" action="/api/auth/logout">
                 <button type="submit" className="text-sm text-[#fd8549] hover:underline">
@@ -63,5 +66,6 @@ export default function Header() {
         </nav>
       </div>
     </header>
+    </>
   );
 }

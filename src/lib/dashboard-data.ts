@@ -28,21 +28,7 @@ export const dashboardNav: DashboardNavGroup[] = [
   },
   {
     group: "Create",
-    items: [
-      { href: "/studio", label: "Studio", description: "AI brief wizard" },
-      { href: "/dashboard/content-lab", label: "Content Lab", description: "Copy generation" },
-      { href: "/dashboard/ideas", label: "Ideas Engine", description: "Viral content ideas" },
-      { href: "/dashboard/plan", label: "30-Day Plan", description: "Content calendar" },
-    ],
-  },
-  {
-    group: "Tools",
-    items: [
-      { href: "/dashboard/calendar", label: "Calendar", description: "Publishing rhythm" },
-      { href: "/dashboard/campaigns", label: "Campaigns", description: "Launches & offers" },
-      { href: "/dashboard/virality", label: "Virality", description: "Predict reach" },
-      { href: "/dashboard/notes", label: "Notes", description: "Drafts & ideas" },
-    ],
+    items: [{ href: "/studio", label: "Studio", description: "AI brief wizard" }],
   },
   {
     group: "Admin",
