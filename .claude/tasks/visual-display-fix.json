@@ -51,7 +51,7 @@
     {
       "step": 7,
       "name": "commit",
-      "status": "in_progress"
+      "status": "done", "at": "2026-06-15", "evidence": { "sha": "c4fc76f" }
     }
   ],
   "metadata": {
