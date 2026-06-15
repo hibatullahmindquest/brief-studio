@@ -1,7 +1,15 @@
 # STATUS — brief-studio
 
 ## Current Phase
-SCIS MVP — P1 (Schema) + P2 (Meta OAuth) + real-data ETL DONE on branch `feat/scis-meta-analytics`. Next: P3 (Sync) / P4 (Analytics on real data).
+SCIS MVP — P1 (Schema) + P2 (Meta OAuth) + real-data ETL + P4 Paid Analytics DONE on branch `feat/scis-meta-analytics`. Next: P3 (live Sync) / Organic analytics / Daily Signals.
+
+## P4 Paid Analytics (2026-06-15)
+- `src/lib/analytics.ts` — getPaidAnalytics(brandId, period): rolls up AdDailyMetric to T-1/T-7 windows anchored to latest data date (asOf), deltas vs prior equal window, top creatives by spend, rule-based fatigue flag (freq>=2.5 & CTR fell vs prior).
+- `src/app/dashboard/analytics/paid/` — page (metric cards w/ per-metric explainers, paid=orange accent, fatigue warnings, top-creatives table) + paid-controls (brand select + T-1/T-7 toggle via URL params).
+- Nav item "Paid Analytics" added to dashboard-data.ts.
+- Renders real NakNgaji data. T-7 (as of 2026-05-06): RM11,634 spend, 1,038 leads, 0.74% CTR, RM11.21 CPL.
+- View at /dashboard/analytics/paid (login required).
+- Verify: lint + tsc + build pass.
 
 ## BIG FIND — reusable Meta data + token (2026-06-15)
 `marketing-ai-agent` local Docker Postgres (volume `marketing-ai-agent_pgdata`) held REAL synced NakNgaji paid data + a working **non-expiring System User token** ("Analytics" BM system user). Token tested live: account `act_1034360610566607` (Nakngaji.my Amin), active, MYR, pulling current data (RM7.8k last 7d).

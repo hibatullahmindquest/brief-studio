@@ -8,6 +8,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
   { href: "/dashboard", label: "Overview", description: "Performance at a glance" },
   { href: "/studio", label: "Studio", description: "AI-powered creative brief wizard" },
   { href: "/dashboard/analytics", label: "Analytics", description: "Growth, reach, and engagement" },
+  { href: "/dashboard/analytics/paid", label: "Paid Analytics", description: "Meta ad spend, CPL, CTR, fatigue" },
   { href: "/dashboard/campaigns", label: "Campaigns", description: "Active launches and offers" },
   { href: "/dashboard/calendar", label: "Calendar", description: "Weekly publishing rhythm" },
   { href: "/dashboard/content-lab", label: "Content Lab", description: "Generate and iterate copy" },
