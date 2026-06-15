@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { ApifyStatsPanel } from "./apify-stats-panel";
 import { SettingsForm } from "@/components/settings-form";
 
 export const metadata: Metadata = {
@@ -25,23 +25,25 @@ export default async function DashboardSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <section className="editorial-panel rounded-4xl p-6 sm:p-8">
+      <section className="editorial-panel rounded-3xl p-5 sm:p-6">
         <p className="editorial-kicker">Settings</p>
-        <h1 className="editorial-title mt-3 text-4xl sm:text-5xl">Brand profile controls</h1>
+        <h1 className="editorial-title mt-3 text-2xl sm:text-3xl">Brand profile controls</h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 editorial-muted">
           Keep your outputs on-brand with clear defaults for tone, audience, and conversion goals.
         </p>
       </section>
 
-      {/* Instagram stats via Apify */}
-      <ApifyStatsPanel
-        igHandle={stats?.instagramHandle ?? null}
-        igFollowers={stats?.igFollowers ?? null}
-        igPosts={stats?.igPosts ?? null}
-        igAvgLikes={stats?.igAvgLikes ?? null}
-        igAvgComments={stats?.igAvgComments ?? null}
-        igEngagementRate={stats?.igEngagementRate ?? null}
-      />
+      {/* Meta integration link */}
+      <Link
+        href="/dashboard/settings/meta"
+        className="block rounded-3xl border border-[var(--line)] bg-white p-5 shadow-sm transition hover:border-[var(--brand-line)]"
+      >
+        <p className="eyebrow">Integrations</p>
+        <p className="mt-2 text-lg font-semibold text-[#00262a]">Meta connections →</p>
+        <p className="mt-1 text-sm text-[#7b8698]">
+          Connect each brand&apos;s Facebook Page, Instagram, and ad accounts.
+        </p>
+      </Link>
 
       <SettingsForm
         initialBrandName={stats?.brandName ?? user.name}

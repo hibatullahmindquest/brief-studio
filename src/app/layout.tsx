@@ -1,32 +1,28 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Geist, Geist_Mono } from "next/font/google";
+import { Poppins, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "../components/header";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const poppins = Poppins({
+  variable: "--font-poppins",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains",
   subsets: ["latin"],
-});
-
-const editorialSerif = Cormorant_Garamond({
-  variable: "--font-editorial-serif",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "700"],
 });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://postforge-ai.vercel.app"),
   title: {
-    default: "PostForge AI | AI Social Media Generator for Brands",
-    template: "%s | PostForge AI",
+    default: "SCIS — Creative Intelligence System",
+    template: "%s | SCIS",
   },
   description:
-    "PostForge AI is an AI social media generator that creates Instagram posts, captions, ad copy, gym promotions, and startup marketing content in seconds.",
+    "SCIS is an internal AI marketing and creative platform — Meta organic/paid analytics, daily decision signals, reports, and AI creative generation for SifuTutor and NakNgaji.",
   keywords: [
     "AI social media generator",
     "AI caption generator",
@@ -66,13 +62,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} ${editorialSerif.variable} min-h-screen bg-background text-foreground antialiased`}
+        className={`${poppins.variable} ${jetbrainsMono.variable} min-h-screen bg-background text-foreground antialiased`}
       >
         <Header />
-        <div className="pt-24">{children}</div>
+        {children}
       </body>
     </html>
   );

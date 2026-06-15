@@ -2,20 +2,41 @@ export type DashboardNavItem = {
   href: string;
   label: string;
   description: string;
+  soon?: boolean; // module planned but not built yet — shown disabled
+  admin?: boolean; // only rendered for admin users
 };
 
-export const dashboardNavItems: DashboardNavItem[] = [
-  { href: "/dashboard", label: "Overview", description: "Performance at a glance" },
-  { href: "/studio", label: "Studio", description: "AI-powered creative brief wizard" },
-  { href: "/dashboard/analytics", label: "Analytics", description: "Growth, reach, and engagement" },
-  { href: "/dashboard/campaigns", label: "Campaigns", description: "Active launches and offers" },
-  { href: "/dashboard/calendar", label: "Calendar", description: "Weekly publishing rhythm" },
-  { href: "/dashboard/content-lab", label: "Content Lab", description: "Generate and iterate copy" },
-  { href: "/dashboard/ideas", label: "🧠 Ideas Engine", description: "AI-generated viral content ideas" },
-  { href: "/dashboard/plan", label: "📅 30-Day Plan", description: "Full month content calendar" },
-  { href: "/dashboard/virality", label: "🔮 Virality Predictor", description: "Will your post go viral?" },
-  { href: "/dashboard/notes", label: "📝 Notes", description: "Capture ideas and drafts" },
-  { href: "/dashboard/settings", label: "Settings", description: "Brand profile and preferences" },
+export type DashboardNavGroup = {
+  group: string;
+  items: DashboardNavItem[];
+};
+
+// SCIS navigation — Workspace modules first, inherited tools grouped below.
+// `soon` items are part of the SCIS vision but not yet built (shown disabled).
+export const dashboardNav: DashboardNavGroup[] = [
+  {
+    group: "Workspace",
+    items: [
+      { href: "/dashboard", label: "Today", description: "Daily overview" },
+      { href: "#", label: "Daily Signals", description: "What to make next", soon: true },
+      { href: "#", label: "Organic", description: "FB / IG performance", soon: true },
+      { href: "/dashboard/analytics/paid", label: "Paid", description: "Ad spend, CPL, fatigue" },
+      { href: "#", label: "Research", description: "Sources & ideas", soon: true },
+      { href: "#", label: "Library", description: "Saved outputs", soon: true },
+      { href: "#", label: "Reports", description: "Daily / weekly / monthly", soon: true },
+    ],
+  },
+  {
+    group: "Create",
+    items: [{ href: "/studio", label: "Studio", description: "AI brief wizard" }],
+  },
+  {
+    group: "Admin",
+    items: [
+      { href: "/dashboard/settings", label: "Settings", description: "Brand & preferences" },
+      { href: "/dashboard/settings/meta", label: "Meta Connections", description: "Connect accounts", admin: true },
+    ],
+  },
 ];
 
 export const dashboardKPIs = [

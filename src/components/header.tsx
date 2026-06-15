@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 type ApiUser = {
   id: string;
@@ -12,61 +12,60 @@ type ApiUser = {
 
 export default function Header() {
   const [user, setUser] = useState<ApiUser>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
-    // fetch current user info
     fetch("/api/auth/me")
       .then((r) => r.json())
       .then((data) => setUser(data))
       .catch(() => setUser(null));
   }, []);
 
+  // The app shell (dashboard/studio) has its own sidebar brand — no top bar there.
+  if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/studio")) {
+    return null;
+  }
+
   return (
-    <header className="fixed top-0 inset-x-0 z-50 bg-background/80 backdrop-blur-sm border-b border-white/10">
-      <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 overflow-hidden rounded-full border border-white/20">
-            <Image
-              src="/images/preview.png"
-              alt="PostForge AI preview"
-              width={40}
-              height={40}
-              className="h-full w-full object-cover"
-            />
-          </div>
-          <span className="text-lg font-bold">PostForge AI</span>
-        </div>
-        <nav className="flex gap-6 text-sm font-medium items-center">
-          <a href="/approach">Approach</a>
-          <a href="/offerings">Offerings</a>
-          <a href="/community">Community</a>
-          <a href="/pricing">Pricing</a>
+    <>
+    <div className="h-[60px]" aria-hidden />
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-[var(--line)] bg-white/85 backdrop-blur-sm">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3.5">
+        <a href={user ? "/dashboard" : "/"} className="flex items-center gap-3">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#3b4ee2] text-base font-bold text-white shadow-lg shadow-[#3b4ee2]/30">
+            S
+          </span>
+          <span className="flex flex-col leading-tight">
+            <span className="text-base font-bold text-[#00262a]">SCIS</span>
+            <span className="mono text-[9px] uppercase tracking-[0.16em] text-[#7b8698]">
+              Creative Intelligence
+            </span>
+          </span>
+        </a>
+
+        <nav className="flex items-center gap-5 text-sm font-medium">
           {user ? (
             <>
-              <a
-                href="/dashboard/settings"
-                className="rounded-full border border-white/15 px-3 py-1.5 text-xs hover:border-white/35"
-              >
-                Profile
+              <a href="/dashboard" className="text-[#33414f] hover:text-[#00262a]">
+                Dashboard
               </a>
-              <span className="text-sm">{user.name}</span>
               <form method="post" action="/api/auth/logout">
-                <button
-                  type="submit"
-                  className="ml-4 text-sm text-accent hover:underline"
-                >
+                <button type="submit" className="text-sm text-[#fd8549] hover:underline">
                   Sign out
                 </button>
               </form>
             </>
           ) : (
-            <>
-              <a href="/login">Login</a>
-              <a href="/signup" className="ml-2">Sign up</a>
-            </>
+            <a
+              href="/login"
+              className="rounded-full bg-[#3b4ee2] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#304bd4]"
+            >
+              Login
+            </a>
           )}
         </nav>
       </div>
     </header>
+    </>
   );
 }

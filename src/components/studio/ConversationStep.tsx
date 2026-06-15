@@ -50,7 +50,7 @@ export function ConversationStep({
   }
 
   return (
-    <div className="editorial-panel rounded-4xl p-6 sm:p-8 space-y-6">
+    <div className="editorial-panel rounded-3xl p-5 sm:p-6 space-y-6">
       <div className="flex items-center gap-2 text-xs editorial-muted">
         <span
           className="inline-block h-2 w-2 rounded-full shrink-0"
@@ -64,7 +64,7 @@ export function ConversationStep({
       </div>
 
       <div>
-        <h2 className="editorial-title text-3xl sm:text-4xl">{question.text}</h2>
+        <h2 className="editorial-title text-2xl sm:text-3xl">{question.text}</h2>
         {question.subtext && (
           <p className="mt-2 text-sm editorial-muted">{question.subtext}</p>
         )}
@@ -81,8 +81,8 @@ export function ConversationStep({
                 onClick={() => handleChipClick(option)}
                 className={`rounded-full border px-5 py-2.5 text-sm font-medium transition ${
                   active
-                    ? "border-(--accent) bg-[rgba(212,183,143,0.15)] text-foreground"
-                    : "border-white/10 bg-[rgba(255,255,255,0.02)] editorial-muted hover:border-white/20"
+                    ? "border-[var(--brand)] bg-[var(--brand-soft)] text-foreground"
+                    : "border-[var(--line)] bg-white editorial-muted hover:border-[var(--line-2)]"
                 }`}
               >
                 {option}
@@ -105,7 +105,7 @@ export function ConversationStep({
             }}
             placeholder={question.placeholder}
             rows={3}
-            className="w-full rounded-2xl border border-white/10 bg-[rgba(255,255,255,0.02)] px-4 py-3 text-sm outline-none transition placeholder:text-muted focus:border-(--accent) resize-none"
+            className="w-full rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm outline-none transition placeholder:text-muted focus:border-[var(--brand)] resize-none"
           />
         </div>
       )}
@@ -114,7 +114,7 @@ export function ConversationStep({
         <button
           type="button"
           onClick={onBack}
-          className="rounded-full border border-white/10 px-5 py-3 text-sm editorial-muted hover:border-white/20 transition"
+          className="rounded-full border border-[var(--line)] px-5 py-3 text-sm editorial-muted hover:border-[var(--line-2)] transition"
         >
           ← Balik
         </button>
@@ -123,7 +123,7 @@ export function ConversationStep({
           <button
             type="button"
             onClick={() => onAnswer(question.id, "—")}
-            className="rounded-full border border-white/10 px-5 py-3 text-sm editorial-muted hover:border-white/20 transition"
+            className="rounded-full border border-[var(--line)] px-5 py-3 text-sm editorial-muted hover:border-[var(--line-2)] transition"
           >
             Skip
           </button>

@@ -105,6 +105,180 @@ model Brand {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   featureRuns FeatureRun[]
+  metaConnections MetaConnection[]
+  organicPosts    OrganicPost[]
+  adCreatives     AdCreative[]
+  adDailyMetrics  AdDailyMetric[]
+  dailySignals    DailySignal[]
+  reports         Report[]
+}
+
+// ── SCIS: Meta integration + analytics ──────────────────────────────
+
+model MetaConnection {
+  id           String    @id @default(cuid())
+  brand        Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  brandId      String
+  type         String    // "page" | "instagram" | "ad_account"
+  externalId   String    // page_id | ig_user_id | ad_account_id (act_ prefix kept)
+  name         String    @default("")
+  tokenEnc     String?   // AES-256-GCM encrypted token (see lib/crypto)
+  tokenExpiry  DateTime?
+  scopes       String    @default("")
+  status       String    @default("connected") // connected | needs_reauth | not_linked | error
+  lastError    String?
+  lastSyncedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([brandId, type, externalId])
+  @@index([brandId, type])
+}
+
+model OrganicPost {
+  id           String    @id @default(cuid())
+  brand        Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  brandId      String
+  platform     String    // "facebook" | "instagram"
+  metaPostId   String
+  type         String    @default("") // image | video | carousel | reel | story
+  caption      String    @default("")
+  thumbnailUrl String?
+  permalink    String?
+  publishedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  snapshots    OrganicMetricSnapshot[]
+
+  @@unique([brandId, metaPostId])
+  @@index([brandId, platform, publishedAt])
+}
+
+model OrganicMetricSnapshot {
+  id             String   @id @default(cuid())
+  post           OrganicPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId         String
+  dateRange      String   // "t1" | "t7" | "t30"
+  reach          Int      @default(0)
+  impressions    Int      @default(0)
+  likes          Int      @default(0)
+  comments       Int      @default(0)
+  shares         Int      @default(0)
+  saves          Int      @default(0)
+  profileActions Int      @default(0)
+  engagementRate Float    @default(0)
+  score          Float    @default(0)
+  metricsJson    String?  // raw extras (stringified JSON)
+  syncedAt       DateTime @default(now())
+
+  @@unique([postId, dateRange])
+  @@index([postId, dateRange])
+}
+
+model AdCreative {
+  id           String   @id @default(cuid())
+  brand        Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  brandId      String
+  metaAdId     String
+  campaignId   String   @default("")
+  adsetId      String   @default("")
+  name         String   @default("")
+  copyJson     String?  // stringified JSON
+  thumbnailUrl String?
+  createdAt    DateTime @default(now())
+  snapshots    AdMetricSnapshot[]
+  dailyMetrics AdDailyMetric[]
+
+  @@unique([brandId, metaAdId])
+  @@index([brandId, campaignId])
+}
+
+model AdMetricSnapshot {
+  id          String   @id @default(cuid())
+  ad          AdCreative @relation(fields: [adId], references: [id], onDelete: Cascade)
+  adId        String
+  dateRange   String   // "t1" | "t7" | "t30"
+  spend       Float    @default(0)
+  impressions Int      @default(0)
+  reach       Int      @default(0)
+  clicks      Int      @default(0)
+  results     Int      @default(0) // leads/conversions
+  ctr         Float    @default(0)
+  cpc         Float    @default(0)
+  cpm         Float    @default(0)
+  cpl         Float    @default(0)
+  frequency   Float    @default(0)
+  metricsJson String?  // stringified JSON
+  syncedAt    DateTime @default(now())
+
+  @@unique([adId, dateRange])
+  @@index([adId, dateRange])
+}
+
+// Daily-grain paid metrics — the source of truth for paid analytics.
+// T-1/T-7/T-30 windows are rolled up from these rows (not stored as fixed
+// snapshots). Mirrors the rich schema imported from marketing-ai-agent.
+model AdDailyMetric {
+  id              String   @id @default(cuid())
+  ad              AdCreative @relation(fields: [adId], references: [id], onDelete: Cascade)
+  adId            String
+  brand           Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  brandId         String
+  metricDate      DateTime @db.Date
+  spend           Float    @default(0)
+  impressions     Int      @default(0)
+  reach           Int      @default(0)
+  clicks          Int      @default(0)
+  linkClicks      Int      @default(0)
+  leads           Int      @default(0)
+  waConversations Int      @default(0)
+  ctr             Float    @default(0)  // ctr_pct
+  cpc             Float    @default(0)
+  cpm             Float    @default(0)
+  cpl             Float    @default(0)
+  frequency       Float    @default(0)
+  campaignId      String   @default("")
+  campaignName    String   @default("")
+  adsetName       String   @default("")
+  objective       String   @default("")
+  effectiveStatus String   @default("")
+  metricsJson     String?  // breakdowns: country, placement, age_range, segment, ad_format, etc.
+  syncedAt        DateTime @default(now())
+
+  @@unique([adId, metricDate])
+  @@index([brandId, metricDate])
+  @@index([adId, metricDate])
+}
+
+model DailySignal {
+  id               String   @id @default(cuid())
+  brand            Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  brandId          String
+  channel          String   // "organic" | "paid"
+  signalType       String
+  decisionLabel    String   // scale_similar | create_variation | watch | hold_stop
+  confidence       String   @default("low") // low | medium | high
+  score            Float    @default(0)
+  evidenceJson     String   @default("[]") // stringified JSON array
+  recommendation   String   @default("")
+  suggestedActions String   @default("[]") // stringified JSON array
+  generatedAt      DateTime @default(now())
+
+  @@index([brandId, channel, generatedAt])
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  brand       Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  brandId     String
+  periodType  String   // "daily" | "weekly" | "monthly"
+  periodStart DateTime
+  periodEnd   DateTime
+  dataJson    String   // stringified JSON payload used for the narrative
+  narrative   String   @default("")
+  exportPath  String?
+  createdAt   DateTime @default(now())
+
+  @@index([brandId, periodType, periodStart])
 }
 
 model Note {
