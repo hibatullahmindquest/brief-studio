@@ -150,8 +150,8 @@ export function StudioWizard() {
                     i === progressIndex
                       ? "border-(--accent) bg-[rgba(212,183,143,0.12)] text-foreground"
                       : i < progressIndex
-                      ? "border-white/20 text-white/50"
-                      : "border-white/10 text-white/20"
+                      ? "border-[var(--line-2)] text-[#7b8698]"
+                      : "border-[var(--line)] text-[#a6aebb]"
                   }`}
                 >
                   {label}
@@ -164,7 +164,7 @@ export function StudioWizard() {
               </span>
             )}
           </div>
-          <div className="h-1 w-full rounded-full bg-white/10">
+          <div className="h-1 w-full rounded-full bg-[var(--card-2)]">
             <div
               className="h-full rounded-full bg-[rgba(212,183,143,0.9)] transition-all duration-500"
               style={{ width: `${(progressIndex / (PROGRESS_STEPS.length - 1)) * 100}%` }}
@@ -217,7 +217,7 @@ export function StudioWizard() {
 
       {stage === "GENERATING" && (
         <div className="editorial-panel rounded-4xl p-10 text-center space-y-4">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[var(--line-2)] border-t-white/80" />
           <p className="editorial-title text-3xl">AI sedang menjana output...</p>
           <p className="text-sm editorial-muted">Mengambil masa 10–30 saat</p>
         </div>

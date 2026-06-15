@@ -37,7 +37,7 @@ export function OutputTypePicker({
         <button
           type="button"
           onClick={onBack}
-          className="shrink-0 rounded-full border border-white/10 px-4 py-2 text-sm editorial-muted hover:border-white/20 transition"
+          className="shrink-0 rounded-full border border-[var(--line)] px-4 py-2 text-sm editorial-muted hover:border-[var(--line-2)] transition"
         >
           ← Tukar brand
         </button>
@@ -55,7 +55,7 @@ export function OutputTypePicker({
                   key={ot.id}
                   type="button"
                   onClick={() => onSelect(ot.id)}
-                  className="rounded-3xl border border-white/10 bg-[rgba(255,255,255,0.02)] p-5 text-left transition hover:border-[rgba(212,183,143,0.4)] hover:bg-[rgba(255,255,255,0.04)]"
+                  className="rounded-3xl border border-[var(--line)] bg-white p-5 text-left transition hover:border-[rgba(212,183,143,0.4)] hover:bg-[var(--card-2)]"
                 >
                   <p className="font-semibold">{ot.label}</p>
                   <p className="mt-1 text-sm editorial-muted">{ot.description}</p>

@@ -30,7 +30,7 @@ export function BriefReview({
         </p>
       </div>
 
-      <div className="rounded-3xl border border-white/10 divide-y divide-white/10">
+      <div className="rounded-3xl border border-[var(--line)] divide-y divide-white/10">
         <div className="flex items-center justify-between px-5 py-4">
           <div>
             <p className="text-xs editorial-muted uppercase tracking-[0.15em]">Brand</p>
@@ -74,7 +74,7 @@ export function BriefReview({
         <button
           type="button"
           onClick={onBack}
-          className="rounded-full border border-white/10 px-5 py-3 text-sm editorial-muted hover:border-white/20 transition"
+          className="rounded-full border border-[var(--line)] px-5 py-3 text-sm editorial-muted hover:border-[var(--line-2)] transition"
         >
           ← Balik
         </button>

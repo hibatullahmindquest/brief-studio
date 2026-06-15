@@ -131,15 +131,15 @@ export function GenerationHistory() {
         className={`fixed bottom-6 right-6 z-30 flex items-center gap-2 rounded-full border px-4 py-2.5 text-xs font-medium shadow-lg transition-all duration-200 ${
           open
             ? "border-(--accent) bg-[rgba(212,183,143,0.1)] text-(--accent)"
-            : "border-white/15 bg-[var(--color-panel)] text-white/70 hover:border-white/25 hover:text-white"
+            : "border-[var(--line)] bg-[var(--color-panel)] text-[#33414f] hover:border-[var(--line-2)] hover:text-[#00262a]"
         }`}
       >
         <span
           className="inline-block h-1.5 w-1.5 rounded-full"
-          style={{ background: open ? "var(--accent)" : "rgba(255,255,255,0.4)" }}
+          style={{ background: open ? "var(--accent)" : "var(--line-2)" }}
         />
         Semakan Lepas
-        <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px]">
+        <span className="rounded-full border border-[var(--line)] bg-[var(--card-2)] px-2 py-0.5 text-[10px]">
           {runs.length}
         </span>
       </button>
@@ -154,35 +154,35 @@ export function GenerationHistory() {
 
       {/* Drawer */}
       <aside
-        className={`fixed top-[73px] right-0 z-40 flex h-[calc(100vh-73px)] w-full max-w-sm flex-col border-l border-white/8 bg-[var(--color-panel)] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.32,0,0.15,1)] ${
+        className={`fixed top-[73px] right-0 z-40 flex h-[calc(100vh-73px)] w-full max-w-sm flex-col border-l border-[var(--line)] bg-[var(--color-panel)] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.32,0,0.15,1)] ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/8 px-5 py-4">
+        <div className="flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
           <span className="text-sm font-semibold">Semakan Lepas</span>
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 text-xs text-white/40 transition hover:border-white/20 hover:text-white"
+            className="flex h-7 w-7 items-center justify-center rounded-full border border-[var(--line)] text-xs text-[#7b8698] transition hover:border-[var(--line-2)] hover:text-[#00262a]"
           >
             ✕
           </button>
         </div>
 
         {/* Search */}
-        <div className="border-b border-white/8 px-4 py-3">
+        <div className="border-b border-[var(--line)] px-4 py-3">
           <input
             type="text"
             placeholder="Cari output..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white placeholder-white/25 outline-none transition focus:border-white/20"
+            className="w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2 text-xs text-[#00262a] placeholder-[#a6aebb] outline-none transition focus:border-[var(--line-2)]"
           />
         </div>
 
         {/* Brand filter tabs */}
-        <div className="flex gap-1 border-b border-white/8 px-4 py-2.5">
+        <div className="flex gap-1 border-b border-[var(--line)] px-4 py-2.5">
           {TABS.map((tab) => (
             <button
               key={tab.key}
@@ -190,8 +190,8 @@ export function GenerationHistory() {
               onClick={() => setBrandFilter(tab.key)}
               className={`rounded-full px-3 py-1 text-xs transition ${
                 brandFilter === tab.key
-                  ? "bg-white/10 text-white"
-                  : "text-white/40 hover:text-white/70"
+                  ? "bg-[var(--card-2)] text-[#00262a]"
+                  : "text-[#7b8698] hover:text-[#33414f]"
               }`}
             >
               {tab.label}
@@ -202,7 +202,7 @@ export function GenerationHistory() {
         {/* List */}
         <div className="flex-1 overflow-y-auto overscroll-contain">
           {filtered.length === 0 ? (
-            <div className="px-5 py-12 text-center text-xs text-white/25 leading-6">
+            <div className="px-5 py-12 text-center text-xs text-[#a6aebb] leading-6">
               {search ? `Tiada hasil untuk "${search}"` : "Tiada history untuk brand ini."}
             </div>
           ) : (
@@ -215,7 +215,7 @@ export function GenerationHistory() {
                     key={run.id}
                     type="button"
                     onClick={() => setSelected(run)}
-                    className="w-full border-b border-white/[0.04] px-5 py-4 text-left transition hover:bg-white/[0.03]"
+                    className="w-full border-b border-[var(--line)] px-5 py-4 text-left transition hover:bg-[var(--card-2)]"
                   >
                     <div className="mb-1.5 flex items-center gap-1.5">
                       <span
@@ -223,13 +223,13 @@ export function GenerationHistory() {
                         style={{ backgroundColor: brandColor }}
                       />
                       <span className="text-[11px] font-semibold">{brandName}</span>
-                      <span className="text-[11px] text-white/20">·</span>
-                      <span className="text-[11px] text-white/40">{run.subtype ?? "Generation"}</span>
-                      <span className="ml-auto shrink-0 text-[11px] text-white/20">
+                      <span className="text-[11px] text-[#a6aebb]">·</span>
+                      <span className="text-[11px] text-[#7b8698]">{run.subtype ?? "Generation"}</span>
+                      <span className="ml-auto shrink-0 text-[11px] text-[#a6aebb]">
                         {formatRelative(run.createdAt)}
                       </span>
                     </div>
-                    <p className="line-clamp-2 text-[11px] leading-5 text-white/45">
+                    <p className="line-clamp-2 text-[11px] leading-5 text-[#7b8698]">
                       {run.primaryPostExcerpt}
                     </p>
                   </button>
@@ -241,8 +241,8 @@ export function GenerationHistory() {
                 <div ref={sentinelRef} className="flex items-center justify-center gap-2 px-5 py-5">
                   {loadingMore && (
                     <>
-                      <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border border-white/15 border-t-white/50" />
-                      <span className="text-[11px] text-white/25">Memuatkan lagi...</span>
+                      <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border border-[var(--line)] border-t-white/50" />
+                      <span className="text-[11px] text-[#a6aebb]">Memuatkan lagi...</span>
                     </>
                   )}
                 </div>

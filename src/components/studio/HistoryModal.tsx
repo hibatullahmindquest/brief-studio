@@ -59,13 +59,13 @@ export function HistoryModal({
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 rounded-full border border-white/10 px-3 py-1.5 text-xs editorial-muted hover:border-white/20 transition"
+            className="shrink-0 rounded-full border border-[var(--line)] px-3 py-1.5 text-xs editorial-muted hover:border-[var(--line-2)] transition"
           >
             Tutup ✕
           </button>
         </div>
 
-        <div className="rounded-3xl border border-white/10 p-5">
+        <div className="rounded-3xl border border-[var(--line)] p-5">
           <p className="text-xs uppercase tracking-[0.2em] editorial-muted">Primary Post</p>
           <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-7">
             {fullOutput.primaryPost}
@@ -73,24 +73,24 @@ export function HistoryModal({
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-3xl border border-white/10 p-5">
+          <div className="rounded-3xl border border-[var(--line)] p-5">
             <p className="text-xs uppercase tracking-[0.2em] editorial-muted">Caption</p>
             <p className="mt-3 text-sm leading-7 editorial-muted">{fullOutput.caption}</p>
           </div>
-          <div className="rounded-3xl border border-white/10 p-5">
+          <div className="rounded-3xl border border-[var(--line)] p-5">
             <p className="text-xs uppercase tracking-[0.2em] editorial-muted">CTA</p>
             <p className="mt-3 text-sm leading-7 editorial-muted">{fullOutput.callToAction}</p>
           </div>
         </div>
 
         {fullOutput.hashtags?.length > 0 && (
-          <div className="rounded-3xl border border-white/10 p-5">
+          <div className="rounded-3xl border border-[var(--line)] p-5">
             <p className="text-xs uppercase tracking-[0.2em] editorial-muted">Hashtags</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {fullOutput.hashtags.map((tag, i) => (
                 <span
                   key={`${tag}-${i}`}
-                  className="rounded-full border border-white/10 px-3 py-1.5 text-xs editorial-muted"
+                  className="rounded-full border border-[var(--line)] px-3 py-1.5 text-xs editorial-muted"
                 >
                   #{tag}
                 </span>
@@ -99,7 +99,7 @@ export function HistoryModal({
           </div>
         )}
 
-        <div className="rounded-3xl border border-white/10 p-5">
+        <div className="rounded-3xl border border-[var(--line)] p-5">
           <p className="text-xs uppercase tracking-[0.2em] editorial-muted">Strategy Note</p>
           <p className="mt-3 text-sm leading-7 editorial-muted">{fullOutput.strategyNote}</p>
         </div>
