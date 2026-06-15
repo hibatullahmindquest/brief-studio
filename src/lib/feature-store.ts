@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { OUTPUT_TYPES } from "@/lib/conversation-engine";
 
 export type PersistedFeature = "generate" | "ideas" | "plan" | "virality";
 
@@ -71,6 +72,7 @@ export type HistoryRun = {
     generatedAt: string;
   };
   image: HistoryImage | null;
+  outputTypeId: string;
   createdAt: string;
 };
 
@@ -89,7 +91,8 @@ export async function getRecentFeatureRuns(
   return rows.flatMap((row) => {
     const output = safeParse<HistoryRun["fullOutput"] & { image?: HistoryImage }>(row.outputJson);
     if (!output) return [];
-    const input = safeParse<{ brandSlug?: string }>(row.inputJson);
+    const input = safeParse<{ brandSlug?: string; contentType?: string }>(row.inputJson);
+    const outputTypeId = OUTPUT_TYPES.find((o) => o.label === input?.contentType)?.id ?? "";
     return [
       {
         id: row.id,
@@ -98,6 +101,7 @@ export async function getRecentFeatureRuns(
         primaryPostExcerpt: (output.primaryPost ?? "").slice(0, 120),
         fullOutput: output,
         image: output.image ?? null,
+        outputTypeId,
         createdAt: row.createdAt.toISOString(),
       },
     ];

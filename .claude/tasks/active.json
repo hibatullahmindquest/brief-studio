@@ -1,5 +1,5 @@
 {
-  "activeTask": "generation-timer",
-  "taskFile": ".claude/tasks/generation-timer.json",
+  "activeTask": "generate-visual-later",
+  "taskFile": ".claude/tasks/generate-visual-later.json",
   "route": "feature"
 }

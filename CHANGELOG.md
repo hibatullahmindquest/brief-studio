@@ -6,6 +6,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## [Unreleased]
 
 ### Added
+- **Generate visual later** — a saved run whose image wasn't generated yet can now produce it from the Semakan Lepas history: HistoryModal shows the "Jana Visual" panel (reusing the existing `featureRunId`-based route) for poster/storyboard/video runs without an image. Solves closing the tab before pressing Jana Visual.
 - **Error logging & tracking** — `ErrorLog` model + never-throwing `logError()` that normalizes any error (esp. OpenAI `APIError` — captures status/code/type/body into `detail`). Wired into `/api/generate/visual`, `/api/generate`, and `/api/meta/callback` catches with sanitized context. Admin-only viewer at `/dashboard/settings/logs` (filter by source/level, expand for full stack + OpenAI body) + Settings link + Admin nav item. No secrets logged.
 - **Visual generation from Studio output** — gpt-4o "visual director" plans a visual from the text output, gpt-image-2 renders one image per visual output:
   - Poster output → a single poster image (aspect from the brief)

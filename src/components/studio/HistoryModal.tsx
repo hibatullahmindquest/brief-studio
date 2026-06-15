@@ -2,6 +2,9 @@
 
 import { useEffect } from "react";
 import type { HistoryRun } from "@/lib/feature-store";
+import { VisualPanel } from "./VisualPanel";
+
+const VISUAL_TYPES = new Set(["poster", "storyboard", "video_script"]);
 
 const BRAND_NAMES: Record<string, string> = {
   sifututor: "SifuTutor",
@@ -95,6 +98,11 @@ export function HistoryModal({
               </div>
             )}
           </div>
+        )}
+
+        {/* No image yet + a visual output type → let the user generate it now. */}
+        {!image && VISUAL_TYPES.has(run.outputTypeId) && (
+          <VisualPanel featureRunId={run.id} outputTypeId={run.outputTypeId} />
         )}
 
         <div className="rounded-3xl border border-[var(--line)] p-5">
