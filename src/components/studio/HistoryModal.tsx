@@ -31,7 +31,6 @@ export function HistoryModal({
   const brandName = run.brandSlug ? (BRAND_NAMES[run.brandSlug] ?? run.brandSlug) : "—";
   const brandColor = run.brandSlug ? (BRAND_COLORS[run.brandSlug] ?? "#888") : "#888";
   const { fullOutput, image } = run;
-  const aspectRatio: Record<string, string> = { "9:16": "9 / 16", "16:9": "16 / 9", "1:1": "1 / 1" };
 
   return (
     <div
@@ -78,10 +77,10 @@ export function HistoryModal({
                 alt="Generated visual"
                 className="rounded-xl border border-[var(--line-2)]"
                 style={{
-                  aspectRatio: aspectRatio[image.aspect] ?? "1 / 1",
+                  display: "block",
+                  height: "auto",
                   width: image.kind === "poster" ? "auto" : "100%",
                   maxWidth: image.kind === "poster" ? "180px" : "100%",
-                  objectFit: "cover",
                 }}
               />
             </div>

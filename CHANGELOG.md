@@ -25,6 +25,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Fixed
 - **Visual generation "empty prompt" failure** — the gpt-5 director sometimes returned no `imagePrompt` (reasoning truncation at 1500 tokens), and the empty string was passed to gpt-image-2 → `400 Invalid 'prompt'`. Fixed: bumped director budget to 4000 tokens, added a deterministic brand-aware fallback prompt, and guarded `renderImage` against empty prompts. (Diagnosed via the new error log.)
+- **Cropped generated image** — the result container forced a 9:16/16:9 ratio with `object-fit: cover`, but gpt-image-2 outputs 1:1/2:3/3:2 → top/bottom got cropped. Now displays the image at its native ratio, uncropped (VisualPanel + HistoryModal). (Exact social-ratio crop/pad deferred — see FUTURE plan.)
+- **Vague visual failure message** — errors are now categorized (moderated / quota / timeout / api_error / system) with a clear reason and a retryable-vs-terminal action ("Cuba semula" vs "ubah brief"); error source split into `visual.plan` / `visual.render` for diagnosis.
 
 ## [0.2.0] - 2026-06-11
 

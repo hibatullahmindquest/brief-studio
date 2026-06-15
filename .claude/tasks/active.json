@@ -1,5 +1,5 @@
 {
-  "activeTask": "error-logging",
-  "taskFile": ".claude/tasks/error-logging.json",
+  "activeTask": "visual-display-fix",
+  "taskFile": ".claude/tasks/visual-display-fix.json",
   "route": "feature"
 }

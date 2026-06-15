@@ -29,6 +29,60 @@ function safeParse<T>(s: string | null): T | null {
   try { return JSON.parse(s) as T; } catch { return null; }
 }
 
+type Classified = { category: string; retryable: boolean; httpStatus: number; message: string };
+
+// Map any generation error to a user-facing category + reason + whether
+// retrying could help. (Real OpenAI codes are visible in the ErrorLog.)
+function classifyVisualError(err: unknown): Classified {
+  const e = err as { code?: unknown; status?: unknown; message?: unknown };
+  const code = typeof e?.code === "string" ? e.code : "";
+  const status = typeof e?.status === "number" ? e.status : undefined;
+  const msg = (typeof e?.message === "string" ? e.message : "").toLowerCase();
+
+  if (
+    code === "content_policy_violation" ||
+    code === "moderation_blocked" ||
+    /moderat|safety|content policy|sensitive|rejected by/.test(msg)
+  ) {
+    return {
+      category: "moderated",
+      retryable: false,
+      httpStatus: 422,
+      message: "Visual disekat — kandungan ada elemen sensitif. Ubah brief dan jana semula.",
+    };
+  }
+  if (code === "insufficient_quota" || status === 429) {
+    return {
+      category: "quota",
+      retryable: false,
+      httpStatus: 402,
+      message: "Kuota OpenAI habis. Hubungi admin untuk semak billing.",
+    };
+  }
+  if (status === 408 || /timeout|timed out|etimedout|network|fetch failed|socket/.test(msg)) {
+    return {
+      category: "timeout",
+      retryable: true,
+      httpStatus: 504,
+      message: "Generation terlalu lama atau masalah rangkaian. Cuba semula.",
+    };
+  }
+  if (typeof status === "number" && status >= 500) {
+    return {
+      category: "api_error",
+      retryable: true,
+      httpStatus: 502,
+      message: "Ralat server OpenAI. Cuba semula sebentar lagi.",
+    };
+  }
+  return {
+    category: "system",
+    retryable: true,
+    httpStatus: 500,
+    message: "Ralat sistem semasa jana visual. Cuba semula.",
+  };
+}
+
 export async function POST(req: NextRequest) {
   const rateLimited = enforceRateLimit(req, { keyPrefix: "feature:visual", limit: 15, windowMs: 10 * 60 * 1000 });
   if (rateLimited) return rateLimited;
@@ -59,6 +113,7 @@ export async function POST(req: NextRequest) {
   const outputText = output.primaryPost ?? "";
   const briefAnswers = input.briefAnswers ?? {};
 
+  let phase: "plan" | "render" = "plan";
   try {
     const { plan, usage: planUsage } = await planVisual({ outputTypeId, outputText, briefAnswers, brand });
 
@@ -76,6 +131,7 @@ export async function POST(req: NextRequest) {
     }
 
     const size = sizeForAspect(plan.aspect);
+    phase = "render";
     const image = await renderImage({ prompt: plan.imagePrompt, size, runId: featureRunId });
 
     // Log the image render.
@@ -110,24 +166,19 @@ export async function POST(req: NextRequest) {
       costMyr,
     });
   } catch (err) {
-    const code = err && typeof err === "object" && "code" in err ? (err as { code: string }).code : null;
-    const httpStatus =
-      code === "insufficient_quota" ? 402 : code === "content_policy_violation" || code === "moderation_blocked" ? 422 : 500;
+    const c = classifyVisualError(err);
     await logError({
-      source: "visual.render",
+      source: `visual.${phase}`,
       error: err,
-      httpStatus,
+      httpStatus: c.httpStatus,
       userId: user.id,
       brandId: brand.id,
       featureRunId,
-      context: { outputTypeId, model: "gpt-image-2" },
+      context: { outputTypeId, phase, category: c.category, model: phase === "render" ? "gpt-image-2" : "director" },
     });
-    if (httpStatus === 402) {
-      return NextResponse.json({ error: "OpenAI quota habis. Tambah billing di platform.openai.com." }, { status: 402 });
-    }
-    if (httpStatus === 422) {
-      return NextResponse.json({ error: "Visual ditolak oleh content policy. Cuba ubah brief." }, { status: 422 });
-    }
-    return NextResponse.json({ error: "Gagal jana visual. Cuba semula." }, { status: 500 });
+    return NextResponse.json(
+      { error: c.message, category: c.category, retryable: c.retryable },
+      { status: c.httpStatus }
+    );
   }
 }

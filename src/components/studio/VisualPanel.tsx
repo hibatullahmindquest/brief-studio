@@ -15,8 +15,6 @@ function visualKind(id: string): Kind {
 type Scene = { no: number; caption: string };
 type Stage = "idle" | "planning" | "rendering" | "done" | "skipped" | "error";
 
-const ASPECT_RATIO: Record<string, string> = { "9:16": "9 / 16", "16:9": "16 / 9", "1:1": "1 / 1" };
-
 export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: string; outputTypeId: string }) {
   const kind = visualKind(outputTypeId);
   const [stage, setStage] = useState<Stage>("idle");
@@ -24,6 +22,7 @@ export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: stri
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [cost, setCost] = useState<number | null>(null);
   const [errMsg, setErrMsg] = useState("");
+  const [retryable, setRetryable] = useState(true);
 
   if (kind === "none") return null;
 
@@ -42,11 +41,16 @@ export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: stri
         body: JSON.stringify({ featureRunId }),
       });
       const data = (await res.json()) as {
-        error?: string; shouldRender?: boolean;
+        error?: string; retryable?: boolean; shouldRender?: boolean;
         image?: { urlPath: string; aspect: string }; scenes?: Scene[]; costMyr?: number;
       };
       clearTimeout(timer);
-      if (!res.ok) { setErrMsg(data.error ?? "Gagal jana visual."); setStage("error"); return; }
+      if (!res.ok) {
+        setErrMsg(data.error ?? "Gagal jana visual.");
+        setRetryable(data.retryable !== false);
+        setStage("error");
+        return;
+      }
       if (data.shouldRender === false) { setStage("skipped"); return; }
       setImage(data.image ?? null);
       setScenes(data.scenes ?? []);
@@ -55,7 +59,8 @@ export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: stri
       window.dispatchEvent(new CustomEvent("generation:complete"));
     } catch {
       clearTimeout(timer);
-      setErrMsg("Network error. Cuba semula.");
+      setErrMsg("Ralat rangkaian. Cuba semula.");
+      setRetryable(true);
       setStage("error");
     }
   }
@@ -116,16 +121,17 @@ export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: stri
           </div>
 
           <div className="mt-4">
+            {/* Native ratio, never cropped — gpt-image-2 outputs 1:1 / 2:3 / 3:2. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={image.urlPath}
               alt="Generated visual"
               className="rounded-xl border border-[var(--line-2)]"
               style={{
-                aspectRatio: ASPECT_RATIO[image.aspect] ?? "1 / 1",
+                display: "block",
+                height: "auto",
                 width: kind === "poster" ? "auto" : "100%",
                 maxWidth: kind === "poster" ? "280px" : "100%",
-                objectFit: "cover",
               }}
             />
           </div>
@@ -163,9 +169,15 @@ export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: stri
         <div>
           <p className="eyebrow">Visual</p>
           <div className="mt-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{errMsg}</div>
-          <button onClick={generate} className="mt-3 rounded-xl border border-[var(--line-2)] px-4 py-2 text-sm font-semibold text-[#33414f] hover:bg-[var(--card-2)]">
-            Cuba semula
-          </button>
+          {retryable ? (
+            <button onClick={generate} className="mt-3 rounded-xl border border-[var(--line-2)] px-4 py-2 text-sm font-semibold text-[#33414f] hover:bg-[var(--card-2)]">
+              Cuba semula
+            </button>
+          ) : (
+            <p className="mt-3 text-xs text-[#7b8698]">
+              Cuba semula takkan membantu — ubah brief/jawapan, jana output baru, kemudian jana visual.
+            </p>
+          )}
         </div>
       )}
     </div>
