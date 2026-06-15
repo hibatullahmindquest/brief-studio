@@ -30,10 +30,10 @@ export function BrandPicker({ onSelect }: { onSelect: (brand: BrandSummary) => v
   }
 
   return (
-    <div className="editorial-panel rounded-4xl p-6 sm:p-8 space-y-6">
+    <div className="editorial-panel rounded-3xl p-5 sm:p-6 space-y-6">
       <div>
         <p className="editorial-kicker">Langkah 1</p>
-        <h2 className="editorial-title mt-2 text-3xl sm:text-4xl">Pilih brand</h2>
+        <h2 className="editorial-title mt-2 text-2xl sm:text-3xl">Pilih brand</h2>
         <p className="mt-2 text-sm editorial-muted">
           Output AI akan disesuaikan dengan guidelines brand yang dipilih.
         </p>

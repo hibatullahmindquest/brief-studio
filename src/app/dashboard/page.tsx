@@ -26,9 +26,9 @@ export default async function TodayPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <section className="editorial-panel rounded-4xl p-6 sm:p-8">
+      <section className="editorial-panel rounded-3xl p-5 sm:p-6">
         <p className="eyebrow">Today</p>
-        <h1 className="editorial-title mt-3 text-4xl sm:text-5xl">
+        <h1 className="editorial-title mt-3 text-2xl sm:text-3xl">
           Welcome back, {firstName}
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-7 editorial-muted">

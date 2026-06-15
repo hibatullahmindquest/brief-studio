@@ -62,9 +62,9 @@ export default async function PaidAnalyticsPage({
   if (brands.length === 0) {
     return (
       <div className="space-y-6">
-        <section className="editorial-panel rounded-4xl p-6 sm:p-8">
+        <section className="editorial-panel rounded-3xl p-5 sm:p-6">
           <p className="editorial-kicker">Analytics · Paid</p>
-          <h1 className="editorial-title mt-3 text-4xl">Paid analytics</h1>
+          <h1 className="editorial-title mt-3 text-2xl sm:text-3xl">Paid analytics</h1>
           <p className="mt-4 text-sm editorial-muted">No paid data yet. Connect a Meta ad account or import history.</p>
         </section>
       </div>
@@ -80,9 +80,9 @@ export default async function PaidAnalyticsPage({
 
   return (
     <div className="space-y-6">
-      <section className="editorial-panel rounded-4xl p-6 sm:p-8">
+      <section className="editorial-panel rounded-3xl p-5 sm:p-6">
         <p className="editorial-kicker">Analytics · Paid</p>
-        <h1 className="editorial-title mt-3 text-4xl sm:text-5xl">Paid analytics</h1>
+        <h1 className="editorial-title mt-3 text-2xl sm:text-3xl">Paid analytics</h1>
         <p className="mt-3 text-sm editorial-muted">
           {brandName} · {period === "t1" ? "latest day" : "last 7 days"}
           {data.asOf ? ` · as of ${data.asOf}` : ""}

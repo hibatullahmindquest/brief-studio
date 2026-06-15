@@ -18,11 +18,11 @@ export function GenerationResult({
 }) {
   return (
     <div className="space-y-4">
-      <div className="editorial-panel rounded-4xl p-6 sm:p-8">
+      <div className="editorial-panel rounded-3xl p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="editorial-kicker">{brand.name} · {outputType.label}</p>
-            <h2 className="editorial-title mt-2 text-3xl sm:text-4xl">Output dijana</h2>
+            <h2 className="editorial-title mt-2 text-2xl sm:text-3xl">Output dijana</h2>
             <p className="mt-1 text-xs editorial-muted">
               {new Date(result.generatedAt).toLocaleString("ms-MY")}
             </p>
@@ -46,7 +46,7 @@ export function GenerationResult({
         </div>
       </div>
 
-      <div className="editorial-panel rounded-4xl p-6 sm:p-8 space-y-4">
+      <div className="editorial-panel rounded-3xl p-5 sm:p-6 space-y-4">
         <div className="rounded-3xl border border-[var(--line)] p-5">
           <p className="text-xs uppercase tracking-[0.2em] editorial-muted">Primary Post</p>
           <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-7">{result.primaryPost}</pre>

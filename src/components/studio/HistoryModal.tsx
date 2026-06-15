@@ -38,7 +38,7 @@ export function HistoryModal({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto editorial-panel rounded-4xl p-6 sm:p-8 space-y-5"
+        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto editorial-panel rounded-3xl p-5 sm:p-6 space-y-5"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">

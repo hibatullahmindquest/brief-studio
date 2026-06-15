@@ -50,7 +50,7 @@ export function ConversationStep({
   }
 
   return (
-    <div className="editorial-panel rounded-4xl p-6 sm:p-8 space-y-6">
+    <div className="editorial-panel rounded-3xl p-5 sm:p-6 space-y-6">
       <div className="flex items-center gap-2 text-xs editorial-muted">
         <span
           className="inline-block h-2 w-2 rounded-full shrink-0"
@@ -64,7 +64,7 @@ export function ConversationStep({
       </div>
 
       <div>
-        <h2 className="editorial-title text-3xl sm:text-4xl">{question.text}</h2>
+        <h2 className="editorial-title text-2xl sm:text-3xl">{question.text}</h2>
         {question.subtext && (
           <p className="mt-2 text-sm editorial-muted">{question.subtext}</p>
         )}

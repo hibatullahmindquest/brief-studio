@@ -25,9 +25,9 @@ export default async function DashboardSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <section className="editorial-panel rounded-4xl p-6 sm:p-8">
+      <section className="editorial-panel rounded-3xl p-5 sm:p-6">
         <p className="editorial-kicker">Settings</p>
-        <h1 className="editorial-title mt-3 text-4xl sm:text-5xl">Brand profile controls</h1>
+        <h1 className="editorial-title mt-3 text-2xl sm:text-3xl">Brand profile controls</h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 editorial-muted">
           Keep your outputs on-brand with clear defaults for tone, audience, and conversion goals.
         </p>

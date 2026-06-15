@@ -25,11 +25,11 @@ export function OutputTypePicker({
   }, {});
 
   return (
-    <div className="editorial-panel rounded-4xl p-6 sm:p-8 space-y-6">
+    <div className="editorial-panel rounded-3xl p-5 sm:p-6 space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="editorial-kicker">Langkah 2 — {brand.name}</p>
-          <h2 className="editorial-title mt-2 text-3xl sm:text-4xl">Apa yang nak dibuat?</h2>
+          <h2 className="editorial-title mt-2 text-2xl sm:text-3xl">Apa yang nak dibuat?</h2>
           <p className="mt-2 text-sm editorial-muted">
             Pilih jenis output — AI akan tanya soalan yang berkaitan.
           </p>

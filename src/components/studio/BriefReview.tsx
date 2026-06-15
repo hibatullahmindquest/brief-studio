@@ -21,10 +21,10 @@ export function BriefReview({
   onEditAnswer: (questionId: string) => void;
 }) {
   return (
-    <div className="editorial-panel rounded-4xl p-6 sm:p-8 space-y-6">
+    <div className="editorial-panel rounded-3xl p-5 sm:p-6 space-y-6">
       <div>
         <p className="editorial-kicker">Review Brief</p>
-        <h2 className="editorial-title mt-2 text-3xl sm:text-4xl">Ini yang AI faham</h2>
+        <h2 className="editorial-title mt-2 text-2xl sm:text-3xl">Ini yang AI faham</h2>
         <p className="mt-2 text-sm editorial-muted">
           Semak dan betulkan jika perlu sebelum generate.
         </p>

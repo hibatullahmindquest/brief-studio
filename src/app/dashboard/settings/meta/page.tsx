@@ -53,9 +53,9 @@ export default async function MetaSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <section className="editorial-panel rounded-4xl p-6 sm:p-8">
+      <section className="editorial-panel rounded-3xl p-5 sm:p-6">
         <p className="editorial-kicker">Settings · Integrations</p>
-        <h1 className="editorial-title mt-3 text-4xl sm:text-5xl">Meta connections</h1>
+        <h1 className="editorial-title mt-3 text-2xl sm:text-3xl">Meta connections</h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 editorial-muted">
           Connect each brand&apos;s Facebook Page, Instagram account, and ad accounts. Tokens are
           encrypted at rest and never shown — only connection status is visible.
