@@ -155,3 +155,62 @@ export async function requireUser(): Promise<SessionUser> {
 
   return user;
 }
+
+export type SessionUserWithRole = SessionUser & {
+  teamRole: string;
+  isAdmin: boolean;
+};
+
+// Session token only carries identity, not role. Look up role from DB when gating.
+export async function getCurrentUserWithRole(): Promise<SessionUserWithRole | null> {
+  const sessionUser = await getCurrentUser();
+
+  if (!sessionUser) {
+    return null;
+  }
+
+  try {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: sessionUser.id },
+      select: { teamRole: true, isAdmin: true },
+    });
+
+    if (!dbUser) {
+      return null;
+    }
+
+    return { ...sessionUser, teamRole: dbUser.teamRole, isAdmin: dbUser.isAdmin };
+  } catch {
+    return null;
+  }
+}
+
+// For page handlers — redirects non-admins away.
+export async function requireAdmin(): Promise<SessionUserWithRole> {
+  const user = await getCurrentUserWithRole();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  if (!user.isAdmin) {
+    redirect("/dashboard");
+  }
+
+  return user;
+}
+
+// For route handlers — throws a Response so the caller can `return` it on failure.
+export async function assertAdmin(): Promise<SessionUserWithRole> {
+  const user = await getCurrentUserWithRole();
+
+  if (!user) {
+    throw new Response("Unauthorized", { status: 401 });
+  }
+
+  if (!user.isAdmin) {
+    throw new Response("Forbidden — admin only", { status: 403 });
+  }
+
+  return user;
+}
