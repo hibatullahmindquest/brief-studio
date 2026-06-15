@@ -1,7 +1,18 @@
 # STATUS — brief-studio
 
 ## Current Phase
-SCIS MVP — P1 (Schema) + P2 (Meta OAuth) DONE on branch `feat/scis-meta-analytics`. Next: P3 (Sync).
+SCIS MVP — P1 (Schema) + P2 (Meta OAuth) + real-data ETL DONE on branch `feat/scis-meta-analytics`. Next: P3 (Sync) / P4 (Analytics on real data).
+
+## BIG FIND — reusable Meta data + token (2026-06-15)
+`marketing-ai-agent` local Docker Postgres (volume `marketing-ai-agent_pgdata`) held REAL synced NakNgaji paid data + a working **non-expiring System User token** ("Analytics" BM system user). Token tested live: account `act_1034360610566607` (Nakngaji.my Amin), active, MYR, pulling current data (RM7.8k last 7d).
+- Imported into brief-studio via `scripts/import-meta-history.ts`:
+  - 1,255 AdCreatives + 17,055 AdDailyMetric rows (2025-01-01 → 2026-05-06, RM520k)
+  - Parity verified: Jan 2026 = 31 days / 85 ads / RM58,426.50 / 4,428 leads / 337 WA ✓
+  - NakNgaji `ad_account` MetaConnection with token stored ENCRYPTED (META_TOKEN_KEY now set in .env.local)
+- Schema upgraded to daily-grain: new `AdDailyMetric` model (rich: cpl, leads, waConversations, frequency, placement/country/age/segment in metricsJson). T-1/T-7/T-30 = rollups over this, not fixed snapshots.
+- ETL date-shift bug fixed (node-pg DATE OID 1082 → keep as string, build UTC date).
+- `@types/pg` added (devDep).
+- To reuse the token for ongoing sync: it's a system-user token → brief-studio should support system-user-token model (paste/store), not just OAuth.
 
 ## Last Done
 - Brainstorm: `.claude/plans/2026-06-15-scis-analytics-meta-mvp-brainstorm.md`

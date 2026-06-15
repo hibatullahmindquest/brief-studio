@@ -108,6 +108,7 @@ model Brand {
   metaConnections MetaConnection[]
   organicPosts    OrganicPost[]
   adCreatives     AdCreative[]
+  adDailyMetrics  AdDailyMetric[]
   dailySignals    DailySignal[]
   reports         Report[]
 }
@@ -185,6 +186,7 @@ model AdCreative {
   thumbnailUrl String?
   createdAt    DateTime @default(now())
   snapshots    AdMetricSnapshot[]
+  dailyMetrics AdDailyMetric[]
 
   @@unique([brandId, metaAdId])
   @@index([brandId, campaignId])
@@ -210,6 +212,41 @@ model AdMetricSnapshot {
 
   @@unique([adId, dateRange])
   @@index([adId, dateRange])
+}
+
+// Daily-grain paid metrics — the source of truth for paid analytics.
+// T-1/T-7/T-30 windows are rolled up from these rows (not stored as fixed
+// snapshots). Mirrors the rich schema imported from marketing-ai-agent.
+model AdDailyMetric {
+  id              String   @id @default(cuid())
+  ad              AdCreative @relation(fields: [adId], references: [id], onDelete: Cascade)
+  adId            String
+  brand           Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  brandId         String
+  metricDate      DateTime @db.Date
+  spend           Float    @default(0)
+  impressions     Int      @default(0)
+  reach           Int      @default(0)
+  clicks          Int      @default(0)
+  linkClicks      Int      @default(0)
+  leads           Int      @default(0)
+  waConversations Int      @default(0)
+  ctr             Float    @default(0)  // ctr_pct
+  cpc             Float    @default(0)
+  cpm             Float    @default(0)
+  cpl             Float    @default(0)
+  frequency       Float    @default(0)
+  campaignId      String   @default("")
+  campaignName    String   @default("")
+  adsetName       String   @default("")
+  objective       String   @default("")
+  effectiveStatus String   @default("")
+  metricsJson     String?  // breakdowns: country, placement, age_range, segment, ad_format, etc.
+  syncedAt        DateTime @default(now())
+
+  @@unique([adId, metricDate])
+  @@index([brandId, metricDate])
+  @@index([adId, metricDate])
 }
 
 model DailySignal {
