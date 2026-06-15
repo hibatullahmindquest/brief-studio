@@ -146,7 +146,10 @@ export default async function PaidAnalyticsPage({
               {data.topCreatives.map((c) => (
                 <tr key={c.adId} className="border-b border-zinc-50">
                   <td className="py-2 pr-3">
-                    <span className="line-clamp-1 max-w-xs">{c.name}</span>
+                    <span className="line-clamp-1 max-w-xs">{c.name || "(untitled)"}</span>
+                    <span className="font-mono text-[10px] text-zinc-400">
+                      #{c.metaAdId.slice(-6)}
+                    </span>
                     {c.fatigue && <span className="ml-1 text-xs text-amber-600">⚠ fatigue</span>}
                   </td>
                   <td className="py-2 px-3 text-right font-mono">{rm(c.spend)}</td>

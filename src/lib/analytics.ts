@@ -24,6 +24,7 @@ export type PaidMetrics = {
 
 export type PaidCreative = {
   adId: string;
+  metaAdId: string;
   name: string;
   campaignName: string;
   spend: number;
@@ -147,11 +148,12 @@ export async function getPaidAnalytics(brandId: string, period: PaidPeriod): Pro
     }),
     prisma.adCreative.findMany({
       where: { brandId },
-      select: { id: true, name: true },
+      select: { id: true, name: true, metaAdId: true },
     }),
   ]);
 
   const nameById = new Map(creatives.map((c) => [c.id, c.name]));
+  const metaAdIdById = new Map(creatives.map((c) => [c.id, c.metaAdId]));
   const prevCtrById = new Map(
     prevGroup.map((g) => {
       const imp = g._sum.impressions ?? 0;
@@ -173,6 +175,7 @@ export async function getPaidAnalytics(brandId: string, period: PaidPeriod): Pro
       const fatigue = frequency >= 2.5 && prevCtr !== undefined && prevCtr > 0 && ctr < prevCtr;
       return {
         adId: g.adId,
+        metaAdId: metaAdIdById.get(g.adId) ?? "",
         name: nameById.get(g.adId) ?? g.adId,
         campaignName: "",
         spend,
