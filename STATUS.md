@@ -1,7 +1,7 @@
 # STATUS — brief-studio
 
 ## Current Phase
-SCIS shipped to master (PR #2: PRD v2 + v6 redesign + Meta paid analytics + real NakNgaji data). Now on branch `feat/visual-generation` — visual gen + supporting features, **8 commits UNPUSHED**. See GOALS.md "Active Task" for full detail + next steps. Next: push branch + PR to master.
+SCIS — all merged to master (PR #2 redesign+analytics, PR #3 visual generation+cost/error tracking, PR #4 fork-PR guard). Working tree clean, master = origin/master, no open PRs. See GOALS.md "Active Task" for next-step candidates. Repo is a FORK — pin `--repo hibatullahmindquest/brief-studio` on all PRs (guard hook enforces).
 
 ## v6 redesign + de-PostForge (2026-06-15)
 - DELETED inherited PostForge feature modules entirely (overrides PRD v2 "keep"): analytics(IG growth), calendar, campaigns, content-lab, ideas, plan, virality, notes — pages + API routes + components. App is SCIS-only (25 routes, was 40).

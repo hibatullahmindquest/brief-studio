@@ -171,8 +171,9 @@ Semua implementation plans disimpan di `docs/plans/`:
 
 > Last updated: 2026-06-15
 
-**Phase:** SCIS transformation. Master = PRD v2 + v6 redesign + Meta paid analytics + real NakNgaji data (PR #2 merged). Branch `feat/visual-generation` = visual gen + supporting features (8 commits, UNPUSHED).
-**Task:** `generate-visual-later` — DONE (closed). Last in a chain of visual-gen work on `feat/visual-generation`.
-**Status:** On branch `feat/visual-generation`, 8 commits ahead of master, all gates green, working tree clean. Shipped this session on the branch: visual generation (gpt-4o director → gpt-image-2), APIUsageLog + `/dashboard/usage`, error logging + `/dashboard/settings/logs`, empty-prompt fix, uncropped display + categorized failures, generation timer, generate-visual-later from history.
-**Next:** Decide: (1) **push `feat/visual-generation` + open PR → merge to master** (recommended — big chunk ready); then (2) candidates: Isu 3 async generation jobs (parked, `docs/plans/2026-06-15-async-generation-jobs-FUTURE.md`), generation timeout/cancel hardening, Organic analytics (needs Graph organic pull), Daily Signals engine, full Library page.
-**Blockers:** None. Note: live image gen needs `OPENAI_API_KEY` with gpt-image-2 access + billing (confirmed working this session).
+**Phase:** SCIS — everything below MERGED to master. Clean working tree, master = origin/master, no open PRs.
+**Task:** All closed. Merged this session: PR #2 (PRD v2 + v6 redesign + Meta paid analytics + real NakNgaji data), PR #3 (visual generation: gpt-4o director → gpt-image-2, APIUsageLog + `/dashboard/usage`, error logging + `/dashboard/settings/logs`, empty-prompt fix, uncropped display + categorized failures, generation timer, generate-visual-later), PR #4 (fork-PR guard: gh set-default + WORKFLOW/CLAUDE rule + `.claude/hooks/guard-pr-repo.py`).
+**Status:** Nothing pending. Live image gen confirmed working (needs `OPENAI_API_KEY` with gpt-image-2 access + billing).
+**Next (pick one):** Isu 3 async/resumable generation jobs (parked → `docs/plans/2026-06-15-async-generation-jobs-FUTURE.md`); generation timeout/cancel hardening; exact social-ratio crop/pad for images; Organic analytics (needs Meta Graph organic pull); Daily Signals engine; full Library page.
+**Blockers:** None.
+**Reminder:** repo is a FORK — always `gh pr create --repo hibatullahmindquest/brief-studio --base master` (guard hook enforces this).
