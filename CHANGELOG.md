@@ -5,6 +5,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Added
+- **Visual generation from Studio output** — gpt-4o "visual director" plans a visual from the text output, gpt-image-2 renders one image per visual output:
+  - Poster output → a single poster image (aspect from the brief)
+  - Storyboard / Video Script output → one composite multi-panel storyboard image + scene captions shown as text
+  - Hook & Copy stays text-only (no image)
+  - `VisualPanel` in the result: idle + cost estimate → planning → rendering → done (Download / Regenerate) / skipped / error
+  - Brand-aware prompts; logo + exact price/date left to a designer ("visual draf")
+- **AI cost tracking** — `APIUsageLog` model logs every gpt-4o and gpt-image-2 call (tokens / image / USD + MYR); copy generation logged too
+- **Usage module** — `/dashboard/usage` (admin): today / month cost KPIs, recent generations, by-module breakdown, USD→MYR rate
+- **`pricing.ts`** — token + image rate tables, `estimateVisual` / `actualFromUsage`, `USD_TO_MYR` env
+- **`POST /api/generate/visual`** + **`GET /api/usage`**; `/api/generate` now returns the run id
+- Saved visuals reappear in the Semakan Lepas history (HistoryModal)
+
+### Changed
+- `generateCopy` now returns `{ copy, usage }` so token usage can be logged
+- `saveFeatureRun` returns the created run (for usage `featureRunId` + client run id)
+
 ## [0.2.0] - 2026-06-11
 
 ### Added

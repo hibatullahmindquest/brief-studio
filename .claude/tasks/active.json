@@ -1,5 +1,5 @@
 {
-  "activeTask": "history-drawer-upgrade",
-  "taskFile": ".claude/tasks/history-drawer-upgrade.json",
+  "activeTask": "visual-generation",
+  "taskFile": ".claude/tasks/visual-generation.json",
   "route": "feature"
 }

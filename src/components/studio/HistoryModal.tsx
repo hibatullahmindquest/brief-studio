@@ -30,7 +30,8 @@ export function HistoryModal({
 
   const brandName = run.brandSlug ? (BRAND_NAMES[run.brandSlug] ?? run.brandSlug) : "—";
   const brandColor = run.brandSlug ? (BRAND_COLORS[run.brandSlug] ?? "#888") : "#888";
-  const { fullOutput } = run;
+  const { fullOutput, image } = run;
+  const aspectRatio: Record<string, string> = { "9:16": "9 / 16", "16:9": "16 / 9", "1:1": "1 / 1" };
 
   return (
     <div
@@ -64,6 +65,38 @@ export function HistoryModal({
             Tutup ✕
           </button>
         </div>
+
+        {image && (
+          <div className="rounded-3xl border border-[var(--line)] p-5">
+            <p className="text-xs uppercase tracking-[0.2em] editorial-muted">
+              Visual · {image.kind === "poster" ? "Poster" : "Storyboard"}
+            </p>
+            <div className="mt-3 flex items-start gap-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={image.urlPath}
+                alt="Generated visual"
+                className="rounded-xl border border-[var(--line-2)]"
+                style={{
+                  aspectRatio: aspectRatio[image.aspect] ?? "1 / 1",
+                  width: image.kind === "poster" ? "auto" : "100%",
+                  maxWidth: image.kind === "poster" ? "180px" : "100%",
+                  objectFit: "cover",
+                }}
+              />
+            </div>
+            {image.scenes?.length > 0 && (
+              <div className="mt-3">
+                {image.scenes.map((s) => (
+                  <div key={s.no} className="flex gap-3 border-b border-[var(--line)] py-1.5 text-xs last:border-0">
+                    <b className="shrink-0 text-[var(--brand)]" style={{ width: 52 }}>Scene {s.no}</b>
+                    <span className="editorial-muted">{s.caption}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="rounded-3xl border border-[var(--line)] p-5">
           <p className="text-xs uppercase tracking-[0.2em] editorial-muted">Primary Post</p>

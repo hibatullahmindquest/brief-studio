@@ -43,6 +43,7 @@ export function StudioWizard() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [result, setResult] = useState<GeneratedOutput | null>(null);
+  const [runId, setRunId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const outputType = outputTypeId ? getOutputType(outputTypeId) : null;
@@ -53,6 +54,7 @@ export function StudioWizard() {
     setAnswers({});
     setCurrentQuestionIndex(0);
     setResult(null);
+    setRunId(null);
     setError(null);
     setStage("SELECT_BRAND");
   }
@@ -122,6 +124,7 @@ export function StudioWizard() {
         return;
       }
       setResult(data as GeneratedOutput);
+      setRunId(typeof data.id === "string" ? data.id : null);
       setStage("RESULT");
       window.dispatchEvent(new CustomEvent("generation:complete"));
     } catch {
@@ -228,6 +231,7 @@ export function StudioWizard() {
           result={result}
           brand={brand}
           outputType={outputType}
+          featureRunId={runId}
           onReset={reset}
           onRegenerate={handleGenerate}
         />

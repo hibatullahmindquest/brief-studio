@@ -4,6 +4,7 @@ import { getBrandContext } from "@/lib/brand-context";
 import { getLatestFeatureRun, saveFeatureRun } from "@/lib/feature-store";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { requireUser } from "@/lib/session";
+import { logUsage } from "@/lib/usage";
 
 type GenerateBody = {
   brandSlug?: string;
@@ -55,10 +56,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Brand not found" }, { status: 404 });
     }
 
-    const copy = await generateCopy(brand, product, contentType, variant ?? 1, briefAnswers);
+    const { copy, usage } = await generateCopy(brand, product, contentType, variant ?? 1, briefAnswers);
     const generatedAt = new Date().toISOString();
 
-    await saveFeatureRun({
+    const run = await saveFeatureRun({
       userId: user.id,
       feature: "generate",
       subtype: contentType,
@@ -66,7 +67,17 @@ export async function POST(req: NextRequest) {
       output: { ...copy, generatedAt },
     });
 
-    return NextResponse.json({ ...copy, generatedAt });
+    await logUsage({
+      userId: user.id,
+      brandId: brand.id,
+      featureRunId: run.id,
+      module: "copy",
+      model: usage.model,
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
+    });
+
+    return NextResponse.json({ ...copy, generatedAt, id: run.id });
   } catch (err) {
     console.error("generation error", err);
     const isQuota =

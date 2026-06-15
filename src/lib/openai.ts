@@ -9,7 +9,10 @@ export type GeneratedCopy = {
   strategyNote: string;
 };
 
-function getClient() {
+export type CopyUsage = { model: string; inputTokens: number; outputTokens: number };
+export type CopyResult = { copy: GeneratedCopy; usage: CopyUsage };
+
+export function getClient() {
   const key = process.env.OPENAI_API_KEY;
   if (!key) {
     throw new Error("Missing OpenAI API key");
@@ -54,8 +57,9 @@ export async function generateCopy(
   contentType: string,
   variant: number,
   briefAnswers?: Record<string, string>
-): Promise<GeneratedCopy> {
+): Promise<CopyResult> {
   const client = getClient();
+  const model = process.env.OPENAI_MODEL ?? "gpt-5";
   const systemPrompt = `${BASE_SYSTEM_PROMPT}\n\n## Brand Guidelines\n${brand.promptBlock}`;
   const briefBlock = briefAnswers
     ? "\n\nBrief dari user:\n" +
@@ -67,7 +71,7 @@ export async function generateCopy(
   const userPrompt = `Create a ${contentType} about "${product}" for the ${brand.name} brand. Variant ${variant}. Hook the audience immediately. Follow the brand guidelines strictly.${briefBlock}`;
   try {
     const response = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL ?? "gpt-5",
+      model,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
@@ -78,11 +82,18 @@ export async function generateCopy(
     const raw = response.choices[0]?.message?.content?.trim() || "{}";
     const parsed = JSON.parse(raw) as Partial<GeneratedCopy>;
     return {
-      primaryPost: parsed.primaryPost ?? "",
-      caption: parsed.caption ?? "",
-      callToAction: parsed.callToAction ?? "",
-      hashtags: Array.isArray(parsed.hashtags) ? parsed.hashtags : [],
-      strategyNote: parsed.strategyNote ?? "",
+      copy: {
+        primaryPost: parsed.primaryPost ?? "",
+        caption: parsed.caption ?? "",
+        callToAction: parsed.callToAction ?? "",
+        hashtags: Array.isArray(parsed.hashtags) ? parsed.hashtags : [],
+        strategyNote: parsed.strategyNote ?? "",
+      },
+      usage: {
+        model,
+        inputTokens: response.usage?.prompt_tokens ?? 0,
+        outputTokens: response.usage?.completion_tokens ?? 0,
+      },
     };
   } catch (err: unknown) {
     const code =
@@ -91,7 +102,10 @@ export async function generateCopy(
         : null;
     if (code === "insufficient_quota") {
       console.warn("[openai] quota exceeded — returning mock response");
-      return mockResponse(brand.name, brand.tone, product, contentType);
+      return {
+        copy: mockResponse(brand.name, brand.tone, product, contentType),
+        usage: { model, inputTokens: 0, outputTokens: 0 },
+      };
     }
     throw err;
   }

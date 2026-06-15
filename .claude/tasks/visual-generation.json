@@ -1,0 +1,30 @@
+{
+  "id": "visual-generation",
+  "route": "feature",
+  "created": "2026-06-15",
+  "branch": "feat/visual-generation",
+  "description": "gpt-4o director plans a visual from Studio output, gpt-image-2 renders one image per visual output (poster, or single composite storyboard); cost shown + logged to a Usage module. Hook & Copy stays text-only.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "brainstorm",
+      "status": "done",
+      "at": "2026-06-15",
+      "evidence": { "file": ".claude/plans/2026-06-15-visual-generation-brainstorm.md", "mockup": "C:/Claude/temp/scis-visual-feature-mockup.html" }
+    },
+    { "step": 2, "name": "prd", "status": "done", "at": "2026-06-15", "evidence": { "file": "docs/PRD-visual-generation.md" } },
+    { "step": 3, "name": "ux", "status": "done", "at": "2026-06-15", "evidence": { "file": "docs/UX-visual-generation.md" } },
+    { "step": 4, "name": "build-prompts", "status": "done", "at": "2026-06-15", "evidence": { "file": "docs/plans/2026-06-15-visual-generation-build-prompts.md" } },
+    { "step": 5, "name": "build", "status": "done", "at": "2026-06-15", "evidence": { "buildPrompts": "BP1-BP8 implemented + reviewed PASS" } },
+    { "step": 6, "name": "verify (lint + tsc + build)", "status": "done", "at": "2026-06-15", "evidence": { "lint": "passed", "tsc": "passed", "build": "passed" } },
+    { "step": 7, "name": "review (spec + code quality)", "status": "done", "at": "2026-06-15", "evidence": { "perPrompt": "BP1-BP8 all PASS (spec + quality)" } },
+    { "step": 8, "name": "release-notes (CHANGELOG)", "status": "done", "at": "2026-06-15", "evidence": { "file": "CHANGELOG.md [Unreleased]" } },
+    { "step": 9, "name": "commit", "status": "in_progress" },
+    { "step": 10, "name": "push (needs user permission)", "status": "pending" }
+  ],
+  "metadata": {
+    "outputType": "poster, storyboard, video-script",
+    "brand": "both",
+    "affectedFiles": []
+  }
+}

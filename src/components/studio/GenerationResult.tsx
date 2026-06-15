@@ -2,17 +2,20 @@
 
 import type { OutputType } from "@/lib/conversation-engine";
 import type { BrandSummary, GeneratedOutput } from "./StudioWizard";
+import { VisualPanel } from "./VisualPanel";
 
 export function GenerationResult({
   result,
   brand,
   outputType,
+  featureRunId,
   onReset,
   onRegenerate,
 }: {
   result: GeneratedOutput;
   brand: BrandSummary;
   outputType: OutputType;
+  featureRunId: string | null;
   onReset: () => void;
   onRegenerate: () => void;
 }) {
@@ -82,6 +85,8 @@ export function GenerationResult({
           <p className="mt-3 text-sm leading-7 editorial-muted">{result.strategyNote}</p>
         </div>
       </div>
+
+      {featureRunId && <VisualPanel featureRunId={featureRunId} outputTypeId={outputType.id} />}
     </div>
   );
 }
