@@ -45,6 +45,18 @@ export default async function DashboardSettingsPage() {
         </p>
       </Link>
 
+      {/* Error logs link */}
+      <Link
+        href="/dashboard/settings/logs"
+        className="block rounded-3xl border border-[var(--line)] bg-white p-5 shadow-sm transition hover:border-[var(--brand-line)]"
+      >
+        <p className="eyebrow">Diagnostics</p>
+        <p className="mt-2 text-lg font-semibold text-[#00262a]">Error logs →</p>
+        <p className="mt-1 text-sm text-[#7b8698]">
+          Server &amp; AI generation errors with full detail — for diagnosing failures.
+        </p>
+      </Link>
+
       <SettingsForm
         initialBrandName={stats?.brandName ?? user.name}
         initialTone={(preference?.defaultTone as "Bold" | "Luxury" | "Hype") ?? "Bold"}

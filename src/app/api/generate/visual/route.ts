@@ -6,6 +6,7 @@ import { planVisual, renderImage } from "@/lib/visual";
 import { OUTPUT_TYPES } from "@/lib/conversation-engine";
 import { sizeForAspect, actualFromUsage } from "@/lib/pricing";
 import { logUsage } from "@/lib/usage";
+import { logError } from "@/lib/error-log";
 import { enforceRateLimit } from "@/lib/rate-limit";
 
 type Body = { featureRunId?: string };
@@ -109,12 +110,22 @@ export async function POST(req: NextRequest) {
       costMyr,
     });
   } catch (err) {
-    console.error("[visual] generation failed:", err instanceof Error ? err.message : err);
     const code = err && typeof err === "object" && "code" in err ? (err as { code: string }).code : null;
-    if (code === "insufficient_quota") {
+    const httpStatus =
+      code === "insufficient_quota" ? 402 : code === "content_policy_violation" || code === "moderation_blocked" ? 422 : 500;
+    await logError({
+      source: "visual.render",
+      error: err,
+      httpStatus,
+      userId: user.id,
+      brandId: brand.id,
+      featureRunId,
+      context: { outputTypeId, model: "gpt-image-2" },
+    });
+    if (httpStatus === 402) {
       return NextResponse.json({ error: "OpenAI quota habis. Tambah billing di platform.openai.com." }, { status: 402 });
     }
-    if (code === "content_policy_violation" || code === "moderation_blocked") {
+    if (httpStatus === 422) {
       return NextResponse.json({ error: "Visual ditolak oleh content policy. Cuba ubah brief." }, { status: 422 });
     }
     return NextResponse.json({ error: "Gagal jana visual. Cuba semula." }, { status: 500 });

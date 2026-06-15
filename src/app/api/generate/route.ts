@@ -5,6 +5,7 @@ import { getLatestFeatureRun, saveFeatureRun } from "@/lib/feature-store";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { requireUser } from "@/lib/session";
 import { logUsage } from "@/lib/usage";
+import { logError } from "@/lib/error-log";
 
 type GenerateBody = {
   brandSlug?: string;
@@ -79,12 +80,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ...copy, generatedAt, id: run.id });
   } catch (err) {
-    console.error("generation error", err);
     const isQuota =
       err &&
       typeof err === "object" &&
       "code" in err &&
       (err as { code: string }).code === "insufficient_quota";
+    const httpStatus = isQuota ? 402 : 500;
+    await logError({ source: "generate.copy", error: err, httpStatus });
     if (isQuota) {
       return NextResponse.json(
         { error: "OpenAI quota exceeded. Please add billing details at platform.openai.com." },

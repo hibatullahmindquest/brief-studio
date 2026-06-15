@@ -19,7 +19,7 @@
     { "step": 6, "name": "verify (lint + tsc + build)", "status": "done", "at": "2026-06-15", "evidence": { "lint": "passed", "tsc": "passed", "build": "passed" } },
     { "step": 7, "name": "review (spec + code quality)", "status": "done", "at": "2026-06-15", "evidence": { "perPrompt": "BP1-BP8 all PASS (spec + quality)" } },
     { "step": 8, "name": "release-notes (CHANGELOG)", "status": "done", "at": "2026-06-15", "evidence": { "file": "CHANGELOG.md [Unreleased]" } },
-    { "step": 9, "name": "commit", "status": "in_progress" },
+    { "step": 9, "name": "commit", "status": "done", "at": "2026-06-15", "evidence": { "sha": "061ca22" } },
     { "step": 10, "name": "push (needs user permission)", "status": "pending" }
   ],
   "metadata": {

@@ -1,5 +1,5 @@
 {
-  "activeTask": "visual-generation",
-  "taskFile": ".claude/tasks/visual-generation.json",
+  "activeTask": "error-logging",
+  "taskFile": ".claude/tasks/error-logging.json",
   "route": "feature"
 }

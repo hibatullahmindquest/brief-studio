@@ -303,6 +303,25 @@ model APIUsageLog {
   @@index([brandId, module, createdAt])
 }
 
+// Persistent error capture — one row per logged failure (esp. OpenAI calls).
+model ErrorLog {
+  id           String   @id @default(cuid())
+  source       String   // "visual.render" | "generate.copy" | "meta.callback" | ...
+  level        String   @default("error") // "error" | "warn"
+  message      String
+  code         String   @default("")
+  httpStatus   Int?
+  detail       String   @default("") // stack + extracted OpenAI body, capped
+  userId       String?
+  brandId      String?
+  featureRunId String?
+  contextJson  String?  // sanitized JSON — never secrets
+  createdAt    DateTime @default(now())
+
+  @@index([source, createdAt])
+  @@index([level, createdAt])
+}
+
 model Note {
   id        String   @id @default(cuid())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
