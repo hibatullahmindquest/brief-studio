@@ -1,5 +1,5 @@
 {
-  "activeTask": "history-cost-display",
-  "taskFile": ".claude/tasks/history-cost-display.json",
-  "route": "bugfix"
+  "activeTask": null,
+  "taskFile": null,
+  "route": null
 }

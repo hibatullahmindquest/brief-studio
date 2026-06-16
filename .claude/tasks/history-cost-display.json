@@ -10,7 +10,7 @@
     { "name": "verify (lint + tsc + build)", "status": "done", "at": "2026-06-16", "evidence": { "lint": "passed", "tsc": "passed", "build": "passed" } },
     { "name": "review (spec + code quality)", "status": "done", "at": "2026-06-16", "evidence": { "stage1_spec_compliance": "passed — costMyr now persisted to outputJson.image and shown in HistoryModal; matches live card", "stage2_code_quality": "passed", "critical_issues": 0, "notes": "cost computed before persist (reordered); graceful omission for pre-fix runs; no migration" } },
     { "name": "release-notes (CHANGELOG)", "status": "done", "at": "2026-06-16", "evidence": "CHANGELOG.md Fixed: cost missing in Semakan Lepas" },
-    { "name": "commit", "status": "in_progress", "at": null }
+    { "name": "commit", "status": "done", "at": "2026-06-16", "evidence": "9e0994e fix(studio): show generation cost in Semakan Lepas" }
   ],
   "metadata": {
     "outputType": "poster, storyboard, video-script",
