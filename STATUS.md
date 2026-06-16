@@ -1,5 +1,14 @@
 # STATUS — brief-studio
 
+## PR OPEN (2026-06-16) — Async visual generation + Semakan Lepas status/cost/time → PR #6
+- **PR #6**: https://github.com/hibatullahmindquest/brief-studio/pull/6 (base `master`, head `fix/history-cost-display`, pinned to fork ✅). Bundles 4 stacked commits + 1 chore:
+  - `039ba5a` async visual generation via worker (close-tab-safe + resumable)
+  - `37aff00` Semakan Lepas visual indicator + generation time
+  - `861666d` fix live generation status (timer resume + live "Tengah jana")
+  - `9e0994e` fix cost display in Semakan Lepas
+- Live E2E proven with real OpenAI (RM0.30 poster). lint+tsc+build green; worker boots clean.
+- NEXT: await review/merge of PR #6. After merge: delete stacked branches; VPS deploy (Hafiz root: pm2 scis-worker) when ready.
+
 ## DONE (2026-06-16) — Async Generation Jobs (committed 039ba5a on feat/async-generation-jobs)
 - Approach **B** (separate worker process), local-first. All 9 workflow steps done (brainstorm→PRD→UX→build-prompts→build→verify→review→release-notes→commit). Branch NOT pushed yet.
 - Built: `GenerationJob` model (2 migrations applied), `src/lib/visual-job.ts` (runVisualJob), `src/lib/job-store.ts` (enqueue/claim/sweep/mark), `POST /api/generate/visual` now enqueues, `GET /api/jobs?featureRunId=` poll/resume, worker `src/worker/index.ts`+`loop.ts` (`npm run worker`), VisualPanel submit→poll(2s)→resume + worker-down hint, `tsx` devDep.
