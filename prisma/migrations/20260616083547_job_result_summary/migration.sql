@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "GenerationJob" ADD COLUMN     "costMyr" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "resultKind" TEXT NOT NULL DEFAULT '';

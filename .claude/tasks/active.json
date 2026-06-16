@@ -1,5 +1,5 @@
 {
-  "activeTask": "generate-visual-later",
-  "taskFile": ".claude/tasks/generate-visual-later.json",
+  "activeTask": "async-generation-jobs",
+  "taskFile": ".claude/tasks/async-generation-jobs.json",
   "route": "feature"
 }

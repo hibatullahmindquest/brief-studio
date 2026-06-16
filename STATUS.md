@@ -1,5 +1,12 @@
 # STATUS — brief-studio
 
+## IN PROGRESS (2026-06-16) — Async Generation Jobs (feat/async-generation-jobs)
+- Route: feature. Branch `feat/async-generation-jobs`. Approach **B** (separate worker process). Local-first; VPS/PM2 deferred (hibatullah has SSH but no sudo / no /var/www write on KVM8 — Hafiz needed for VPS setup).
+- Planning done: brainstorm + PRD + UX + build-prompts saved (`.claude/plans/2026-06-16-async-*`, `docs/plans/2026-06-16-async-generation-jobs-PRD.md`). Visual explainer: `temp/async-worker-approach-b.html`.
+- Locked: fully async (sync visual path removed), watchdog stale 5min, poll 2s, worker concurrency 1.
+- BUILD progress: **P1 done** — `GenerationJob` model added + migration `20260616082753_add_generation_job` APPLIED to local DB. ⚠️ `prisma generate` blocked by EPERM (next dev holds query_engine DLL) → bouncing dev server to regenerate.
+- NEXT after generate: P2 extract `src/lib/visual-job.ts`, P3 `src/lib/job-store.ts`, P4 rewrite enqueue route, P5 `GET /api/jobs`, P6 worker + `npm run worker` + tsx devDep, P7 VisualPanel poll/resume, P8 verify.
+
 ## Current Phase
 SCIS — all merged to master (PR #2 redesign+analytics, PR #3 visual generation+cost/error tracking, PR #4 fork-PR guard). Working tree clean, master = origin/master, no open PRs. See GOALS.md "Active Task" for next-step candidates. Repo is a FORK — pin `--repo hibatullahmindquest/brief-studio` on all PRs (guard hook enforces).
 

@@ -6,6 +6,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## [Unreleased]
 
 ### Added
+- **Async visual generation (close-tab-safe + resumable)** — visual generation now runs in a separate worker process instead of the web request, so closing the tab no longer drops a generation:
+  - `GenerationJob` model + queue (`queued → processing → succeeded → failed`); the image still lives in `FeatureRun.outputJson` (job tracks process + cost only)
+  - `POST /api/generate/visual` now **enqueues** a job and returns `{ jobId }` immediately (idempotent — one active job per run); `GET /api/jobs?featureRunId=` polls status / resumes
+  - Worker (`npm run worker` → `src/worker/index.ts`): atomic job claim, runs gpt-4o director → gpt-image-2, persists result + logs usage; watchdog marks `processing` jobs stale after 5 min
+  - `VisualPanel` submits → polls every 2s → resumes any in-flight/finished job on mount; shows a "boleh tutup tab" note + a worker-down hint if queued > 60s
+  - Shared `src/lib/visual-job.ts` (`runVisualJob`) + `src/lib/job-store.ts`; `tsx` dev dependency
+  - Local-first; VPS PM2 `scis-worker` deploy deferred (needs root setup)
 - **Generate visual later** — a saved run whose image wasn't generated yet can now produce it from the Semakan Lepas history: HistoryModal shows the "Jana Visual" panel (reusing the existing `featureRunId`-based route) for poster/storyboard/video runs without an image. Solves closing the tab before pressing Jana Visual.
 - **Error logging & tracking** — `ErrorLog` model + never-throwing `logError()` that normalizes any error (esp. OpenAI `APIError` — captures status/code/type/body into `detail`). Wired into `/api/generate/visual`, `/api/generate`, and `/api/meta/callback` catches with sanitized context. Admin-only viewer at `/dashboard/settings/logs` (filter by source/level, expand for full stack + OpenAI body) + Settings link + Admin nav item. No secrets logged.
 - **Visual generation from Studio output** — gpt-4o "visual director" plans a visual from the text output, gpt-image-2 renders one image per visual output:
@@ -21,6 +28,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Saved visuals reappear in the Semakan Lepas history (HistoryModal)
 
 ### Changed
+- **Visual generation is now asynchronous** — `POST /api/generate/visual` no longer runs OpenAI inside the request (it enqueues); the synchronous plan→render-in-request path was removed. The worker (`npm run worker`) must be running for visuals to generate
 - `generateCopy` now returns `{ copy, usage }` so token usage can be logged
 - `saveFeatureRun` returns the created run (for usage `featureRunId` + client run id)
 
