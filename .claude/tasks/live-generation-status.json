@@ -10,7 +10,7 @@
     { "name": "verify (lint + tsc + build)", "status": "done", "at": "2026-06-16", "evidence": { "lint": "passed", "tsc": "passed", "build": "passed" } },
     { "name": "review (spec + code quality)", "status": "done", "at": "2026-06-16", "evidence": { "stage1_spec_compliance": "passed", "stage2_code_quality": "passed", "critical_issues": 0, "notes": "poll resets to page 1 + brief loader flicker during generating window — transient, acceptable; poll self-terminates" } },
     { "name": "release-notes (CHANGELOG)", "status": "done", "at": "2026-06-16", "evidence": "CHANGELOG.md Fixed: timer resume + live Tengah jana badge" },
-    { "name": "commit", "status": "in_progress", "at": null }
+    { "name": "commit", "status": "done", "at": "2026-06-16", "evidence": "861666d fix(studio): live generation status" }
   ],
   "metadata": {
     "outputType": "poster, storyboard, video-script",

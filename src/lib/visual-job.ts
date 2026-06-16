@@ -149,6 +149,14 @@ export async function runVisualJob(args: { featureRunId: string; userId: string 
       imageCount: image.imageCount, imageSize: image.size,
     });
 
+    // Compute cost first so it can be persisted into the run output (so Semakan
+    // Lepas can show it, same as the live card).
+    const directorCost = planUsage.model !== "none"
+      ? actualFromUsage({ model: planUsage.model, inputTokens: planUsage.inputTokens, outputTokens: planUsage.outputTokens })
+      : { myr: 0 };
+    const imageCost = actualFromUsage({ model: "gpt-image-2", imageCount: image.imageCount, imageSize: image.size });
+    const costMyr = Math.round((directorCost.myr + imageCost.myr) * 100) / 100;
+
     // Persist into the run's output so it shows in history.
     const generatedMs = Date.now() - startedAt;
     const visual = {
@@ -158,14 +166,9 @@ export async function runVisualJob(args: { featureRunId: string; userId: string 
       prompt: plan.imagePrompt,
       scenes: plan.scenes,
       generatedMs,
+      costMyr,
     };
     await updateFeatureRunOutput(featureRunId, { ...output, image: visual, visualPlan: { kind: plan.kind, scenes: plan.scenes } });
-
-    const directorCost = planUsage.model !== "none"
-      ? actualFromUsage({ model: planUsage.model, inputTokens: planUsage.inputTokens, outputTokens: planUsage.outputTokens })
-      : { myr: 0 };
-    const imageCost = actualFromUsage({ model: "gpt-image-2", imageCount: image.imageCount, imageSize: image.size });
-    const costMyr = Math.round((directorCost.myr + imageCost.myr) * 100) / 100;
 
     return {
       ok: true,

@@ -1,5 +1,5 @@
 {
-  "activeTask": "live-generation-status",
-  "taskFile": ".claude/tasks/live-generation-status.json",
+  "activeTask": "history-cost-display",
+  "taskFile": ".claude/tasks/history-cost-display.json",
   "route": "bugfix"
 }

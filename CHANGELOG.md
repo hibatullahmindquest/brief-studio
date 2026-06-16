@@ -29,6 +29,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Saved visuals reappear in the Semakan Lepas history (HistoryModal)
 
 ### Fixed
+- **Cost missing in Semakan Lepas** — the RM cost showed on the live output card (read from the job) but not in the history detail, because cost was never stored in the run output. The worker now writes `costMyr` into `outputJson.image` (alongside `generatedMs`), and HistoryModal shows an RM chip next to the time. Old runs omit it gracefully.
 - **Visual timer restarted at 0s on resume** — reopening a run mid-generation reset the elapsed counter to 0; it now anchors to the job's real enqueue time (`GET /api/jobs` returns `createdAt`) so it shows true elapsed.
 - **"Tengah jana" never appeared in Semakan Lepas** — the history list only refreshed on completion, so the live generating window was skipped (it jumped straight to "Ada visual"). VisualPanel now fires a `generation:start` event on submit and the list polls page 1 every 3s while any run is generating, so the badge shows ⏳ then flips to 🖼/✗ on its own.
 

@@ -74,11 +74,18 @@ export function HistoryModal({
               <p className="text-xs uppercase tracking-[0.2em] editorial-muted">
                 Visual · {image.kind === "poster" ? "Poster" : "Storyboard"}
               </p>
-              {typeof image.generatedMs === "number" && image.generatedMs > 0 && (
-                <span className="rounded-md bg-[var(--card-2)] px-2 py-1 mono text-[11px] text-[#7b8698]">
-                  ⏱ {Math.round(image.generatedMs / 1000)}s
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                {typeof image.costMyr === "number" && image.costMyr > 0 && (
+                  <span className="rounded-md bg-[var(--ok-soft)] px-2 py-1 mono text-[11px] font-bold text-[var(--ok)]">
+                    RM{image.costMyr.toFixed(2)}
+                  </span>
+                )}
+                {typeof image.generatedMs === "number" && image.generatedMs > 0 && (
+                  <span className="rounded-md bg-[var(--card-2)] px-2 py-1 mono text-[11px] text-[#7b8698]">
+                    ⏱ {Math.round(image.generatedMs / 1000)}s
+                  </span>
+                )}
+              </div>
             </div>
             <div className="mt-3 flex items-start gap-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}

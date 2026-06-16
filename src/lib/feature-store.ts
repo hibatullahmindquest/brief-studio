@@ -57,6 +57,7 @@ export type HistoryImage = {
   urlPath: string;
   scenes: { no: number; caption: string }[];
   generatedMs?: number; // wall-clock the worker took to generate (omitted on pre-fix runs)
+  costMyr?: number;     // total MYR cost of the generation (omitted on pre-fix runs)
 };
 
 // Per-run visual state shown in Semakan Lepas. "text" = output type can't have a
