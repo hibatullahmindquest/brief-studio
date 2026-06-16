@@ -1,0 +1,21 @@
+{
+  "id": "history-cost-display",
+  "route": "bugfix",
+  "created": "2026-06-16",
+  "branch": "fix/history-cost-display",
+  "description": "Cost (costMyr) shows on the live output card but not in Semakan Lepas — persist costMyr into outputJson.image (like generatedMs) and show an RM chip in HistoryModal.",
+  "steps": [
+    { "name": "diagnose (root cause)", "status": "done", "at": "2026-06-16", "evidence": "VisualPanel reads cost from GET /api/jobs (GenerationJob.costMyr). HistoryModal reads FeatureRun.outputJson which never stored costMyr (only kind/aspect/urlPath/prompt/scenes/generatedMs). Cost lives on the job + APIUsageLog, not in outputJson — so history has no cost to show." },
+    { "name": "build", "status": "done", "at": "2026-06-16", "evidence": "visual-job computes costMyr before persist + writes into outputJson.image; HistoryImage += costMyr; HistoryModal shows RM chip next to time chip" },
+    { "name": "verify (lint + tsc + build)", "status": "done", "at": "2026-06-16", "evidence": { "lint": "passed", "tsc": "passed", "build": "passed" } },
+    { "name": "review (spec + code quality)", "status": "done", "at": "2026-06-16", "evidence": { "stage1_spec_compliance": "passed — costMyr now persisted to outputJson.image and shown in HistoryModal; matches live card", "stage2_code_quality": "passed", "critical_issues": 0, "notes": "cost computed before persist (reordered); graceful omission for pre-fix runs; no migration" } },
+    { "name": "release-notes (CHANGELOG)", "status": "done", "at": "2026-06-16", "evidence": "CHANGELOG.md Fixed: cost missing in Semakan Lepas" },
+    { "name": "commit", "status": "done", "at": "2026-06-16", "evidence": "9e0994e fix(studio): show generation cost in Semakan Lepas" }
+  ],
+  "metadata": {
+    "outputType": "poster, storyboard, video-script",
+    "brand": "both",
+    "affectedFiles": ["src/lib/visual-job.ts", "src/lib/feature-store.ts", "src/components/studio/HistoryModal.tsx"],
+    "dependsOn": "feat/history-visual-indicator (generatedMs pattern)"
+  }
+}

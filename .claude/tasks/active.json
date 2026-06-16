@@ -1,5 +1,5 @@
 {
-  "activeTask": "generate-visual-later",
-  "taskFile": ".claude/tasks/generate-visual-later.json",
-  "route": "feature"
+  "activeTask": null,
+  "taskFile": null,
+  "route": null
 }

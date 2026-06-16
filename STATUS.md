@@ -1,5 +1,27 @@
 # STATUS — brief-studio
 
+## PR OPEN (2026-06-16) — Async visual generation + Semakan Lepas status/cost/time → PR #6
+- **PR #6**: https://github.com/hibatullahmindquest/brief-studio/pull/6 (base `master`, head `fix/history-cost-display`, pinned to fork ✅). Bundles 4 stacked commits + 1 chore:
+  - `039ba5a` async visual generation via worker (close-tab-safe + resumable)
+  - `37aff00` Semakan Lepas visual indicator + generation time
+  - `861666d` fix live generation status (timer resume + live "Tengah jana")
+  - `9e0994e` fix cost display in Semakan Lepas
+- Live E2E proven with real OpenAI (RM0.30 poster). lint+tsc+build green; worker boots clean.
+- NEXT: await review/merge of PR #6. After merge: delete stacked branches; VPS deploy (Hafiz root: pm2 scis-worker) when ready.
+
+## DONE (2026-06-16) — Async Generation Jobs (committed 039ba5a on feat/async-generation-jobs)
+- Approach **B** (separate worker process), local-first. All 9 workflow steps done (brainstorm→PRD→UX→build-prompts→build→verify→review→release-notes→commit). Branch NOT pushed yet.
+- Built: `GenerationJob` model (2 migrations applied), `src/lib/visual-job.ts` (runVisualJob), `src/lib/job-store.ts` (enqueue/claim/sweep/mark), `POST /api/generate/visual` now enqueues, `GET /api/jobs?featureRunId=` poll/resume, worker `src/worker/index.ts`+`loop.ts` (`npm run worker`), VisualPanel submit→poll(2s)→resume + worker-down hint, `tsx` devDep.
+- Locked: fully async (sync visual path removed), watchdog stale 5min, poll 2s, worker concurrency 1.
+- Verify: lint+tsc+build green (26 routes, /api/jobs present); worker boots clean (`npm run worker:start`).
+- Visual explainer kept at `temp/async-worker-approach-b.html` (outside repo, by choice).
+- ⚠️ GOTCHA: `prisma generate` / `next build` hit EPERM when a `next dev` OR a leftover `tsx` worker process holds `query_engine-windows.dll.node` → kill stray node procs referencing brief-studio before building (Windows).
+
+### PENDING / NEXT for this feature
+- [ ] **Live end-to-end test** (needs `OPENAI_API_KEY` w/ gpt-image-2 + running worker): `npm run dev` + `npm run worker` in 2 terminals → generate a poster → confirm image lands in history; close tab mid-render → reopen → resumes; kill worker mid-processing → job goes failed(stale) after 5 min; double-click → one job only.
+- [ ] **Push + PR** (only when user asks): `git push -u origin feat/async-generation-jobs` then `gh pr create --repo hibatullahmindquest/brief-studio --base master` (FORK — always pin repo; guard hook enforces).
+- [ ] **VPS deploy (later, needs Hafiz root):** chown deploy dir to hibatullah, install deps, `pm2 start npm --name scis-worker -- run worker:start`, PM2 startup/save. Code unchanged from local.
+
 ## Current Phase
 SCIS — all merged to master (PR #2 redesign+analytics, PR #3 visual generation+cost/error tracking, PR #4 fork-PR guard). Working tree clean, master = origin/master, no open PRs. See GOALS.md "Active Task" for next-step candidates. Repo is a FORK — pin `--repo hibatullahmindquest/brief-studio` on all PRs (guard hook enforces).
 

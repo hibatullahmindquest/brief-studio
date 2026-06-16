@@ -1,0 +1,24 @@
+{
+  "id": "async-generation-jobs",
+  "route": "feature",
+  "created": "2026-06-16",
+  "branch": "feat/async-generation-jobs",
+  "description": "Async generation jobs (local first) — GenerationJob model + worker process + submit/poll API + VisualPanel resume; close-tab-safe generation. VPS/PM2 deploy deferred.",
+  "steps": [
+    { "name": "brainstorm", "status": "done", "at": "2026-06-16", "evidence": ".claude/plans/2026-06-16-async-generation-jobs-brainstorm.md" },
+    { "name": "prd", "status": "done", "at": "2026-06-16", "evidence": "docs/plans/2026-06-16-async-generation-jobs-PRD.md" },
+    { "name": "ux", "status": "done", "at": "2026-06-16", "evidence": ".claude/plans/2026-06-16-async-generation-jobs-ux.md" },
+    { "name": "build-prompts", "status": "done", "at": "2026-06-16", "evidence": ".claude/plans/2026-06-16-async-generation-jobs-build-prompts.md" },
+    { "name": "build", "status": "done", "at": "2026-06-16", "evidence": "P1-P8: GenerationJob model+2 migrations, visual-job.ts, job-store.ts, enqueue route, GET /api/jobs, worker (index+loop), VisualPanel poll/resume, tsx devDep" },
+    { "name": "verify (lint + tsc + build)", "status": "done", "at": "2026-06-16", "evidence": { "lint": "passed", "tsc": "passed", "build": "passed (26 routes, /api/jobs present)", "worker_boot": "passed (npm run worker:start boots clean)" } },
+    { "name": "review (spec + code quality)", "status": "done", "at": "2026-06-16", "evidence": { "stage1_spec_compliance": "passed (8/8 acceptance criteria traced)", "stage2_code_quality": "passed", "critical_issues": 0, "notes": "4 non-blocking suggestions: job pruning, GET rate-limit, applyJob blank-panel guard, job.brandId null" } },
+    { "name": "release-notes (CHANGELOG)", "status": "done", "at": "2026-06-16", "evidence": "CHANGELOG.md updated (Added: async visual generation; Changed: enqueue + sync path removed)" },
+    { "name": "commit", "status": "done", "at": "2026-06-16", "evidence": "039ba5a feat(studio): async visual generation via worker" }
+  ],
+  "metadata": {
+    "outputType": "poster, storyboard, video-script",
+    "brand": "both",
+    "affectedFiles": [],
+    "scope": "local-only; VPS PM2 scis-worker deferred to separate deploy task (needs Hafiz root setup)"
+  }
+}

@@ -322,6 +322,29 @@ model ErrorLog {
   @@index([level, createdAt])
 }
 
+// Async visual generation jobs — the queue between the web app (enqueue) and
+// the worker process (claim → run OpenAI → persist). Tracks PROCESS only; the
+// actual image stays in FeatureRun.outputJson. Loose featureRunId (no FK),
+// matching APIUsageLog/ErrorLog convention.
+model GenerationJob {
+  id           String    @id @default(cuid())
+  featureRunId String    // the run whose visual we generate
+  userId       String    // submitter (ownership checks on poll)
+  brandId      String?   // usage/cost attribution
+  kind         String    @default("visual") // future-proof: only "visual" for now
+  status       String    @default("queued") // queued | processing | succeeded | failed
+  resultKind   String    @default("") // on success: "image" (rendered) | "skipped" (AI said no image needed)
+  costMyr      Float     @default(0)  // total MYR cost of the generation (director + image), set on success
+  reason       String?   // failure category + message (from classifyVisualError)
+  retryable    Boolean   @default(true)
+  claimedAt    DateTime? // set on claim; basis for watchdog staleness
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([status, createdAt])
+  @@index([featureRunId, createdAt])
+}
+
 model Note {
   id        String   @id @default(cuid())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)

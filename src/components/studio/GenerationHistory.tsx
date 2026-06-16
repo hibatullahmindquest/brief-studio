@@ -27,6 +27,48 @@ function formatRelative(iso: string): string {
   return `${days} hari lalu`;
 }
 
+function msToSec(ms?: number): string | null {
+  if (typeof ms !== "number" || ms <= 0) return null;
+  return `${Math.round(ms / 1000)}s`;
+}
+
+// Visual-status badge row for a history item. Renders nothing for text-only runs.
+function VisualBadges({ run }: { run: HistoryRun }) {
+  const time = msToSec(run.image?.generatedMs);
+  switch (run.visualStatus) {
+    case "ready":
+      return (
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+          <span className="inline-flex items-center gap-1 rounded-md bg-[var(--ok-soft)] px-1.5 py-0.5 mono text-[10px] font-bold text-[var(--ok)]">🖼 Ada visual</span>
+          {time && <span className="rounded-md bg-[var(--card-2)] px-1.5 py-0.5 mono text-[10px] text-[#7b8698]">⏱ {time}</span>}
+        </div>
+      );
+    case "generating":
+      return (
+        <div className="mt-1.5 flex items-center gap-1.5">
+          <span className="inline-flex items-center gap-1.5 rounded-md bg-[#eef0ff] px-1.5 py-0.5 mono text-[10px] font-bold text-[var(--brand)]">
+            <span className="inline-block h-2 w-2 animate-spin rounded-full border-[1.5px] border-[#c7ccf5] border-t-[var(--brand)]" />
+            Tengah jana…
+          </span>
+        </div>
+      );
+    case "failed":
+      return (
+        <div className="mt-1.5">
+          <span className="inline-flex items-center gap-1 rounded-md bg-red-50 px-1.5 py-0.5 mono text-[10px] font-bold text-red-600">✗ Gagal</span>
+        </div>
+      );
+    case "pending":
+      return (
+        <div className="mt-1.5">
+          <span className="inline-flex items-center gap-1 rounded-md bg-[var(--card-2)] px-1.5 py-0.5 mono text-[10px] font-semibold text-[#a6aebb]">○ Belum jana</span>
+        </div>
+      );
+    default: // "text" — no visual badge
+      return null;
+  }
+}
+
 export function GenerationHistory() {
   const [runs, setRuns] = useState<HistoryRun[]>([]);
   const [selected, setSelected] = useState<HistoryRun | null>(null);
@@ -58,7 +100,7 @@ export function GenerationHistory() {
     }
   }, []);
 
-  // Initial fetch + refresh when a new generation completes.
+  // Initial fetch + refresh when a generation starts or completes.
   useEffect(() => {
     void fetchPage();
     function onGenerated() {
@@ -68,9 +110,25 @@ export function GenerationHistory() {
       setInitialLoaded(false);
       void fetchPage();
     }
+    // A generation just started → refetch page 1 so the live "Tengah jana" badge
+    // appears immediately (don't wait for the 3s poll below).
+    function onStarted() { void fetchPage(); }
     window.addEventListener("generation:complete", onGenerated);
-    return () => window.removeEventListener("generation:complete", onGenerated);
+    window.addEventListener("generation:start", onStarted);
+    return () => {
+      window.removeEventListener("generation:complete", onGenerated);
+      window.removeEventListener("generation:start", onStarted);
+    };
   }, [fetchPage]);
+
+  // While any run is mid-generation, poll page 1 every 3s so the badge flips
+  // generating → ready (or failed) on its own without a manual refresh.
+  const hasGenerating = runs.some((r) => r.visualStatus === "generating");
+  useEffect(() => {
+    if (!hasGenerating) return;
+    const id = setInterval(() => { void fetchPage(); }, 3000);
+    return () => clearInterval(id);
+  }, [hasGenerating, fetchPage]);
 
   // Infinite scroll.
   useEffect(() => {
@@ -184,6 +242,7 @@ export function GenerationHistory() {
                     <p className="line-clamp-2 text-[11px] leading-5 text-[#7b8698]">
                       {run.primaryPostExcerpt}
                     </p>
+                    <VisualBadges run={run} />
                   </button>
                 );
               })}

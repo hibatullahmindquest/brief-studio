@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { estimateVisual, type ImageSize } from "@/lib/pricing";
 
 // Client-safe copy of the output-type → visual family mapping
@@ -15,6 +15,23 @@ function visualKind(id: string): Kind {
 type Scene = { no: number; caption: string };
 type Stage = "idle" | "planning" | "rendering" | "done" | "skipped" | "error";
 
+// Shape returned by GET /api/jobs?featureRunId=
+type JobPayload = {
+  jobId: string;
+  status: "queued" | "processing" | "succeeded" | "failed";
+  resultKind?: string;
+  reason?: string | null;
+  retryable?: boolean;
+  createdAt?: string; // enqueue time — used to show true elapsed on resume
+  kind?: string;
+  image?: { urlPath: string; aspect: string } | null;
+  scenes?: Scene[];
+  costMyr?: number;
+};
+
+const POLL_MS = 2000;
+const WORKER_HINT_AFTER = 60; // seconds queued before hinting the worker may be down
+
 export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: string; outputTypeId: string }) {
   const kind = visualKind(outputTypeId);
   const [stage, setStage] = useState<Stage>("idle");
@@ -24,25 +41,108 @@ export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: stri
   const [errMsg, setErrMsg] = useState("");
   const [retryable, setRetryable] = useState(true);
   const [elapsed, setElapsed] = useState(0); // seconds, live while generating then frozen
+  const [queuedTooLong, setQueuedTooLong] = useState(false);
   const startRef = useRef<number | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Clear the ticking interval on unmount.
-  useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
-
-  function startTimer() {
-    startRef.current = Date.now();
-    setElapsed(0);
+  function stopPoll() {
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+  }
+  function stopTimer() {
+    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+    if (startRef.current) setElapsed(Math.round((Date.now() - startRef.current) / 1000));
+  }
+  // fromTs lets resume anchor the timer to the job's real enqueue time so the
+  // elapsed count continues from where it actually is, not from 0.
+  function startTimer(fromTs?: number) {
+    startRef.current = fromTs ?? Date.now();
+    setElapsed(Math.max(0, Math.round((Date.now() - startRef.current) / 1000)));
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
       if (startRef.current) setElapsed(Math.round((Date.now() - startRef.current) / 1000));
     }, 500);
   }
 
-  function stopTimer() {
-    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
-    if (startRef.current) setElapsed(Math.round((Date.now() - startRef.current) / 1000));
+  // Map a job payload to panel state. Returns true if terminal (stop polling).
+  const applyJob = useCallback((job: JobPayload): boolean => {
+    if (job.status === "queued") {
+      setStage("planning");
+      return false;
+    }
+    if (job.status === "processing") {
+      setStage("rendering");
+      setQueuedTooLong(false);
+      return false;
+    }
+    if (job.status === "succeeded") {
+      if (job.resultKind === "skipped") {
+        setStage("skipped");
+      } else {
+        setImage(job.image ?? null);
+        setScenes(job.scenes ?? []);
+        setCost(typeof job.costMyr === "number" ? job.costMyr : null);
+        setStage("done");
+      }
+      window.dispatchEvent(new CustomEvent("generation:complete"));
+      return true;
+    }
+    // failed
+    setErrMsg(job.reason || "Gagal jana visual.");
+    setRetryable(job.retryable !== false);
+    setStage("error");
+    return true;
+  }, []);
+
+  const pollOnce = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/jobs?featureRunId=${encodeURIComponent(featureRunId)}`);
+      if (!res.ok) return;
+      const data = (await res.json()) as { job: JobPayload | null };
+      if (!data.job) return;
+      const terminal = applyJob(data.job);
+      if (terminal) { stopPoll(); stopTimer(); }
+    } catch {
+      // transient network error — keep polling
+    }
+  }, [featureRunId, applyJob]);
+
+  function startPolling() {
+    stopPoll();
+    pollRef.current = setInterval(pollOnce, POLL_MS);
   }
+
+  // Resume on mount: if an active/recent job exists for this run, restore it.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/jobs?featureRunId=${encodeURIComponent(featureRunId)}`);
+        if (!res.ok) return;
+        const data = (await res.json()) as { job: JobPayload | null };
+        if (cancelled || !data.job) return;
+        const terminal = applyJob(data.job);
+        if (!terminal) {
+          const base = data.job.createdAt ? new Date(data.job.createdAt).getTime() : undefined;
+          startTimer(base);
+          startPolling();
+        }
+      } catch {
+        // ignore — user can still submit
+      }
+    })();
+    return () => {
+      cancelled = true;
+      stopPoll();
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [featureRunId]);
+
+  // Hint that the worker may be down if we've been queued (planning) too long.
+  useEffect(() => {
+    setQueuedTooLong(stage === "planning" && elapsed >= WORKER_HINT_AFTER);
+  }, [stage, elapsed]);
 
   if (kind === "none") return null;
 
@@ -53,36 +153,32 @@ export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: stri
   async function generate() {
     setStage("planning");
     setErrMsg("");
+    setQueuedTooLong(false);
     startTimer();
-    const timer = setTimeout(() => setStage((s) => (s === "planning" ? "rendering" : s)), 1200);
     try {
       const res = await fetch("/api/generate/visual", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ featureRunId }),
       });
-      const data = (await res.json()) as {
-        error?: string; retryable?: boolean; shouldRender?: boolean;
-        image?: { urlPath: string; aspect: string }; scenes?: Scene[]; costMyr?: number;
-      };
-      clearTimeout(timer);
-      stopTimer();
+      const data = (await res.json()) as { jobId?: string; status?: string; error?: string };
       if (!res.ok) {
-        setErrMsg(data.error ?? "Gagal jana visual.");
-        setRetryable(data.retryable !== false);
+        stopTimer();
+        setErrMsg(data.error ?? "Gagal hantar job jana visual.");
+        setRetryable(true);
         setStage("error");
         return;
       }
-      if (data.shouldRender === false) { setStage("skipped"); return; }
-      setImage(data.image ?? null);
-      setScenes(data.scenes ?? []);
-      setCost(typeof data.costMyr === "number" ? data.costMyr : null);
-      setStage("done");
-      window.dispatchEvent(new CustomEvent("generation:complete"));
+      // Enqueued — poll for progress. Worker does the heavy lifting; closing the
+      // tab no longer drops the generation.
+      startPolling();
+      void pollOnce();
+      // Tell the history list a generation just started so it can show the live
+      // "Tengah jana" badge (it otherwise only refreshes on completion).
+      window.dispatchEvent(new CustomEvent("generation:start"));
     } catch {
-      clearTimeout(timer);
       stopTimer();
-      setErrMsg("Ralat rangkaian. Cuba semula.");
+      setErrMsg("Ralat rangkaian semasa hantar job. Cuba semula.");
       setRetryable(true);
       setStage("error");
     }
@@ -115,12 +211,18 @@ export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: stri
         <div className="py-8 text-center">
           <span className="mx-auto block h-9 w-9 animate-spin rounded-full border-2 border-[var(--line-2)] border-t-[var(--brand)]" />
           <p className="mt-3 font-semibold text-[#00262a]">
-            {stage === "planning" ? "AI tengah rancang visual…" : "Melukis…"}
+            {stage === "planning" ? "Dalam giliran / AI tengah rancang…" : "Melukis…"}
           </p>
           <p className="mt-1 text-sm text-[#7b8698]">
             {stage === "planning" ? "gpt-4o baca output → tentukan panel & gaya" : "gpt-image-2 · 15–30 saat"}
           </p>
           <p className="mono mt-2 text-base font-bold text-[var(--brand)]">{elapsed}s</p>
+          <p className="mt-2 text-xs text-[#7b8698]">Boleh tutup tab — generation jalan di belakang, buka semula bila-bila.</p>
+          {queuedTooLong && (
+            <p className="mt-2 text-xs text-[#b45309]">
+              Lama dalam giliran — pastikan worker hidup (<span className="mono">npm run worker</span>).
+            </p>
+          )}
         </div>
       )}
 
