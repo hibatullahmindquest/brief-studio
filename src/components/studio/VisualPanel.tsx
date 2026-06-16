@@ -22,6 +22,7 @@ type JobPayload = {
   resultKind?: string;
   reason?: string | null;
   retryable?: boolean;
+  createdAt?: string; // enqueue time — used to show true elapsed on resume
   kind?: string;
   image?: { urlPath: string; aspect: string } | null;
   scenes?: Scene[];
@@ -52,9 +53,11 @@ export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: stri
     if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
     if (startRef.current) setElapsed(Math.round((Date.now() - startRef.current) / 1000));
   }
-  function startTimer() {
-    startRef.current = Date.now();
-    setElapsed(0);
+  // fromTs lets resume anchor the timer to the job's real enqueue time so the
+  // elapsed count continues from where it actually is, not from 0.
+  function startTimer(fromTs?: number) {
+    startRef.current = fromTs ?? Date.now();
+    setElapsed(Math.max(0, Math.round((Date.now() - startRef.current) / 1000)));
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
       if (startRef.current) setElapsed(Math.round((Date.now() - startRef.current) / 1000));
@@ -119,7 +122,11 @@ export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: stri
         const data = (await res.json()) as { job: JobPayload | null };
         if (cancelled || !data.job) return;
         const terminal = applyJob(data.job);
-        if (!terminal) { startTimer(); startPolling(); }
+        if (!terminal) {
+          const base = data.job.createdAt ? new Date(data.job.createdAt).getTime() : undefined;
+          startTimer(base);
+          startPolling();
+        }
       } catch {
         // ignore — user can still submit
       }
@@ -166,6 +173,9 @@ export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: stri
       // tab no longer drops the generation.
       startPolling();
       void pollOnce();
+      // Tell the history list a generation just started so it can show the live
+      // "Tengah jana" badge (it otherwise only refreshes on completion).
+      window.dispatchEvent(new CustomEvent("generation:start"));
     } catch {
       stopTimer();
       setErrMsg("Ralat rangkaian semasa hantar job. Cuba semula.");

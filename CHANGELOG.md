@@ -28,6 +28,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - **`POST /api/generate/visual`** + **`GET /api/usage`**; `/api/generate` now returns the run id
 - Saved visuals reappear in the Semakan Lepas history (HistoryModal)
 
+### Fixed
+- **Visual timer restarted at 0s on resume** — reopening a run mid-generation reset the elapsed counter to 0; it now anchors to the job's real enqueue time (`GET /api/jobs` returns `createdAt`) so it shows true elapsed.
+- **"Tengah jana" never appeared in Semakan Lepas** — the history list only refreshed on completion, so the live generating window was skipped (it jumped straight to "Ada visual"). VisualPanel now fires a `generation:start` event on submit and the list polls page 1 every 3s while any run is generating, so the badge shows ⏳ then flips to 🖼/✗ on its own.
+
 ### Changed
 - **Visual generation is now asynchronous** — `POST /api/generate/visual` no longer runs OpenAI inside the request (it enqueues); the synchronous plan→render-in-request path was removed. The worker (`npm run worker`) must be running for visuals to generate
 - `generateCopy` now returns `{ copy, usage }` so token usage can be logged

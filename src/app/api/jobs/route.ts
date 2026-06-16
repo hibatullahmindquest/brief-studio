@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
     resultKind: job.resultKind,
     reason: job.reason,
     retryable: job.retryable,
+    createdAt: job.createdAt.toISOString(), // so the client timer shows true elapsed on resume
   };
 
   if (job.status === "succeeded" && job.resultKind === "image") {

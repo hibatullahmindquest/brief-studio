@@ -13,7 +13,7 @@
     { "name": "verify (lint + tsc + build)", "status": "done", "at": "2026-06-16", "evidence": { "lint": "passed", "tsc": "passed", "build": "passed" } },
     { "name": "review (spec + code quality)", "status": "done", "at": "2026-06-16", "evidence": { "stage1_spec_compliance": "passed (7/7)", "stage2_code_quality": "passed", "critical_issues": 0, "notes": "single batched job query (no N+1); swapped absent --bad-soft var to red-50/red-600; graceful generatedMs omission" } },
     { "name": "release-notes (CHANGELOG)", "status": "done", "at": "2026-06-16", "evidence": "CHANGELOG.md — Added: Semakan Lepas visual indicator + generation time" },
-    { "name": "commit", "status": "in_progress", "at": null }
+    { "name": "commit", "status": "done", "at": "2026-06-16", "evidence": "37aff00 feat(studio): Semakan Lepas visual indicator + generation time" }
   ],
   "metadata": {
     "outputType": "poster, storyboard, video-script",

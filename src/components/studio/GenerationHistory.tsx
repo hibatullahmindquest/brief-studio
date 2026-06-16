@@ -100,7 +100,7 @@ export function GenerationHistory() {
     }
   }, []);
 
-  // Initial fetch + refresh when a new generation completes.
+  // Initial fetch + refresh when a generation starts or completes.
   useEffect(() => {
     void fetchPage();
     function onGenerated() {
@@ -110,9 +110,25 @@ export function GenerationHistory() {
       setInitialLoaded(false);
       void fetchPage();
     }
+    // A generation just started → refetch page 1 so the live "Tengah jana" badge
+    // appears immediately (don't wait for the 3s poll below).
+    function onStarted() { void fetchPage(); }
     window.addEventListener("generation:complete", onGenerated);
-    return () => window.removeEventListener("generation:complete", onGenerated);
+    window.addEventListener("generation:start", onStarted);
+    return () => {
+      window.removeEventListener("generation:complete", onGenerated);
+      window.removeEventListener("generation:start", onStarted);
+    };
   }, [fetchPage]);
+
+  // While any run is mid-generation, poll page 1 every 3s so the badge flips
+  // generating → ready (or failed) on its own without a manual refresh.
+  const hasGenerating = runs.some((r) => r.visualStatus === "generating");
+  useEffect(() => {
+    if (!hasGenerating) return;
+    const id = setInterval(() => { void fetchPage(); }, 3000);
+    return () => clearInterval(id);
+  }, [hasGenerating, fetchPage]);
 
   // Infinite scroll.
   useEffect(() => {

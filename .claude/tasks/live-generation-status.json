@@ -1,0 +1,21 @@
+{
+  "id": "live-generation-status",
+  "route": "bugfix",
+  "created": "2026-06-16",
+  "branch": "fix/live-generation-status",
+  "description": "Fix live generation status: VisualPanel timer resumes from real job.createdAt (not 0s); Semakan Lepas shows 'Tengah jana' live via generation:start event + polling while any run is generating.",
+  "steps": [
+    { "name": "diagnose (root cause)", "status": "done", "at": "2026-06-16", "evidence": "Timer: GET /api/jobs doesn't return createdAt so resume restarts at 0. Generating badge: history list only refetches on generation:complete (fires at finish) so the 'generating' window is never displayed — needs a generation:start event + poll-while-generating." },
+    { "name": "build", "status": "done", "at": "2026-06-16", "evidence": "GET /api/jobs returns createdAt; VisualPanel startTimer(fromTs) + resume anchors to createdAt + dispatches generation:start; GenerationHistory listens generation:start + polls page 1 every 3s while any run generating" },
+    { "name": "verify (lint + tsc + build)", "status": "done", "at": "2026-06-16", "evidence": { "lint": "passed", "tsc": "passed", "build": "passed" } },
+    { "name": "review (spec + code quality)", "status": "done", "at": "2026-06-16", "evidence": { "stage1_spec_compliance": "passed", "stage2_code_quality": "passed", "critical_issues": 0, "notes": "poll resets to page 1 + brief loader flicker during generating window — transient, acceptable; poll self-terminates" } },
+    { "name": "release-notes (CHANGELOG)", "status": "done", "at": "2026-06-16", "evidence": "CHANGELOG.md Fixed: timer resume + live Tengah jana badge" },
+    { "name": "commit", "status": "in_progress", "at": null }
+  ],
+  "metadata": {
+    "outputType": "poster, storyboard, video-script",
+    "brand": "both",
+    "affectedFiles": ["src/app/api/jobs/route.ts", "src/components/studio/VisualPanel.tsx", "src/components/studio/GenerationHistory.tsx"],
+    "dependsOn": "feat/async-generation-jobs + feat/history-visual-indicator"
+  }
+}

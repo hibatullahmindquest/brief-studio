@@ -1,5 +1,5 @@
 {
-  "activeTask": "history-visual-indicator",
-  "taskFile": ".claude/tasks/history-visual-indicator.json",
-  "route": "feature"
+  "activeTask": "live-generation-status",
+  "taskFile": ".claude/tasks/live-generation-status.json",
+  "route": "bugfix"
 }
