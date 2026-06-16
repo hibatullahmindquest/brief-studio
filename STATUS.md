@@ -1,11 +1,17 @@
 # STATUS — brief-studio
 
-## IN PROGRESS (2026-06-16) — Async Generation Jobs (feat/async-generation-jobs)
-- Route: feature. Branch `feat/async-generation-jobs`. Approach **B** (separate worker process). Local-first; VPS/PM2 deferred (hibatullah has SSH but no sudo / no /var/www write on KVM8 — Hafiz needed for VPS setup).
-- Planning done: brainstorm + PRD + UX + build-prompts saved (`.claude/plans/2026-06-16-async-*`, `docs/plans/2026-06-16-async-generation-jobs-PRD.md`). Visual explainer: `temp/async-worker-approach-b.html`.
+## DONE (2026-06-16) — Async Generation Jobs (committed 039ba5a on feat/async-generation-jobs)
+- Approach **B** (separate worker process), local-first. All 9 workflow steps done (brainstorm→PRD→UX→build-prompts→build→verify→review→release-notes→commit). Branch NOT pushed yet.
+- Built: `GenerationJob` model (2 migrations applied), `src/lib/visual-job.ts` (runVisualJob), `src/lib/job-store.ts` (enqueue/claim/sweep/mark), `POST /api/generate/visual` now enqueues, `GET /api/jobs?featureRunId=` poll/resume, worker `src/worker/index.ts`+`loop.ts` (`npm run worker`), VisualPanel submit→poll(2s)→resume + worker-down hint, `tsx` devDep.
 - Locked: fully async (sync visual path removed), watchdog stale 5min, poll 2s, worker concurrency 1.
-- BUILD progress: **P1 done** — `GenerationJob` model added + migration `20260616082753_add_generation_job` APPLIED to local DB. ⚠️ `prisma generate` blocked by EPERM (next dev holds query_engine DLL) → bouncing dev server to regenerate.
-- NEXT after generate: P2 extract `src/lib/visual-job.ts`, P3 `src/lib/job-store.ts`, P4 rewrite enqueue route, P5 `GET /api/jobs`, P6 worker + `npm run worker` + tsx devDep, P7 VisualPanel poll/resume, P8 verify.
+- Verify: lint+tsc+build green (26 routes, /api/jobs present); worker boots clean (`npm run worker:start`).
+- Visual explainer kept at `temp/async-worker-approach-b.html` (outside repo, by choice).
+- ⚠️ GOTCHA: `prisma generate` / `next build` hit EPERM when a `next dev` OR a leftover `tsx` worker process holds `query_engine-windows.dll.node` → kill stray node procs referencing brief-studio before building (Windows).
+
+### PENDING / NEXT for this feature
+- [ ] **Live end-to-end test** (needs `OPENAI_API_KEY` w/ gpt-image-2 + running worker): `npm run dev` + `npm run worker` in 2 terminals → generate a poster → confirm image lands in history; close tab mid-render → reopen → resumes; kill worker mid-processing → job goes failed(stale) after 5 min; double-click → one job only.
+- [ ] **Push + PR** (only when user asks): `git push -u origin feat/async-generation-jobs` then `gh pr create --repo hibatullahmindquest/brief-studio --base master` (FORK — always pin repo; guard hook enforces).
+- [ ] **VPS deploy (later, needs Hafiz root):** chown deploy dir to hibatullah, install deps, `pm2 start npm --name scis-worker -- run worker:start`, PM2 startup/save. Code unchanged from local.
 
 ## Current Phase
 SCIS — all merged to master (PR #2 redesign+analytics, PR #3 visual generation+cost/error tracking, PR #4 fork-PR guard). Working tree clean, master = origin/master, no open PRs. See GOALS.md "Active Task" for next-step candidates. Repo is a FORK — pin `--repo hibatullahmindquest/brief-studio` on all PRs (guard hook enforces).

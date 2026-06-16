@@ -1,0 +1,24 @@
+{
+  "id": "history-visual-indicator",
+  "route": "feature",
+  "created": "2026-06-16",
+  "branch": "feat/history-visual-indicator",
+  "description": "Semakan Lepas: 3-state visual indicator (ada visual / tengah jana / gagal; text-only no badge) + record & show generation duration on history rows + HistoryModal. No migration (status derived from GenerationJob join; duration in outputJson.image.generatedMs).",
+  "steps": [
+    { "name": "brainstorm", "status": "done", "at": "2026-06-16", "evidence": "Design + mockup decided with user: temp/semakan-lepas-indicator-mockup.html (3-state + duration on list+modal)" },
+    { "name": "prd", "status": "done", "at": "2026-06-16", "evidence": "docs/plans/2026-06-16-history-visual-indicator-PRD.md" },
+    { "name": "ux", "status": "done", "at": "2026-06-16", "evidence": "temp/semakan-lepas-indicator-mockup.html — approved by user (3-state + Belum jana, duration on list rows + modal chip)" },
+    { "name": "build-prompts", "status": "done", "at": "2026-06-16", "evidence": ".claude/plans/2026-06-16-history-visual-indicator-build-prompts.md" },
+    { "name": "build", "status": "done", "at": "2026-06-16", "evidence": "P1 visual-job generatedMs; P2 feature-store visualStatus+join; P3 GenerationHistory badges; P4 HistoryModal time chip" },
+    { "name": "verify (lint + tsc + build)", "status": "done", "at": "2026-06-16", "evidence": { "lint": "passed", "tsc": "passed", "build": "passed" } },
+    { "name": "review (spec + code quality)", "status": "done", "at": "2026-06-16", "evidence": { "stage1_spec_compliance": "passed (7/7)", "stage2_code_quality": "passed", "critical_issues": 0, "notes": "single batched job query (no N+1); swapped absent --bad-soft var to red-50/red-600; graceful generatedMs omission" } },
+    { "name": "release-notes (CHANGELOG)", "status": "done", "at": "2026-06-16", "evidence": "CHANGELOG.md — Added: Semakan Lepas visual indicator + generation time" },
+    { "name": "commit", "status": "in_progress", "at": null }
+  ],
+  "metadata": {
+    "outputType": "poster, storyboard, video-script",
+    "brand": "both",
+    "affectedFiles": ["src/lib/visual-job.ts", "src/lib/feature-store.ts", "src/components/studio/GenerationHistory.tsx", "src/components/studio/HistoryModal.tsx"],
+    "dependsOn": "feat/async-generation-jobs (uses GenerationJob model)"
+  }
+}

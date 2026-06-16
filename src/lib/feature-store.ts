@@ -56,7 +56,12 @@ export type HistoryImage = {
   aspect: string;
   urlPath: string;
   scenes: { no: number; caption: string }[];
+  generatedMs?: number; // wall-clock the worker took to generate (omitted on pre-fix runs)
 };
+
+// Per-run visual state shown in Semakan Lepas. "text" = output type can't have a
+// visual (no badge); "pending" = visual-capable but not generated yet.
+export type VisualStatus = "text" | "ready" | "generating" | "failed" | "pending";
 
 export type HistoryRun = {
   id: string;
@@ -73,8 +78,25 @@ export type HistoryRun = {
   };
   image: HistoryImage | null;
   outputTypeId: string;
+  visualStatus: VisualStatus;
   createdAt: string;
 };
+
+// Output types that produce a visual (mirror of visual.ts kindForOutputType,
+// kept local so this server module has no extra import).
+const VISUAL_CAPABLE = new Set(["poster", "storyboard", "video_script"]);
+
+function deriveVisualStatus(
+  outputTypeId: string,
+  hasImage: boolean,
+  latestJobStatus: string | undefined,
+): VisualStatus {
+  if (hasImage) return "ready"; // an image present = done, regardless of any later job
+  if (!VISUAL_CAPABLE.has(outputTypeId)) return "text";
+  if (latestJobStatus === "queued" || latestJobStatus === "processing") return "generating";
+  if (latestJobStatus === "failed") return "failed";
+  return "pending";
+}
 
 export async function getRecentFeatureRuns(
   userId: string,
@@ -88,23 +110,42 @@ export async function getRecentFeatureRuns(
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });
 
-  return rows.flatMap((row) => {
+  // Parse rows first so we can collect ids for a single job lookup.
+  const parsed = rows.flatMap((row) => {
     const output = safeParse<HistoryRun["fullOutput"] & { image?: HistoryImage }>(row.outputJson);
     if (!output) return [];
     const input = safeParse<{ brandSlug?: string; contentType?: string }>(row.inputJson);
     const outputTypeId = OUTPUT_TYPES.find((o) => o.label === input?.contentType)?.id ?? "";
-    return [
-      {
-        id: row.id,
-        subtype: row.subtype,
-        brandSlug: input?.brandSlug ?? null,
-        primaryPostExcerpt: (output.primaryPost ?? "").slice(0, 120),
-        fullOutput: output,
-        image: output.image ?? null,
-        outputTypeId,
-        createdAt: row.createdAt.toISOString(),
-      },
-    ];
+    return [{ row, output, input, outputTypeId }];
+  });
+
+  // Latest GenerationJob status per run (one query), to derive the visual badge.
+  const ids = parsed.map((p) => p.row.id);
+  const latestStatus = new Map<string, string>();
+  if (ids.length > 0) {
+    const jobs = await prisma.generationJob.findMany({
+      where: { featureRunId: { in: ids } },
+      orderBy: { createdAt: "desc" },
+      select: { featureRunId: true, status: true },
+    });
+    for (const j of jobs) {
+      if (!latestStatus.has(j.featureRunId)) latestStatus.set(j.featureRunId, j.status); // first = latest
+    }
+  }
+
+  return parsed.map(({ row, output, input, outputTypeId }) => {
+    const image = output.image ?? null;
+    return {
+      id: row.id,
+      subtype: row.subtype,
+      brandSlug: input?.brandSlug ?? null,
+      primaryPostExcerpt: (output.primaryPost ?? "").slice(0, 120),
+      fullOutput: output,
+      image,
+      outputTypeId,
+      visualStatus: deriveVisualStatus(outputTypeId, image !== null, latestStatus.get(row.id)),
+      createdAt: row.createdAt.toISOString(),
+    };
   });
 }
 

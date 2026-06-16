@@ -13,7 +13,7 @@
     { "name": "verify (lint + tsc + build)", "status": "done", "at": "2026-06-16", "evidence": { "lint": "passed", "tsc": "passed", "build": "passed (26 routes, /api/jobs present)", "worker_boot": "passed (npm run worker:start boots clean)" } },
     { "name": "review (spec + code quality)", "status": "done", "at": "2026-06-16", "evidence": { "stage1_spec_compliance": "passed (8/8 acceptance criteria traced)", "stage2_code_quality": "passed", "critical_issues": 0, "notes": "4 non-blocking suggestions: job pruning, GET rate-limit, applyJob blank-panel guard, job.brandId null" } },
     { "name": "release-notes (CHANGELOG)", "status": "done", "at": "2026-06-16", "evidence": "CHANGELOG.md updated (Added: async visual generation; Changed: enqueue + sync path removed)" },
-    { "name": "commit", "status": "in_progress", "at": null }
+    { "name": "commit", "status": "done", "at": "2026-06-16", "evidence": "039ba5a feat(studio): async visual generation via worker" }
   ],
   "metadata": {
     "outputType": "poster, storyboard, video-script",

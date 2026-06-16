@@ -6,6 +6,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## [Unreleased]
 
 ### Added
+- **Semakan Lepas visual indicator + generation time** — each history row now shows a visual-status badge — `🖼 Ada visual` (with `⏱ Ns` generation time), `⏳ Tengah jana…`, `✗ Gagal`, or `○ Belum jana` (Hook & Copy text-only runs show no badge). Status is derived from the latest `GenerationJob` per run (one batched query, no migration); the worker now records render duration into `outputJson.image.generatedMs`, also shown as a `⏱` chip in the run detail modal. Old runs gracefully omit the time.
 - **Async visual generation (close-tab-safe + resumable)** — visual generation now runs in a separate worker process instead of the web request, so closing the tab no longer drops a generation:
   - `GenerationJob` model + queue (`queued → processing → succeeded → failed`); the image still lives in `FeatureRun.outputJson` (job tracks process + cost only)
   - `POST /api/generate/visual` now **enqueues** a job and returns `{ jobId }` immediately (idempotent — one active job per run); `GET /api/jobs?featureRunId=` polls status / resumes

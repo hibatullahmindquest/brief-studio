@@ -121,6 +121,7 @@ export async function runVisualJob(args: { featureRunId: string; userId: string 
   const briefAnswers = input.briefAnswers ?? {};
 
   let phase: "plan" | "render" = "plan";
+  const startedAt = Date.now(); // wall-clock for the recorded generation time
   try {
     const { plan, usage: planUsage } = await planVisual({ outputTypeId, outputText, briefAnswers, brand });
 
@@ -149,12 +150,14 @@ export async function runVisualJob(args: { featureRunId: string; userId: string 
     });
 
     // Persist into the run's output so it shows in history.
+    const generatedMs = Date.now() - startedAt;
     const visual = {
       kind: plan.kind,
       aspect: plan.aspect,
       urlPath: image.urlPath,
       prompt: plan.imagePrompt,
       scenes: plan.scenes,
+      generatedMs,
     };
     await updateFeatureRunOutput(featureRunId, { ...output, image: visual, visualPlan: { kind: plan.kind, scenes: plan.scenes } });
 
