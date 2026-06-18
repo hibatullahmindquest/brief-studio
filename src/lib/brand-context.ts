@@ -11,6 +11,10 @@ export type BrandContext = {
   /** Visual style direction for image generation only (NOT copy). Distilled from the
    *  designer's real posters. Kept separate from promptBlock so it never pollutes copy gen. */
   visualDna: string;
+  /** Brand furniture for the post-generation overlay (read at gen time). */
+  logoPath?: string | null;
+  footerLeft?: string | null;
+  footerRight?: string | null;
 };
 
 // Per-brand visual DNA (extracted from real designer output, 2026-06-18 brainstorm).
@@ -55,5 +59,8 @@ export async function getBrandContext(slug: string): Promise<BrandContext | null
     secondaryColor: brand.secondaryColor,
     promptBlock: lines.join("\n"),
     visualDna: VISUAL_DNA[brand.slug] ?? GENERIC_DNA,
+    logoPath: brand.logoUrl ?? null,
+    footerLeft: brand.posterFooterLeft ?? null,
+    footerRight: brand.posterFooterRight ?? null,
   };
 }
