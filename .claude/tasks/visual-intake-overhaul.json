@@ -9,7 +9,7 @@
     { "name": "prd", "status": "done", "at": "2026-06-18", "evidence": "docs/plans/2026-06-18-visual-intake-overhaul-PRD.md" },
     { "name": "ux", "status": "done", "at": "2026-06-18", "evidence": "Interactive mockup C:/claude/temp/studio-flow-approaches.html tab C — layout approved by user (guided chat + brief panel + Spec card with regenerate + Sahkan->Generate gate + Semakan Lepas right drawer with Draft state)" },
     { "name": "build-prompts", "status": "done", "at": "2026-06-18", "evidence": ".claude/plans/2026-06-18-visual-intake-overhaul-build-prompts.md (P1-P11, 2 waves)" },
-    { "name": "build", "status": "pending" },
+    { "name": "build", "status": "in_progress", "at": "2026-06-18", "evidence": "WAVE A DONE (P1-P7): P1 schema+migration (ceada13), P2 brand DNA (ceada13), P3-P7 spec pipeline + overlay (118c3f0). Verified: lint+tsc green + scripts/verify-wave-a.mts (planSpec angle-aware, prompt reserves zones, overlay stamps footer). NEXT = WAVE B (UI): P8 brand settings logo+footer upload, P9 Studio guided-brief UI (tab C), P10 Semakan Lepas drawer Draft state, P11 cost rollup." },
     { "name": "verify (lint + tsc + build)", "status": "pending" },
     { "name": "review (spec + code quality)", "status": "pending" },
     { "name": "release-notes (CHANGELOG)", "status": "pending" },
