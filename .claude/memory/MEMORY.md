@@ -5,6 +5,12 @@ Add entries via `/bs-save-session` at end of each session.
 
 ---
 
+## 2026-06-18 — Branch hygiene: squash-merge + always verify commit before push
+**Context:** Cleaning up after PR #6. Found 4 "stacked" branches (async→indicator→timer→cost) each branched off the previous, so every branch re-contained the earlier commits. Also 9 stale local + 5 stale remote branches lingering after merges.
+**Discovery:** (1) **Stacked branches** happen when you `git checkout -b B` while on branch A instead of off `master` — B then carries A's commits. For one shippable unit, use ONE branch with many commits; for independently-mergeable units, branch each off `master`. (2) **`--squash --delete-branch`** on `gh pr merge` collapses a branch to one commit AND auto-removes it (local+remote) → no pile-up, no leftover dangling commits. Set "Allow squash merging" as the only option in repo settings to make it default. (3) **commit-msg hook + heredoc = trap:** `git commit -m "$(cat <<'EOF'…EOF)"` failed the conventional-commit hook (the `$()` reached git unexpanded) AND silently dropped staged edits because the failed first attempt's `git add -A` never ran. Use separate `-m` flags. (4) **ALWAYS `git show HEAD:file` after committing docs, before pushing** — I pushed a commit that had stale GOALS/STATUS (edits never staged), costing a 3-PR detour (#7 partial, #8 conflict-closed, #9 fixed).
+**Impact:** Going forward: squash+delete-branch on every PR merge; verify HEAD content before push; never heredoc a commit message when a commit-msg hook is active.
+**Source:** debugging (self-inflicted during branch cleanup).
+
 ## 2026-06-16 — Async worker (Approach B): web enqueues, worker process generates
 **Context:** Built close-tab-safe visual generation. App is long-running Node (`next start`, NOT serverless — CLAUDE.md forbids Vercel/Edge), so a separate worker process is viable.
 **Discovery:** Pattern = `GenerationJob` table is the only channel between web (enqueue) and worker (`npm run worker` = `tsx watch src/worker/index.ts`). Web does NO OpenAI work. Atomic claim via `updateMany WHERE status='queued'` (loser gets count 0). Watchdog sweeps `processing` older than `claimedAt+5min` → failed. The `kind` field on GenerationJob is future-proofing for async TEXT (bulk variations, Phase 2) — same worker, same queue.
