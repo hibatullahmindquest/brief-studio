@@ -1,5 +1,5 @@
 {
-  "activeTask": null,
-  "taskFile": null,
-  "route": null
+  "activeTask": "visual-intake-overhaul",
+  "taskFile": ".claude/tasks/visual-intake-overhaul.json",
+  "route": "feature"
 }

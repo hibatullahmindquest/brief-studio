@@ -1,0 +1,32 @@
+{
+  "id": "visual-intake-overhaul",
+  "route": "feature",
+  "created": "2026-06-18",
+  "branch": "feat/visual-intake-overhaul",
+  "description": "Overhaul Studio visual intake: guided brief (free-text angle + AI-suggested chip questions) -> Creative Spec (editable headline/accent/CTA, regenerate-per-text) -> Sahkan Idea -> Generate. Render-in-image (gpt-image-2) + brand DNA injection + thin logo/footer overlay from brand settings. Preserves async/history/cost infra; adds Draft state. Phase 1 = poster only.",
+  "steps": [
+    { "name": "brainstorm", "status": "done", "at": "2026-06-18", "evidence": ".claude/plans/2026-06-18-visual-intake-overhaul-brainstorm.md + interactive mockup C:/claude/temp/studio-flow-approaches.html (tab C) + 3 validated gpt-image-2 tests (poster-compare, sifututor-test, sim-brief)" },
+    { "name": "prd", "status": "done", "at": "2026-06-18", "evidence": "docs/plans/2026-06-18-visual-intake-overhaul-PRD.md" },
+    { "name": "ux", "status": "done", "at": "2026-06-18", "evidence": "Interactive mockup C:/claude/temp/studio-flow-approaches.html tab C — layout approved by user (guided chat + brief panel + Spec card with regenerate + Sahkan->Generate gate + Semakan Lepas right drawer with Draft state)" },
+    { "name": "build-prompts", "status": "done", "at": "2026-06-18", "evidence": ".claude/plans/2026-06-18-visual-intake-overhaul-build-prompts.md (P1-P11, 2 waves)" },
+    { "name": "build", "status": "pending" },
+    { "name": "verify (lint + tsc + build)", "status": "pending" },
+    { "name": "review (spec + code quality)", "status": "pending" },
+    { "name": "release-notes (CHANGELOG)", "status": "pending" },
+    { "name": "commit", "status": "pending" }
+  ],
+  "metadata": {
+    "outputType": "poster",
+    "brand": "both",
+    "affectedFiles": [],
+    "scope": "Phase 1 = poster only. New: guided brief UI, options-generator (gpt-4o) call, enriched director prompt, brand-overlay composite (sharp), brand settings logo+footer fields, Draft FeatureRun state, regenerate-text endpoint. Deferred: variations, true 9:16 crop/pad, storyboard/video-script intake.",
+    "decisions": {
+      "interaction": "C-hybrid (guided chat + Spec + confirm-then-generate)",
+      "options": "AI-suggested per brief (CD + photographer + brand-strategist lens)",
+      "textRender": "render-in-image (gpt-image-2)",
+      "brandFurniture": "logo+footer overlay from brand settings, read at gen time",
+      "semakanLepas": "right drawer, +Draft state",
+      "lifecycle": "Spec->Draft (saved)->Sahkan Idea->Generate"
+    }
+  }
+}
