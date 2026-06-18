@@ -5,6 +5,30 @@ Add entries via `/bs-save-session` at end of each session.
 
 ---
 
+## 2026-06-18 — gpt-image-2 renders Malay + 2-font beautifully (old "garble" note is OUTDATED)
+**Context:** Designing the visual-intake overhaul; tested render-in-image vs text-overlay for headline+CTA.
+**Discovery:** gpt-image-2 (2026) renders short Malay headlines/CTA **correctly and with integrated typography** — including a bold-uppercase + handwritten-script accent treatment. The 2026-06-15 MEMORY note "keep text minimal — it garbles" is **superseded**: for poster headlines/CTA, **render-in-image wins** over a text overlay (better look, exact spelling, edits happen at the Spec stage before generating so the "edit=regen" downside rarely bites). Overlay only wins when reusing one image with many text variants (not needed yet).
+**Impact:** Default to render-in-image for poster copy. Keep overlay ONLY for fixed brand furniture (see next entry).
+**Source:** real tests (C:\claude\temp\poster-compare, sifututor-test, sim-brief).
+
+## 2026-06-18 — Brand consistency = AI gets ~90%, overlay stamps the fixed 10%
+**Context:** Extracted SifuTutor visual DNA from 10 real designer posters, then tested how close pure gpt-image-2 gets.
+**Discovery:** With the DNA in the prompt (palette, 2-font, cut-out students, speech bubbles, sparkles), gpt-image-2 nails **~90%** of the brand look. What it CANNOT reproduce consistently: the **exact logo** and the **fixed footer tagline**. So the architecture = **gpt-image-2 renders the creative + a thin `sharp` overlay stamps logo (top-left) + footer (bottom)** read from brand settings at gen time. Prompt must **reserve clean top-left + bottom strips** or the AI headline collides with the logo. DNA lives in `BrandContext.visualDna` (kept OUT of `promptBlock` so it never pollutes copy gen).
+**Impact:** "AI background/subject + branded overlay" is the pattern for on-brand output; changing logo/footer in settings affects only NEW gens (old are flattened).
+**Source:** design + tests (sifututor-test, sim-brief, verify-wave-a).
+
+## 2026-06-18 — LLM JSON director: don't use `<...>` placeholders; strip artifacts
+**Context:** gpt-4o/gpt-5 director (`planSpec`) returns a JSON spec (headline/accent/cta).
+**Discovery:** A system prompt that shows the JSON shape with `"<angle/occasion ...>"` style placeholders makes the model **echo the angle brackets into the values** (e.g. `"<Dapat Manfaat Cuti Sekolah>"`). Fix: describe each field in prose (no `<>`), AND defensively `clean()` every value (strip leading/trailing `"'`<>()[]`, `**`). Also: gpt-5 is a reasoning model — give `max_completion_tokens` 4000–5000 or it returns empty (per earlier note). sharp SVG overlay text MUST XML-escape `&`/`<`/`>` (footer "Sifu & Edu" crashed librsvg with raw `&`).
+**Impact:** Robust director output; no stray brackets on posters; no SVG parse crashes.
+**Source:** debugging (sim-brief `<>` echo; sharp `xmlParseEntityRef` on `&`).
+
+## 2026-06-18 — Windows Git Bash mangles `git show rev:.claude/...` paths
+**Context:** Verifying file content inside a commit via `git show`.
+**Discovery:** MSYS path-conversion mangles `git show "origin/master:.claude/memory/MEMORY.md"` → `origin\master;.claude\...` (colon→`;`, `/`→`\`) when the path has multiple slashes. Prefix with `MSYS_NO_PATHCONV=1 git show "<rev>:<path>"`.
+**Impact:** Use `MSYS_NO_PATHCONV=1` for any `git show rev:path` with nested paths on Windows.
+**Source:** debugging (path mangle during the GOALS/STATUS sync).
+
 ## 2026-06-18 — Branch hygiene: squash-merge + always verify commit before push
 **Context:** Cleaning up after PR #6. Found 4 "stacked" branches (async→indicator→timer→cost) each branched off the previous, so every branch re-contained the earlier commits. Also 9 stale local + 5 stale remote branches lingering after merges.
 **Discovery:** (1) **Stacked branches** happen when you `git checkout -b B` while on branch A instead of off `master` — B then carries A's commits. For one shippable unit, use ONE branch with many commits; for independently-mergeable units, branch each off `master`. (2) **`--squash --delete-branch`** on `gh pr merge` collapses a branch to one commit AND auto-removes it (local+remote) → no pile-up, no leftover dangling commits. Set "Allow squash merging" as the only option in repo settings to make it default. (3) **commit-msg hook + heredoc = trap:** `git commit -m "$(cat <<'EOF'…EOF)"` failed the conventional-commit hook (the `$()` reached git unexpanded) AND silently dropped staged edits because the failed first attempt's `git add -A` never ran. Use separate `-m` flags. (4) **ALWAYS `git show HEAD:file` after committing docs, before pushing** — I pushed a commit that had stale GOALS/STATUS (edits never staged), costing a 3-PR detour (#7 partial, #8 conflict-closed, #9 fixed).

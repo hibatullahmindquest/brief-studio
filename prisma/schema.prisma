@@ -80,6 +80,7 @@ model FeatureRun {
   outputJson  String
   feedback    Int?     // 1 = thumbs up, -1 = thumbs down, null = no feedback
   feedbackNote String?
+  status      String   @default("generated") // "draft" | "confirmed" | "generated" — visual-intake lifecycle
   createdAt   DateTime @default(now())
 
   @@index([userId, feature, createdAt])
@@ -90,7 +91,9 @@ model Brand {
   id          String   @id @default(cuid())
   name        String   @unique // "SifuTutor" | "NakNgaji"
   slug        String   @unique // "sifututor" | "nakngaji"
-  logoUrl     String?
+  logoUrl     String?  // transparent PNG path for poster overlay (public/uploads/brand/<slug>-logo.png)
+  posterFooterLeft  String?  // poster overlay footer — left (e.g. © 2025 ...)
+  posterFooterRight String?  // poster overlay footer — right (e.g. tagline)
   primaryColor    String   @default("#000000")
   secondaryColor  String   @default("#ffffff")
   tone        String   @default("professional")

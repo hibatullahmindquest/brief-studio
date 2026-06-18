@@ -32,7 +32,17 @@ type JobPayload = {
 const POLL_MS = 2000;
 const WORKER_HINT_AFTER = 60; // seconds queued before hinting the worker may be down
 
-export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: string; outputTypeId: string }) {
+export function VisualPanel({
+  featureRunId,
+  outputTypeId,
+  autoStart = false,
+}: {
+  featureRunId: string;
+  outputTypeId: string;
+  // When true, kick off generation on mount (no idle "Jana Visual" button) —
+  // used by the guided-brief flow where the user already pressed Generate Poster.
+  autoStart?: boolean;
+}) {
   const kind = visualKind(outputTypeId);
   const [stage, setStage] = useState<Stage>("idle");
   const [image, setImage] = useState<{ urlPath: string; aspect: string } | null>(null);
@@ -120,7 +130,13 @@ export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: stri
         const res = await fetch(`/api/jobs?featureRunId=${encodeURIComponent(featureRunId)}`);
         if (!res.ok) return;
         const data = (await res.json()) as { job: JobPayload | null };
-        if (cancelled || !data.job) return;
+        if (cancelled) return;
+        if (!data.job) {
+          // No job yet for this run. In autoStart mode (guided-brief Generate),
+          // begin generation immediately instead of showing the idle button.
+          if (autoStart) void generate();
+          return;
+        }
         const terminal = applyJob(data.job);
         if (!terminal) {
           const base = data.job.createdAt ? new Date(data.job.createdAt).getTime() : undefined;
@@ -187,7 +203,7 @@ export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: stri
   return (
     <div className="editorial-panel rounded-3xl p-5 sm:p-6">
       {/* IDLE */}
-      {stage === "idle" && (
+      {stage === "idle" && !autoStart && (
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="eyebrow">Visual</p>
@@ -206,8 +222,8 @@ export function VisualPanel({ featureRunId, outputTypeId }: { featureRunId: stri
         </div>
       )}
 
-      {/* PLANNING / RENDERING */}
-      {(stage === "planning" || stage === "rendering") && (
+      {/* PLANNING / RENDERING (autoStart shows the spinner before generate fires) */}
+      {(stage === "planning" || stage === "rendering" || (autoStart && stage === "idle")) && (
         <div className="py-8 text-center">
           <span className="mx-auto block h-9 w-9 animate-spin rounded-full border-2 border-[var(--line-2)] border-t-[var(--brand)]" />
           <p className="mt-3 font-semibold text-[#00262a]">

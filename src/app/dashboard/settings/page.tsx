@@ -45,6 +45,18 @@ export default async function DashboardSettingsPage() {
         </p>
       </Link>
 
+      {/* Brand furniture link */}
+      <Link
+        href="/dashboard/settings/brands"
+        className="block rounded-3xl border border-[var(--line)] bg-white p-5 shadow-sm transition hover:border-[var(--brand-line)]"
+      >
+        <p className="eyebrow">Brand</p>
+        <p className="mt-2 text-lg font-semibold text-[#00262a]">Logo &amp; footer poster →</p>
+        <p className="mt-1 text-sm text-[#7b8698]">
+          Upload logo dan tetapkan footer untuk overlay poster setiap brand.
+        </p>
+      </Link>
+
       {/* Error logs link */}
       <Link
         href="/dashboard/settings/logs"

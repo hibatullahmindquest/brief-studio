@@ -51,6 +51,22 @@ export async function updateFeatureRunOutput(runId: string, output: unknown) {
   });
 }
 
+export async function updateFeatureRunInput(runId: string, input: unknown) {
+  await prisma.featureRun.update({
+    where: { id: runId },
+    data: { inputJson: safeStringify(input) },
+  });
+}
+
+export type RunStatus = "draft" | "confirmed" | "generated";
+
+export async function setFeatureRunStatus(runId: string, status: RunStatus) {
+  await prisma.featureRun.update({
+    where: { id: runId },
+    data: { status },
+  });
+}
+
 export type HistoryImage = {
   kind: string;
   aspect: string;
@@ -61,8 +77,9 @@ export type HistoryImage = {
 };
 
 // Per-run visual state shown in Semakan Lepas. "text" = output type can't have a
-// visual (no badge); "pending" = visual-capable but not generated yet.
-export type VisualStatus = "text" | "ready" | "generating" | "failed" | "pending";
+// visual (no badge); "pending" = visual-capable but not generated yet; "draft" =
+// a Creative Spec was synthesised but not yet generated (resumable idea).
+export type VisualStatus = "text" | "ready" | "generating" | "failed" | "pending" | "draft";
 
 export type HistoryRun = {
   id: string;
@@ -91,11 +108,14 @@ function deriveVisualStatus(
   outputTypeId: string,
   hasImage: boolean,
   latestJobStatus: string | undefined,
+  runStatus: string,
 ): VisualStatus {
   if (hasImage) return "ready"; // an image present = done, regardless of any later job
   if (!VISUAL_CAPABLE.has(outputTypeId)) return "text";
   if (latestJobStatus === "queued" || latestJobStatus === "processing") return "generating";
   if (latestJobStatus === "failed") return "failed";
+  // Spec synthesised but not yet generated → a resumable Draft idea.
+  if (runStatus === "draft" || runStatus === "confirmed") return "draft";
   return "pending";
 }
 
@@ -115,7 +135,7 @@ export async function getRecentFeatureRuns(
   const parsed = rows.flatMap((row) => {
     const output = safeParse<HistoryRun["fullOutput"] & { image?: HistoryImage }>(row.outputJson);
     if (!output) return [];
-    const input = safeParse<{ brandSlug?: string; contentType?: string }>(row.inputJson);
+    const input = safeParse<{ brandSlug?: string; contentType?: string; visualSpec?: { angle?: string; brief?: string; headline?: string } }>(row.inputJson);
     const outputTypeId = OUTPUT_TYPES.find((o) => o.label === input?.contentType)?.id ?? "";
     return [{ row, output, input, outputTypeId }];
   });
@@ -136,15 +156,22 @@ export async function getRecentFeatureRuns(
 
   return parsed.map(({ row, output, input, outputTypeId }) => {
     const image = output.image ?? null;
+    // Drafts have no copy output — surface the spec's angle/headline so the
+    // Semakan Lepas card reads "Idea: <angle>" instead of a blank line.
+    const spec = input?.visualSpec;
+    const draftLabel = spec ? (spec.angle || spec.headline || spec.brief || "Idea poster") : "Idea poster";
+    // Guided-poster runs (draft AND generated-from-spec) have no copy output, so
+    // fall back to the spec's angle/headline for the list line.
+    const excerpt = (output.primaryPost ?? "").trim() || (spec ? draftLabel : "");
     return {
       id: row.id,
       subtype: row.subtype,
       brandSlug: input?.brandSlug ?? null,
-      primaryPostExcerpt: (output.primaryPost ?? "").slice(0, 120),
+      primaryPostExcerpt: excerpt.slice(0, 120),
       fullOutput: output,
       image,
       outputTypeId,
-      visualStatus: deriveVisualStatus(outputTypeId, image !== null, latestStatus.get(row.id)),
+      visualStatus: deriveVisualStatus(outputTypeId, image !== null, latestStatus.get(row.id), row.status),
       createdAt: row.createdAt.toISOString(),
     };
   });

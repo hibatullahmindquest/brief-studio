@@ -1,9 +1,12 @@
+import { readFile, writeFile } from "fs/promises";
+import path from "path";
 import { getBrandContext } from "@/lib/brand-context";
-import { getFeatureRunOwned, updateFeatureRunOutput } from "@/lib/feature-store";
-import { planVisual, renderImage } from "@/lib/visual";
+import { getFeatureRunOwned, updateFeatureRunOutput, setFeatureRunStatus } from "@/lib/feature-store";
+import { planVisual, renderImage, kindForOutputType, buildPosterPromptFromSpec, type VisualSpec, type Aspect } from "@/lib/visual";
+import { applyBrandOverlay } from "@/lib/visual-overlay";
 import { OUTPUT_TYPES } from "@/lib/conversation-engine";
 import { sizeForAspect, actualFromUsage } from "@/lib/pricing";
-import { logUsage } from "@/lib/usage";
+import { logUsage, sumRunCostMyr } from "@/lib/usage";
 import { logError } from "@/lib/error-log";
 
 // Shared visual-generation unit. Called by the WORKER (and previously by the
@@ -21,7 +24,7 @@ type StoredOutput = {
   visualPlan?: unknown;
 };
 
-type StoredInput = { brandSlug?: string; brandId?: string; contentType?: string; briefAnswers?: Record<string, string> };
+type StoredInput = { brandSlug?: string; brandId?: string; contentType?: string; briefAnswers?: Record<string, string>; visualSpec?: VisualSpec };
 
 function safeParse<T>(s: string | null): T | null {
   if (!s) return null;
@@ -120,12 +123,31 @@ export async function runVisualJob(args: { featureRunId: string; userId: string 
   const outputText = output.primaryPost ?? "";
   const briefAnswers = input.briefAnswers ?? {};
 
+  const spec = input.visualSpec;
   let phase: "plan" | "render" = "plan";
   const startedAt = Date.now(); // wall-clock for the recorded generation time
   try {
-    const { plan, usage: planUsage } = await planVisual({ outputTypeId, outputText, briefAnswers, brand });
+    // Two paths: (1) NEW guided-brief flow — a confirmed Creative Spec already
+    // exists (director cost paid when the spec was synthesised), so build the
+    // image prompt from it directly; (2) legacy flow — call planVisual.
+    let plan: { shouldRender: boolean; kind: string; aspect: Aspect; imagePrompt: string; scenes: VisualScene[] };
+    let planUsage: { model: string; inputTokens: number; outputTokens: number } = { model: "none", inputTokens: 0, outputTokens: 0 };
 
-    // Always log the director call.
+    if (spec) {
+      plan = {
+        shouldRender: true,
+        kind: kindForOutputType(outputTypeId) === "none" ? "poster" : kindForOutputType(outputTypeId),
+        aspect: spec.ratio,
+        imagePrompt: buildPosterPromptFromSpec(spec, brand),
+        scenes: [],
+      };
+    } else {
+      const r = await planVisual({ outputTypeId, outputText, briefAnswers, brand });
+      plan = r.plan;
+      planUsage = r.usage;
+    }
+
+    // Log the director call (legacy path only — spec path logged it at synthesis).
     if (planUsage.model !== "none") {
       await logUsage({
         userId, brandId: brand.id, featureRunId,
@@ -142,6 +164,20 @@ export async function runVisualJob(args: { featureRunId: string; userId: string 
     phase = "render";
     const image = await renderImage({ prompt: plan.imagePrompt, size, runId: featureRunId });
 
+    // P7: stamp brand furniture (logo + footer) onto the saved poster. Spec path
+    // only; overlay failure must NOT fail the generation.
+    if (spec) {
+      try {
+        const abs = path.join(process.cwd(), "public", image.urlPath.replace(/^\/+/, ""));
+        const stamped = await applyBrandOverlay(await readFile(abs), {
+          logoPath: brand.logoPath, footerLeft: brand.footerLeft, footerRight: brand.footerRight,
+        });
+        await writeFile(abs, stamped);
+      } catch (e) {
+        await logError({ source: "visual.overlay", error: e, featureRunId, userId, brandId: brand.id, context: {} });
+      }
+    }
+
     // Log the image render.
     await logUsage({
       userId, brandId: brand.id, featureRunId,
@@ -149,13 +185,19 @@ export async function runVisualJob(args: { featureRunId: string; userId: string 
       imageCount: image.imageCount, imageSize: image.size,
     });
 
-    // Compute cost first so it can be persisted into the run output (so Semakan
-    // Lepas can show it, same as the live card).
-    const directorCost = planUsage.model !== "none"
-      ? actualFromUsage({ model: planUsage.model, inputTokens: planUsage.inputTokens, outputTokens: planUsage.outputTokens })
-      : { myr: 0 };
-    const imageCost = actualFromUsage({ model: "gpt-image-2", imageCount: image.imageCount, imageSize: image.size });
-    const costMyr = Math.round((directorCost.myr + imageCost.myr) * 100) / 100;
+    // Total cost for the run, persisted into its output so Semakan Lepas shows it.
+    // P11: sum every AI call logged against this run — spec synthesis + per-field
+    // regenerations (guided-brief flow) or the director call (legacy flow), plus
+    // the image render just logged above. Falls back to a direct director+image
+    // sum if the usage table can't be read.
+    let costMyr = await sumRunCostMyr(featureRunId);
+    if (costMyr <= 0) {
+      const directorCost = planUsage.model !== "none"
+        ? actualFromUsage({ model: planUsage.model, inputTokens: planUsage.inputTokens, outputTokens: planUsage.outputTokens })
+        : { myr: 0 };
+      const imageCost = actualFromUsage({ model: "gpt-image-2", imageCount: image.imageCount, imageSize: image.size });
+      costMyr = Math.round((directorCost.myr + imageCost.myr) * 100) / 100;
+    }
 
     // Persist into the run's output so it shows in history.
     const generatedMs = Date.now() - startedAt;
@@ -169,6 +211,7 @@ export async function runVisualJob(args: { featureRunId: string; userId: string 
       costMyr,
     };
     await updateFeatureRunOutput(featureRunId, { ...output, image: visual, visualPlan: { kind: plan.kind, scenes: plan.scenes } });
+    await setFeatureRunStatus(featureRunId, "generated");
 
     return {
       ok: true,
