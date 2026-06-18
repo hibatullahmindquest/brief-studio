@@ -171,14 +171,12 @@ Semua implementation plans disimpan di `docs/plans/`:
 
 > Last updated: 2026-06-18
 
-**Phase:** Async visual generation + Semakan Lepas status/cost/time — **PR #6 MERGED** to master (681b1ef). Async work shipped & live.
-**Shipped (in master via PR #6):**
-- `039ba5a` async visual generation via worker (GenerationJob + `npm run worker` + `GET /api/jobs`; enqueue replaces sync; 5-min watchdog; close-tab-safe + resumable)
-- `37aff00` Semakan Lepas visual indicator (🖼/⏳/✗/○) + generation time (`outputJson.image.generatedMs`)
-- `861666d` fix: timer resumes from real `createdAt`; live "Tengah jana" badge (`generation:start` + poll-while-generating)
-- `9e0994e` fix: cost (`costMyr`) persisted to `outputJson.image` → shown in HistoryModal
-- Live E2E proven with real OpenAI (RM0.30 poster). lint+tsc+build green; worker boots clean.
-**Branch hygiene done (2026-06-18):** deleted 9 stale local + 5 stale remote branches (all merged); cleaned up the 4 stacked async branches. Going forward: merge PRs with `--squash --delete-branch` to avoid branch pile-up.
-**Next (pick one):** **VPS deploy** async worker (Hafiz/root: `pm2 start npm --name scis-worker -- run worker:start` + chown `/var/www/brief-studio` — code unchanged from local; hibatullah has SSH to KVM8 but no sudo / no /var/www write); generation timeout/cancel hardening; exact social-ratio crop/pad for images; Organic analytics; Daily Signals engine; full Library page.
-**Blockers:** None. (Local dev: keep `npm run dev` + `npm run worker` both running for visuals to generate.)
+**Phase:** Visual Intake Overhaul (Phase 1: poster) — branch `feat/visual-intake-overhaul`. **Wave A (backend) DONE & verified; Wave B (UI) NEXT.**
+**What it is:** replace the basic "pick type → generate" visual flow with a guided brief (free-text angle + AI-suggested chip questions) → editable Creative Spec (headline/accent/CTA, each ↻ regenerate) → Sahkan Idea → Generate. Render-in-image (gpt-image-2) + brand DNA injection + thin logo/footer overlay from brand settings. Preserves all async/history/cost infra; adds a Draft state. Plans: brainstorm + PRD + build-prompts (P1–P11) in `.claude/plans/` + `docs/plans/`. Mockup: `C:\claude\temp\studio-flow-approaches.html` (tab C). Decisions locked: render-in-image, FeatureRun.status column, 2-field footer, gpt-5 director, local-FS logo.
+**Wave A shipped (commits on branch):**
+- `ceada13` P1 schema+migration (`FeatureRun.status` draft/confirmed/generated · `Brand.posterFooterLeft/Right` · reuse `Brand.logoUrl`) + P2 `BrandContext.visualDna`
+- `118c3f0` P3 `planSpec` director (gpt-5, angle-aware, strips `<>`) + `POST /api/studio/visual-spec`; P4 `regenerateSpecText` + `/regenerate-text`; P5 `/confirm-spec`; P6 `runVisualJob` builds prompt from `VisualSpec` (skips 2nd director call) + status=generated; P7 `visual-overlay.ts` (sharp logo+footer, no-op-safe) post-render. feature-store: `updateFeatureRunInput`/`setFeatureRunStatus` + draft VisualStatus.
+- Verified: lint+tsc green + `scripts/verify-wave-a.mts` (angle-aware spec, prompt reserves zones, overlay stamps footer).
+**Next (resume here) — Wave B (UI):** P8 brand settings logo upload + footer fields (admin); P9 Studio guided-brief UI (build tab-C flow: chat + Brief panel + Spec card w/ regenerate + Sahkan→Generate gate); P10 Semakan Lepas right-drawer Draft state (Edit/Generate); P11 cost rollup → then verify · review · release-notes · commit · PR (pin fork, squash --delete-branch).
+**Blockers:** None. (Local dev: `npm run dev` + `npm run worker`. Stop both before any `prisma generate`/build — Windows EPERM.)
 **Reminder:** repo is a FORK — always `gh pr create --repo hibatullahmindquest/brief-studio --base master` (guard hook enforces this).
