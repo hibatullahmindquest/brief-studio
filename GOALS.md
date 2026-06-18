@@ -169,15 +169,16 @@ Semua implementation plans disimpan di `docs/plans/`:
 
 ## Active Task (update every session)
 
-> Last updated: 2026-06-16
+> Last updated: 2026-06-18
 
-**Phase:** Async visual generation + Semakan Lepas status/cost/time — **PR #6 OPEN** (awaiting review/merge).
-**Task:** Built Approach B async generation (worker process) + history indicators. PR #6 → https://github.com/hibatullahmindquest/brief-studio/pull/6 (base `master`, head `fix/history-cost-display`, pinned to fork). Bundles 4 stacked commits:
+**Phase:** Async visual generation + Semakan Lepas status/cost/time — **PR #6 MERGED** to master (681b1ef). Async work shipped & live.
+**Shipped (in master via PR #6):**
 - `039ba5a` async visual generation via worker (GenerationJob + `npm run worker` + `GET /api/jobs`; enqueue replaces sync; 5-min watchdog; close-tab-safe + resumable)
 - `37aff00` Semakan Lepas visual indicator (🖼/⏳/✗/○) + generation time (`outputJson.image.generatedMs`)
 - `861666d` fix: timer resumes from real `createdAt`; live "Tengah jana" badge (`generation:start` + poll-while-generating)
 - `9e0994e` fix: cost (`costMyr`) persisted to `outputJson.image` → shown in HistoryModal
-**Status:** All 4 tasks shipped through full workflow (verify+review+release-notes+commit each). Live E2E proven with real OpenAI (RM0.30 poster, image on disk via `scripts/test-async-visual.ts`). lint+tsc+build green; worker boots clean.
-**Next:** Await PR #6 review/merge. After merge: delete the 4 stacked branches; **VPS deploy** (Hafiz/root: `pm2 start npm --name scis-worker -- run worker:start` + chown `/var/www/brief-studio` — code unchanged from local). hibatullah has SSH to KVM8 but no sudo / no /var/www write.
+- Live E2E proven with real OpenAI (RM0.30 poster). lint+tsc+build green; worker boots clean.
+**Branch hygiene done (2026-06-18):** deleted 9 stale local + 5 stale remote branches (all merged); cleaned up the 4 stacked async branches. Going forward: merge PRs with `--squash --delete-branch` to avoid branch pile-up.
+**Next (pick one):** **VPS deploy** async worker (Hafiz/root: `pm2 start npm --name scis-worker -- run worker:start` + chown `/var/www/brief-studio` — code unchanged from local; hibatullah has SSH to KVM8 but no sudo / no /var/www write); generation timeout/cancel hardening; exact social-ratio crop/pad for images; Organic analytics; Daily Signals engine; full Library page.
 **Blockers:** None. (Local dev: keep `npm run dev` + `npm run worker` both running for visuals to generate.)
 **Reminder:** repo is a FORK — always `gh pr create --repo hibatullahmindquest/brief-studio --base master` (guard hook enforces this).
