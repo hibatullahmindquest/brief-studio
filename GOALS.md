@@ -169,11 +169,15 @@ Semua implementation plans disimpan di `docs/plans/`:
 
 ## Active Task (update every session)
 
-> Last updated: 2026-06-15
+> Last updated: 2026-06-16
 
-**Phase:** SCIS — everything below MERGED to master. Clean working tree, master = origin/master, no open PRs.
-**Task:** All closed. Merged this session: PR #2 (PRD v2 + v6 redesign + Meta paid analytics + real NakNgaji data), PR #3 (visual generation: gpt-4o director → gpt-image-2, APIUsageLog + `/dashboard/usage`, error logging + `/dashboard/settings/logs`, empty-prompt fix, uncropped display + categorized failures, generation timer, generate-visual-later), PR #4 (fork-PR guard: gh set-default + WORKFLOW/CLAUDE rule + `.claude/hooks/guard-pr-repo.py`).
-**Status:** Nothing pending. Live image gen confirmed working (needs `OPENAI_API_KEY` with gpt-image-2 access + billing).
-**Next (pick one):** Isu 3 async/resumable generation jobs (parked → `docs/plans/2026-06-15-async-generation-jobs-FUTURE.md`); generation timeout/cancel hardening; exact social-ratio crop/pad for images; Organic analytics (needs Meta Graph organic pull); Daily Signals engine; full Library page.
-**Blockers:** None.
+**Phase:** Async visual generation + Semakan Lepas status/cost/time — **PR #6 OPEN** (awaiting review/merge).
+**Task:** Built Approach B async generation (worker process) + history indicators. PR #6 → https://github.com/hibatullahmindquest/brief-studio/pull/6 (base `master`, head `fix/history-cost-display`, pinned to fork). Bundles 4 stacked commits:
+- `039ba5a` async visual generation via worker (GenerationJob + `npm run worker` + `GET /api/jobs`; enqueue replaces sync; 5-min watchdog; close-tab-safe + resumable)
+- `37aff00` Semakan Lepas visual indicator (🖼/⏳/✗/○) + generation time (`outputJson.image.generatedMs`)
+- `861666d` fix: timer resumes from real `createdAt`; live "Tengah jana" badge (`generation:start` + poll-while-generating)
+- `9e0994e` fix: cost (`costMyr`) persisted to `outputJson.image` → shown in HistoryModal
+**Status:** All 4 tasks shipped through full workflow (verify+review+release-notes+commit each). Live E2E proven with real OpenAI (RM0.30 poster, image on disk via `scripts/test-async-visual.ts`). lint+tsc+build green; worker boots clean.
+**Next:** Await PR #6 review/merge. After merge: delete the 4 stacked branches; **VPS deploy** (Hafiz/root: `pm2 start npm --name scis-worker -- run worker:start` + chown `/var/www/brief-studio` — code unchanged from local). hibatullah has SSH to KVM8 but no sudo / no /var/www write.
+**Blockers:** None. (Local dev: keep `npm run dev` + `npm run worker` both running for visuals to generate.)
 **Reminder:** repo is a FORK — always `gh pr create --repo hibatullahmindquest/brief-studio --base master` (guard hook enforces this).

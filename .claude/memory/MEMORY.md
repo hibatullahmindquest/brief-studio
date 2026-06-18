@@ -5,6 +5,30 @@ Add entries via `/bs-save-session` at end of each session.
 
 ---
 
+## 2026-06-16 — Async worker (Approach B): web enqueues, worker process generates
+**Context:** Built close-tab-safe visual generation. App is long-running Node (`next start`, NOT serverless — CLAUDE.md forbids Vercel/Edge), so a separate worker process is viable.
+**Discovery:** Pattern = `GenerationJob` table is the only channel between web (enqueue) and worker (`npm run worker` = `tsx watch src/worker/index.ts`). Web does NO OpenAI work. Atomic claim via `updateMany WHERE status='queued'` (loser gets count 0). Watchdog sweeps `processing` older than `claimedAt+5min` → failed. The `kind` field on GenerationJob is future-proofing for async TEXT (bulk variations, Phase 2) — same worker, same queue.
+**Impact:** Local = 2 terminals (`dev` + `worker`); VPS = same script under PM2 `scis-worker`, zero code change. Worker MUST run or visuals stick at "queued".
+**Source:** built + live E2E proven (real OpenAI, RM0.30 poster).
+
+## 2026-06-16 — tsx worker gotchas: top-level await + env-before-import
+**Context:** Worker wouldn't boot.
+**Discovery:** (1) tsx transforms a worker entry as CJS (no `"type":"module"`) → top-level `await import()` throws "Top-level await is currently not supported with the cjs output format". Use `import("./loop").catch(...)` instead. (2) Env must load BEFORE modules that read it at construct-time (Prisma client). Pattern: `process.loadEnvFile(".env.local")` (sync, Node 20.12+/22+) in a bootstrap entry, THEN dynamic-import the loop. (3) tsx resolves tsconfig `@/*` paths even from `src/worker` + `scripts/` — no extra config.
+**Impact:** Worker entry = thin bootstrap (loadEnvFile + dynamic import); loop in a separate file.
+**Source:** debugging (boot failures).
+
+## 2026-06-16 — Windows: Prisma generate EPERM = a node process holds the engine DLL
+**Context:** `npm run build` (runs `prisma generate`) failed `EPERM unlink query_engine-windows.dll.node`.
+**Discovery:** ANY live node process holding the DLL blocks it — a running `next dev` OR a leftover `tsx` worker/script. `kill` in Git Bash often doesn't reap npm-spawned node children; use PowerShell `Stop-Process` on procs whose CommandLine matches the project. Stop dev + worker before any build/generate.
+**Impact:** Build hygiene on Windows: kill stray project node procs first. Also logged to global KNOWLEDGE.md.
+**Source:** debugging (recurred twice this session).
+
+## 2026-06-16 — Cost/time data placement: persist into outputJson.image, not just the job
+**Context:** Cost showed on the live card but not in Semakan Lepas.
+**Discovery:** The live VisualPanel reads cost/time from `GET /api/jobs` (job row). History (HistoryModal) reads `FeatureRun.outputJson` — a totally separate source. Anything history must show (generatedMs, costMyr) has to be written into `outputJson.image` by the worker at persist time, NOT only kept on GenerationJob/APIUsageLog. Visual status badge is the exception — derived by joining the latest job at query time (`getRecentFeatureRuns`), one batched `findMany WHERE featureRunId IN (...)`.
+**Impact:** When adding any per-run display field, decide its read-source: live card = job; history = outputJson.
+**Source:** debugging (user reported missing cost).
+
 ## 2026-06-15 — gpt-image-2 only outputs 3 sizes (not true 9:16/16:9)
 **Context:** Generated visual rendered cropped.
 **Discovery:** gpt-image-2 supports only 1024×1024 (1:1), 1024×1536 (2:3), 1536×1024 (3:2). We labelled brief sizes 9:16/16:9 and set the CSS container to that ratio with `object-fit: cover` → mismatch (2:3≠9:16) cropped the image. Fix = display native ratio (no fixed aspect + no cover). True 9:16/16:9 needs a crop/pad/outpaint post-step (deferred, FUTURE plan).
