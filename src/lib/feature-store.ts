@@ -135,7 +135,7 @@ export async function getRecentFeatureRuns(
   const parsed = rows.flatMap((row) => {
     const output = safeParse<HistoryRun["fullOutput"] & { image?: HistoryImage }>(row.outputJson);
     if (!output) return [];
-    const input = safeParse<{ brandSlug?: string; contentType?: string }>(row.inputJson);
+    const input = safeParse<{ brandSlug?: string; contentType?: string; visualSpec?: { angle?: string; brief?: string; headline?: string } }>(row.inputJson);
     const outputTypeId = OUTPUT_TYPES.find((o) => o.label === input?.contentType)?.id ?? "";
     return [{ row, output, input, outputTypeId }];
   });
@@ -156,11 +156,18 @@ export async function getRecentFeatureRuns(
 
   return parsed.map(({ row, output, input, outputTypeId }) => {
     const image = output.image ?? null;
+    // Drafts have no copy output — surface the spec's angle/headline so the
+    // Semakan Lepas card reads "Idea: <angle>" instead of a blank line.
+    const spec = input?.visualSpec;
+    const draftLabel = spec ? (spec.angle || spec.headline || spec.brief || "Idea poster") : "Idea poster";
+    // Guided-poster runs (draft AND generated-from-spec) have no copy output, so
+    // fall back to the spec's angle/headline for the list line.
+    const excerpt = (output.primaryPost ?? "").trim() || (spec ? draftLabel : "");
     return {
       id: row.id,
       subtype: row.subtype,
       brandSlug: input?.brandSlug ?? null,
-      primaryPostExcerpt: (output.primaryPost ?? "").slice(0, 120),
+      primaryPostExcerpt: excerpt.slice(0, 120),
       fullOutput: output,
       image,
       outputTypeId,

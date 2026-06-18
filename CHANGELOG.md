@@ -6,6 +6,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## [Unreleased]
 
 ### Added
+- **Visual intake overhaul — guided poster brief → Creative Spec → generate** (`feat/visual-intake-overhaul`): the Poster output now uses a guided flow instead of the scripted Q&A:
+  - Free-text brief + objective chips → AI synthesises a **Creative Spec** (angle, objective, style, mood, headline, accent, CTA, concept, ratio) anchored to the brief's angle
+  - Editable **headline / accent / CTA** rendered verbatim into the image, each with **↻ Jana semula** (single-field regenerate); style/mood/ratio pickable via chips; concept/angle editable
+  - **Sahkan Idea → Generate Poster** gate; spec persists as a **Draft** so it can be edited/generated later
+  - Text rendered in-image by gpt-image-2 with reserved top-left (logo) + bottom (footer) zones; per-brand **visual DNA** injected
+  - **Brand furniture overlay** — transparent logo (top-left) + footer bar (bottom) stamped post-render from brand settings (sharp), read at generation time
+  - Admin **brand furniture settings** at `/dashboard/settings/brands` — PNG logo upload (`POST /api/brand/logo`) + footer text (`PATCH /api/brand`)
+  - **Semakan Lepas Draft state** — `○ Draft` rows with **Edit** (reopen spec) / **Generate** (enqueue) actions
+  - New endpoints: `GET/POST/PUT /api/studio/visual-spec`, `POST /api/studio/regenerate-text`, `POST /api/studio/confirm-spec` (creative/admin gated; admin-only for brand furniture)
+  - Run cost rolls up spec-synthesis + regenerations + image render into one `costMyr`
+  - Phase 1 = poster only (variations, true 9:16 crop/pad, storyboard/script intake deferred)
 - **Semakan Lepas visual indicator + generation time** — each history row now shows a visual-status badge — `🖼 Ada visual` (with `⏱ Ns` generation time), `⏳ Tengah jana…`, `✗ Gagal`, or `○ Belum jana` (Hook & Copy text-only runs show no badge). Status is derived from the latest `GenerationJob` per run (one batched query, no migration); the worker now records render duration into `outputJson.image.generatedMs`, also shown as a `⏱` chip in the run detail modal. Old runs gracefully omit the time.
 - **Async visual generation (close-tab-safe + resumable)** — visual generation now runs in a separate worker process instead of the web request, so closing the tab no longer drops a generation:
   - `GenerationJob` model + queue (`queued → processing → succeeded → failed`); the image still lives in `FeatureRun.outputJson` (job tracks process + cost only)

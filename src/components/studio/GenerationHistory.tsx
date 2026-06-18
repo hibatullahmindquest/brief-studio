@@ -64,7 +64,7 @@ function VisualBadges({ run }: { run: HistoryRun }) {
           <span className="inline-flex items-center gap-1 rounded-md bg-[var(--card-2)] px-1.5 py-0.5 mono text-[10px] font-semibold text-[#a6aebb]">○ Belum jana</span>
         </div>
       );
-    default: // "text" — no visual badge
+    default: // "text" / "draft" — handled elsewhere
       return null;
   }
 }
@@ -82,6 +82,31 @@ export function GenerationHistory() {
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   const LIMIT = 10;
+  const [genningDraft, setGenningDraft] = useState<string | null>(null);
+
+  // Re-open a Draft's Creative Spec in the Studio (StudioWizard listens).
+  function editDraft(run: HistoryRun) {
+    window.dispatchEvent(
+      new CustomEvent("studio:edit-draft", { detail: { featureRunId: run.id, brandSlug: run.brandSlug } })
+    );
+  }
+
+  // Enqueue generation for a Draft directly from the drawer ("Generate" button).
+  const generateDraft = useCallback(async (run: HistoryRun) => {
+    setGenningDraft(run.id);
+    try {
+      const res = await fetch("/api/generate/visual", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ featureRunId: run.id }),
+      });
+      if (res.ok) window.dispatchEvent(new CustomEvent("generation:start"));
+    } catch {
+      /* ignore — user can retry */
+    } finally {
+      setGenningDraft(null);
+    }
+  }, []);
 
   const fetchPage = useCallback(async (afterCursor?: string) => {
     setLoadingMore(true);
@@ -220,6 +245,50 @@ export function GenerationHistory() {
               {filtered.map((run) => {
                 const brandColor = run.brandSlug ? BRAND_COLORS[run.brandSlug] ?? "#888" : "#888";
                 const brandName = run.brandSlug ? BRAND_NAMES[run.brandSlug] ?? run.brandSlug : "—";
+                const meta = (
+                  <div className="mb-1.5 flex items-center gap-1.5">
+                    <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: brandColor }} />
+                    <span className="text-[11px] font-semibold text-[#00262a]">{brandName}</span>
+                    <span className="text-[11px] text-[#a6aebb]">·</span>
+                    <span className="text-[11px] text-[#7b8698]">{run.subtype ?? "Generation"}</span>
+                    <span className="ml-auto shrink-0 text-[10px] text-[#a6aebb]">{formatRelative(run.createdAt)}</span>
+                  </div>
+                );
+
+                // Draft — not a finished output, so it's not a modal-opener. Show
+                // the "○ Draft" badge + Edit/Generate actions (valid HTML: no
+                // button nested inside a button).
+                if (run.visualStatus === "draft") {
+                  return (
+                    <div key={run.id} className="border-b border-[var(--line)] px-4 py-3.5">
+                      {meta}
+                      <p className="line-clamp-2 text-[11px] leading-5 text-[#7b8698]">
+                        Idea: {run.primaryPostExcerpt || "poster"}
+                      </p>
+                      <div className="mt-1.5">
+                        <span className="inline-flex items-center gap-1 rounded-md border border-[var(--line-2)] bg-[var(--card-2)] px-1.5 py-0.5 mono text-[10px] font-bold text-[#7b8698]">○ Draft</span>
+                      </div>
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => editDraft(run)}
+                          className="rounded-lg border border-[var(--line-2)] px-2.5 py-1 text-[11px] font-medium text-[#33414f] transition hover:bg-white"
+                        >
+                          ✎ Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => generateDraft(run)}
+                          disabled={genningDraft === run.id}
+                          className="rounded-lg bg-[var(--orange)] px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-[var(--orange-2)] disabled:opacity-40"
+                        >
+                          {genningDraft === run.id ? "⚡ …" : "⚡ Generate"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                   <button
                     key={run.id}
@@ -227,18 +296,7 @@ export function GenerationHistory() {
                     onClick={() => setSelected(run)}
                     className="w-full border-b border-[var(--line)] px-4 py-3.5 text-left transition hover:bg-[var(--card-2)]"
                   >
-                    <div className="mb-1.5 flex items-center gap-1.5">
-                      <span
-                        className="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
-                        style={{ backgroundColor: brandColor }}
-                      />
-                      <span className="text-[11px] font-semibold text-[#00262a]">{brandName}</span>
-                      <span className="text-[11px] text-[#a6aebb]">·</span>
-                      <span className="text-[11px] text-[#7b8698]">{run.subtype ?? "Generation"}</span>
-                      <span className="ml-auto shrink-0 text-[10px] text-[#a6aebb]">
-                        {formatRelative(run.createdAt)}
-                      </span>
-                    </div>
+                    {meta}
                     <p className="line-clamp-2 text-[11px] leading-5 text-[#7b8698]">
                       {run.primaryPostExcerpt}
                     </p>

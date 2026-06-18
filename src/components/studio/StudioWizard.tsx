@@ -1,17 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BrandPicker } from "./BrandPicker";
 import { OutputTypePicker } from "./OutputTypePicker";
 import { ConversationStep } from "./ConversationStep";
 import { BriefReview } from "./BriefReview";
 import { GenerationResult } from "./GenerationResult";
+import { GuidedPosterFlow } from "./GuidedPosterFlow";
 import { getOutputType } from "@/lib/conversation-engine";
 
 export type Stage =
   | "SELECT_BRAND"
   | "SELECT_OUTPUT"
   | "CONVERSATION"
+  | "GUIDED_POSTER"
   | "REVIEW"
   | "GENERATING"
   | "RESULT";
@@ -45,8 +47,35 @@ export function StudioWizard() {
   const [result, setResult] = useState<GeneratedOutput | null>(null);
   const [runId, setRunId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [editRunId, setEditRunId] = useState<string | null>(null);
 
   const outputType = outputTypeId ? getOutputType(outputTypeId) : null;
+
+  // "Edit" on a Draft in Semakan Lepas → jump straight into the guided poster
+  // flow with that draft's spec loaded. The drawer dispatches the run + brand.
+  useEffect(() => {
+    function onEditDraft(e: Event) {
+      const { featureRunId, brandSlug } = (e as CustomEvent<{ featureRunId: string; brandSlug: string }>).detail ?? {};
+      if (!featureRunId || !brandSlug) return;
+      void (async () => {
+        try {
+          const res = await fetch("/api/brand");
+          const brands = (await res.json()) as BrandSummary[];
+          const b = brands.find((x) => x.slug === brandSlug);
+          if (!b) return;
+          setBrand(b);
+          setOutputTypeId("poster");
+          setEditRunId(featureRunId);
+          setStage("GUIDED_POSTER");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } catch {
+          /* ignore — drawer stays as-is */
+        }
+      })();
+    }
+    window.addEventListener("studio:edit-draft", onEditDraft);
+    return () => window.removeEventListener("studio:edit-draft", onEditDraft);
+  }, []);
 
   function reset() {
     setBrand(null);
@@ -56,6 +85,7 @@ export function StudioWizard() {
     setResult(null);
     setRunId(null);
     setError(null);
+    setEditRunId(null);
     setStage("SELECT_BRAND");
   }
 
@@ -68,7 +98,10 @@ export function StudioWizard() {
     setOutputTypeId(id);
     setCurrentQuestionIndex(0);
     setAnswers({});
-    setStage("CONVERSATION");
+    setEditRunId(null);
+    // Poster uses the guided-brief flow (free-text brief → Creative Spec →
+    // confirm → generate). All other output types keep the Q&A conversation.
+    setStage(id === "poster" ? "GUIDED_POSTER" : "CONVERSATION");
   }
 
   function handleAnswer(questionId: string, answer: string) {
@@ -138,7 +171,7 @@ export function StudioWizard() {
     stage === "SELECT_OUTPUT" ? 1 :
     stage === "CONVERSATION" ? 2 : 3;
 
-  const showProgress = stage !== "RESULT" && stage !== "GENERATING";
+  const showProgress = stage !== "RESULT" && stage !== "GENERATING" && stage !== "GUIDED_POSTER";
 
   return (
     <div className="space-y-4">
@@ -200,6 +233,15 @@ export function StudioWizard() {
           onAnswer={handleAnswer}
           onBack={handleBack}
           canSkip={!outputType.questions[currentQuestionIndex].required}
+        />
+      )}
+
+      {stage === "GUIDED_POSTER" && brand && (
+        <GuidedPosterFlow
+          key={editRunId ?? "new"}
+          brand={brand}
+          initialRunId={editRunId}
+          onExit={() => { setEditRunId(null); setStage("SELECT_OUTPUT"); }}
         />
       )}
 

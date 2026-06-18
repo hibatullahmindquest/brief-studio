@@ -6,7 +6,7 @@ import { planVisual, renderImage, kindForOutputType, buildPosterPromptFromSpec, 
 import { applyBrandOverlay } from "@/lib/visual-overlay";
 import { OUTPUT_TYPES } from "@/lib/conversation-engine";
 import { sizeForAspect, actualFromUsage } from "@/lib/pricing";
-import { logUsage } from "@/lib/usage";
+import { logUsage, sumRunCostMyr } from "@/lib/usage";
 import { logError } from "@/lib/error-log";
 
 // Shared visual-generation unit. Called by the WORKER (and previously by the
@@ -185,13 +185,19 @@ export async function runVisualJob(args: { featureRunId: string; userId: string 
       imageCount: image.imageCount, imageSize: image.size,
     });
 
-    // Compute cost first so it can be persisted into the run output (so Semakan
-    // Lepas can show it, same as the live card).
-    const directorCost = planUsage.model !== "none"
-      ? actualFromUsage({ model: planUsage.model, inputTokens: planUsage.inputTokens, outputTokens: planUsage.outputTokens })
-      : { myr: 0 };
-    const imageCost = actualFromUsage({ model: "gpt-image-2", imageCount: image.imageCount, imageSize: image.size });
-    const costMyr = Math.round((directorCost.myr + imageCost.myr) * 100) / 100;
+    // Total cost for the run, persisted into its output so Semakan Lepas shows it.
+    // P11: sum every AI call logged against this run — spec synthesis + per-field
+    // regenerations (guided-brief flow) or the director call (legacy flow), plus
+    // the image render just logged above. Falls back to a direct director+image
+    // sum if the usage table can't be read.
+    let costMyr = await sumRunCostMyr(featureRunId);
+    if (costMyr <= 0) {
+      const directorCost = planUsage.model !== "none"
+        ? actualFromUsage({ model: planUsage.model, inputTokens: planUsage.inputTokens, outputTokens: planUsage.outputTokens })
+        : { myr: 0 };
+      const imageCost = actualFromUsage({ model: "gpt-image-2", imageCount: image.imageCount, imageSize: image.size });
+      costMyr = Math.round((directorCost.myr + imageCost.myr) * 100) / 100;
+    }
 
     // Persist into the run's output so it shows in history.
     const generatedMs = Date.now() - startedAt;

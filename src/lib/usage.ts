@@ -36,6 +36,21 @@ export async function logUsage(input: LogUsageInput): Promise<void> {
 const MYT_OFFSET_MS = 8 * 60 * 60 * 1000;
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+// Total MYR cost logged against one FeatureRun — sums every AI call attributed
+// to it (spec synthesis + per-field regenerations + the image render) so the
+// guided-brief flow can show a true end-to-end poster cost. Never throws.
+export async function sumRunCostMyr(featureRunId: string): Promise<number> {
+  try {
+    const agg = await prisma.aPIUsageLog.aggregate({
+      _sum: { costMyr: true },
+      where: { featureRunId },
+    });
+    return round2(agg._sum.costMyr ?? 0);
+  } catch {
+    return 0;
+  }
+}
+
 export type UsageRecent = {
   id: string;
   brand: string | null;
