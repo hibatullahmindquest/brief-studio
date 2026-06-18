@@ -17,6 +17,7 @@ const mockBrand: BrandContext = {
     "Key messages: Tutor berpengalaman, belajar di mana-mana, fleksibel",
     "Do NOT say or imply: free trial, free class, nama competitor, confirm gred A",
   ].join("\n"),
+  visualDna: "SifuTutor visual style (test stub).",
 };
 
 async function main() {
