@@ -17,12 +17,13 @@ export default async function BrandFurniturePage() {
     const rows = await prisma.brand.findMany({
       where: { isActive: true },
       orderBy: { name: "asc" },
-      select: { slug: true, name: true, logoUrl: true, posterFooterLeft: true, posterFooterRight: true, primaryColor: true },
+      select: { slug: true, name: true, logoUrlLight: true, logoUrlDark: true, posterFooterLeft: true, posterFooterRight: true, primaryColor: true },
     });
     brands = rows.map((b) => ({
       slug: b.slug,
       name: b.name,
-      logoUrl: b.logoUrl ?? null,
+      logoUrlLight: b.logoUrlLight ?? null,
+      logoUrlDark: b.logoUrlDark ?? null,
       posterFooterLeft: b.posterFooterLeft ?? "",
       posterFooterRight: b.posterFooterRight ?? "",
       primaryColor: b.primaryColor,

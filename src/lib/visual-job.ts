@@ -171,7 +171,8 @@ export async function runVisualJob(args: { featureRunId: string; userId: string 
       try {
         const abs = path.join(process.cwd(), "public", image.urlPath.replace(/^\/+/, ""));
         const stamped = await applyBrandOverlay(await readFile(abs), {
-          logoPath: brand.logoPath, footerLeft: brand.footerLeft, footerRight: brand.footerRight,
+          logoPath: brand.logoPath, logoPathLight: brand.logoPathLight, logoPathDark: brand.logoPathDark,
+          footerLeft: brand.footerLeft, footerRight: brand.footerRight,
         });
         await writeFile(abs, stamped);
       } catch (e) {

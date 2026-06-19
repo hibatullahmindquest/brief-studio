@@ -6,6 +6,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## [Unreleased]
 
 ### Added
+- **Light/dark brand logo variants with auto-pick** (`feat/visual-intake-overhaul`): a brand can now hold two transparent logo PNGs — one for light backgrounds (dark-ink logo) and one for dark backgrounds (light/white logo). At stamp time the overlay samples the mean luminance of the top-left logo zone and stamps the contrasting variant automatically (falls back to whichever variant exists, then the legacy single logo). New `Brand.logoUrlLight` / `logoUrlDark` columns (migration `add_brand_logo_variants`); `POST /api/brand/logo` takes a `variant` (`light`|`dark`) and stores `<slug>-logo-<variant>.png`; admin form (`/dashboard/settings/brands`) now has two upload slots each previewed on a representative background.
 - **Conversational Studio — single-chat flow** (`feat/visual-intake-overhaul`): the Studio entry is now one chat instead of separate picker screens. AI greets → pick **brand** (chips) → pick **output** (chips); Poster continues into the guided brief/Creative Spec inside the same conversation, other output types run their Q&A as chat bubbles. Auto-copy (caption/CTA/hashtags/strategy note) is generated alongside the poster and shown under it.
   - New shared chat primitives (`chat-ui.tsx`: `ChatBubble`/`Chip`/`CustomChip`/`TypingDots`), `ChatConversation` (generic per-output Q&A as bubbles), and `GuidedPosterFlow` `embedded` mode.
   - Replaces the old picker components (`BrandPicker`, `OutputTypePicker`, `ConversationStep`, `BriefReview` — removed).
