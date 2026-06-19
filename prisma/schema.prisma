@@ -94,6 +94,8 @@ model Brand {
   logoUrl     String?  // legacy single logo (fallback) — public/uploads/brand/<slug>-logo.png
   logoUrlLight String? // logo variant to stamp ON LIGHT backgrounds (dark-ink logo) — <slug>-logo-light.png
   logoUrlDark  String? // logo variant to stamp ON DARK backgrounds (light/white logo) — <slug>-logo-dark.png
+  logoSize    String   @default("md") // poster logo size: "sm" | "md" | "lg"
+  logoCorner  String   @default("tl") // poster logo corner: "tl" (kiri-atas) | "tr" (kanan-atas) | "tc" (tengah-atas)
   posterFooterLeft  String?  // poster overlay footer — left (e.g. © 2025 ...)
   posterFooterRight String?  // poster overlay footer — right (e.g. tagline)
   primaryColor    String   @default("#000000")

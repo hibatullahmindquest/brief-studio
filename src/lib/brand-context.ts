@@ -15,6 +15,8 @@ export type BrandContext = {
   logoPath?: string | null;       // legacy single logo (fallback)
   logoPathLight?: string | null;  // logo for light backgrounds
   logoPathDark?: string | null;   // logo for dark backgrounds
+  logoSize?: "sm" | "md" | "lg" | null;
+  logoCorner?: "tl" | "tr" | "tc" | null;
   footerLeft?: string | null;
   footerRight?: string | null;
 };
@@ -64,6 +66,8 @@ export async function getBrandContext(slug: string): Promise<BrandContext | null
     logoPath: brand.logoUrl ?? null,
     logoPathLight: brand.logoUrlLight ?? null,
     logoPathDark: brand.logoUrlDark ?? null,
+    logoSize: (brand.logoSize as "sm" | "md" | "lg") ?? "md",
+    logoCorner: (brand.logoCorner as "tl" | "tr" | "tc") ?? "tl",
     footerLeft: brand.posterFooterLeft ?? null,
     footerRight: brand.posterFooterRight ?? null,
   };

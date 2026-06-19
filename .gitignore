@@ -57,3 +57,6 @@ next-env.d.ts
 # Uploaded brand furniture (logos uploaded via admin at runtime)
 /public/uploads/brand/*
 !/public/uploads/brand/.gitkeep
+
+# Generated status report PDFs (local artifacts — keep the README)
+/docs/reports/*.pdf

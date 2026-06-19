@@ -266,9 +266,9 @@ export function buildPosterPromptFromSpec(spec: VisualSpec, brand: BrandContext)
   if (spec.style) parts.push(`Style: ${spec.style}.`);
   if (spec.mood) parts.push(`Mood: ${spec.mood}.`);
   if (spec.concept) parts.push(`Scene: ${spec.concept}.`);
-  parts.push("Keep the very TOP-LEFT corner empty (clear) for a logo, and a clean thin strip along the VERY BOTTOM empty for a footer.");
-  if (spec.headline) parts.push(`Render a BOLD heavy uppercase headline reading "${spec.headline}".`);
-  if (spec.accent) parts.push(`Below it, render "${spec.accent}" in a handwritten SCRIPT italic font as an accent, with a soft sticker drop-shadow.`);
+  parts.push("CRITICAL LAYOUT: the entire TOP-LEFT corner — roughly the top-left 28% of the width and 16% of the height — MUST be completely empty: no text, no headline, no subjects, no graphics there. It is reserved for a logo added later. Also leave a clean empty thin strip along the VERY BOTTOM edge for a footer.");
+  if (spec.headline) parts.push(`Render a BOLD heavy uppercase headline reading "${spec.headline}" placed in the CENTER or lower-center of the poster — never starting in the top-left corner.`);
+  if (spec.accent) parts.push(`Just below the headline, render "${spec.accent}" in a handwritten SCRIPT italic font as an accent, with a soft sticker drop-shadow.`);
   if (spec.cta) parts.push(`Render a rounded call-to-action button with the text "${spec.cta}" in the lower-middle area (not at the very bottom edge).`);
   parts.push("Spell every word exactly as given. Professional, high-quality ad design.");
   return parts.join(" ");

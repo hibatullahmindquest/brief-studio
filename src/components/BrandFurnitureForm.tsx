@@ -7,10 +7,23 @@ export type BrandFurniture = {
   name: string;
   logoUrlLight: string | null; // logo for LIGHT backgrounds (dark-ink logo)
   logoUrlDark: string | null;  // logo for DARK backgrounds (light/white logo)
+  logoSize: "sm" | "md" | "lg";
+  logoCorner: "tl" | "tr" | "tc";
   posterFooterLeft: string;
   posterFooterRight: string;
   primaryColor: string;
 };
+
+const SIZE_OPTS: { v: "sm" | "md" | "lg"; label: string }[] = [
+  { v: "sm", label: "Kecil" },
+  { v: "md", label: "Sedang" },
+  { v: "lg", label: "Besar" },
+];
+const CORNER_OPTS: { v: "tl" | "tr" | "tc"; label: string }[] = [
+  { v: "tl", label: "Kiri atas" },
+  { v: "tc", label: "Tengah atas" },
+  { v: "tr", label: "Kanan atas" },
+];
 
 // Admin control for one brand's poster furniture: two transparent logo PNGs
 // (light-bg + dark-bg variants, overlay auto-picks by contrast) + two footer
@@ -19,7 +32,28 @@ export function BrandFurnitureForm({ brand }: { brand: BrandFurniture }) {
   const [left, setLeft] = useState(brand.posterFooterLeft);
   const [right, setRight] = useState(brand.posterFooterRight);
   const [savingFooter, setSavingFooter] = useState(false);
+  const [size, setSize] = useState(brand.logoSize);
+  const [corner, setCorner] = useState(brand.logoCorner);
+  const [savingPlacement, setSavingPlacement] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+
+  async function savePlacement(next: { logoSize?: typeof size; logoCorner?: typeof corner }) {
+    setSavingPlacement(true);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/brand", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: brand.slug, ...next }),
+      });
+      const data = (await res.json()) as { error?: string };
+      setMsg(res.ok ? { kind: "ok", text: "Kedudukan logo disimpan." } : { kind: "err", text: data.error ?? "Gagal simpan kedudukan." });
+    } catch {
+      setMsg({ kind: "err", text: "Ralat rangkaian." });
+    } finally {
+      setSavingPlacement(false);
+    }
+  }
 
   async function saveFooter() {
     setSavingFooter(true);
@@ -71,6 +105,50 @@ export function BrandFurnitureForm({ brand }: { brand: BrandFurniture }) {
             initialUrl={brand.logoUrlLight}
             onMsg={setMsg}
           />
+        </div>
+      </div>
+
+      {/* Logo placement — size + corner, saved per brand */}
+      <div className="mt-5">
+        <p className="eyebrow">Kedudukan logo</p>
+        <p className="mt-1 text-xs text-[#7b8698]">Saiz &amp; sudut logo pada poster. Disimpan untuk brand ini.</p>
+        <div className="mt-3 flex flex-wrap items-start gap-x-8 gap-y-3">
+          <div>
+            <span className="text-xs font-medium text-[#7b8698]">Saiz</span>
+            <div className="mt-1.5 flex gap-2">
+              {SIZE_OPTS.map((o) => (
+                <button
+                  key={o.v}
+                  type="button"
+                  disabled={savingPlacement}
+                  onClick={() => { setSize(o.v); void savePlacement({ logoSize: o.v }); }}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition disabled:opacity-40 ${
+                    size === o.v ? "border-[var(--brand)] bg-[var(--brand-soft)] text-foreground" : "border-[var(--line-2)] text-[#7b8698] hover:bg-[var(--card-2)]"
+                  }`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <span className="text-xs font-medium text-[#7b8698]">Sudut</span>
+            <div className="mt-1.5 flex gap-2">
+              {CORNER_OPTS.map((o) => (
+                <button
+                  key={o.v}
+                  type="button"
+                  disabled={savingPlacement}
+                  onClick={() => { setCorner(o.v); void savePlacement({ logoCorner: o.v }); }}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition disabled:opacity-40 ${
+                    corner === o.v ? "border-[var(--brand)] bg-[var(--brand-soft)] text-foreground" : "border-[var(--line-2)] text-[#7b8698] hover:bg-[var(--card-2)]"
+                  }`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
