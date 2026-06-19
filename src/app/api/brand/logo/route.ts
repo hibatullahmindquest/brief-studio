@@ -8,7 +8,8 @@ import { getCurrentUserWithRole } from "@/lib/session";
 const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
 
 // POST (multipart) — admin uploads a brand logo PNG used by the poster overlay.
-// Stored at public/uploads/brand/<slug>-logo.png and recorded in Brand.logoUrl.
+// A `variant` ("light" | "dark") says which background the logo sits on; stored at
+// public/uploads/brand/<slug>-logo-<variant>.png and recorded in logoUrlLight/Dark.
 export async function POST(req: NextRequest) {
   const user = await getCurrentUserWithRole();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -18,8 +19,10 @@ export async function POST(req: NextRequest) {
   try { form = await req.formData(); } catch { return NextResponse.json({ error: "Invalid form data" }, { status: 400 }); }
 
   const slug = String(form.get("slug") ?? "");
+  const variant = String(form.get("variant") ?? ""); // "light" | "dark" — background the logo sits on
   const file = form.get("file");
   if (!slug) return NextResponse.json({ error: "Missing slug" }, { status: 400 });
+  if (variant !== "light" && variant !== "dark") return NextResponse.json({ error: "Invalid variant (light|dark)" }, { status: 400 });
   if (!(file instanceof File)) return NextResponse.json({ error: "Missing file" }, { status: 400 });
   if (file.size > MAX_BYTES) return NextResponse.json({ error: "Logo terlalu besar (max 2MB)" }, { status: 413 });
 
@@ -41,12 +44,15 @@ export async function POST(req: NextRequest) {
 
   const dir = path.join(process.cwd(), "public", "uploads", "brand");
   await mkdir(dir, { recursive: true });
-  const filename = `${slug}-logo.png`;
+  const filename = `${slug}-logo-${variant}.png`;
   await writeFile(path.join(dir, filename), png);
 
   const logoUrl = `/uploads/brand/${filename}`;
-  await prisma.brand.update({ where: { slug }, data: { logoUrl } });
+  await prisma.brand.update({
+    where: { slug },
+    data: variant === "light" ? { logoUrlLight: logoUrl } : { logoUrlDark: logoUrl },
+  });
 
   // Cache-bust the preview (file path is stable across re-uploads).
-  return NextResponse.json({ logoUrl, version: png.length });
+  return NextResponse.json({ variant, logoUrl, version: png.length });
 }

@@ -53,3 +53,10 @@ next-env.d.ts
 # Generated images (created at runtime)
 /public/uploads/generated/*
 !/public/uploads/generated/.gitkeep
+
+# Uploaded brand furniture (logos uploaded via admin at runtime)
+/public/uploads/brand/*
+!/public/uploads/brand/.gitkeep
+
+# Generated status report PDFs (local artifacts — keep the README)
+/docs/reports/*.pdf

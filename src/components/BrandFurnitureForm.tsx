@@ -5,44 +5,53 @@ import { useState, useRef } from "react";
 export type BrandFurniture = {
   slug: string;
   name: string;
-  logoUrl: string | null;
+  logoUrlLight: string | null; // logo for LIGHT backgrounds (dark-ink logo)
+  logoUrlDark: string | null;  // logo for DARK backgrounds (light/white logo)
+  logoSize: "sm" | "md" | "lg";
+  logoCorner: "tl" | "tr" | "tc";
   posterFooterLeft: string;
   posterFooterRight: string;
   primaryColor: string;
 };
 
-// Admin control for one brand's poster furniture: transparent logo PNG (overlay
-// top-left) + two footer text lines (overlay bottom bar). Saved per brand.
+const SIZE_OPTS: { v: "sm" | "md" | "lg"; label: string }[] = [
+  { v: "sm", label: "Kecil" },
+  { v: "md", label: "Sedang" },
+  { v: "lg", label: "Besar" },
+];
+const CORNER_OPTS: { v: "tl" | "tr" | "tc"; label: string }[] = [
+  { v: "tl", label: "Kiri atas" },
+  { v: "tc", label: "Tengah atas" },
+  { v: "tr", label: "Kanan atas" },
+];
+
+// Admin control for one brand's poster furniture: two transparent logo PNGs
+// (light-bg + dark-bg variants, overlay auto-picks by contrast) + two footer
+// text lines (overlay bottom bar). Saved per brand.
 export function BrandFurnitureForm({ brand }: { brand: BrandFurniture }) {
-  const [logoUrl, setLogoUrl] = useState(brand.logoUrl);
-  const [logoBust, setLogoBust] = useState(0); // cache-bust the preview after re-upload
   const [left, setLeft] = useState(brand.posterFooterLeft);
   const [right, setRight] = useState(brand.posterFooterRight);
-  const [uploading, setUploading] = useState(false);
   const [savingFooter, setSavingFooter] = useState(false);
+  const [size, setSize] = useState(brand.logoSize);
+  const [corner, setCorner] = useState(brand.logoCorner);
+  const [savingPlacement, setSavingPlacement] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
-  const fileRef = useRef<HTMLInputElement | null>(null);
 
-  async function uploadLogo(file: File) {
-    setUploading(true);
+  async function savePlacement(next: { logoSize?: typeof size; logoCorner?: typeof corner }) {
+    setSavingPlacement(true);
     setMsg(null);
     try {
-      const form = new FormData();
-      form.set("slug", brand.slug);
-      form.set("file", file);
-      const res = await fetch("/api/brand/logo", { method: "POST", body: form });
-      const data = (await res.json()) as { logoUrl?: string; error?: string };
-      if (res.ok && data.logoUrl) {
-        setLogoUrl(data.logoUrl);
-        setLogoBust(Date.now());
-        setMsg({ kind: "ok", text: "Logo dikemaskini." });
-      } else {
-        setMsg({ kind: "err", text: data.error ?? "Gagal upload logo." });
-      }
+      const res = await fetch("/api/brand", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: brand.slug, ...next }),
+      });
+      const data = (await res.json()) as { error?: string };
+      setMsg(res.ok ? { kind: "ok", text: "Kedudukan logo disimpan." } : { kind: "err", text: data.error ?? "Gagal simpan kedudukan." });
     } catch {
-      setMsg({ kind: "err", text: "Ralat rangkaian semasa upload." });
+      setMsg({ kind: "err", text: "Ralat rangkaian." });
     } finally {
-      setUploading(false);
+      setSavingPlacement(false);
     }
   }
 
@@ -64,8 +73,6 @@ export function BrandFurnitureForm({ brand }: { brand: BrandFurniture }) {
     }
   }
 
-  const previewSrc = logoUrl ? `${logoUrl}${logoBust ? `?v=${logoBust}` : ""}` : null;
-
   return (
     <section className="rounded-3xl border border-[var(--line)] bg-white p-5 shadow-sm sm:p-6">
       <div className="flex items-center gap-2">
@@ -73,38 +80,74 @@ export function BrandFurnitureForm({ brand }: { brand: BrandFurniture }) {
         <h2 className="text-lg font-semibold text-[#00262a]">{brand.name}</h2>
       </div>
 
-      {/* Logo */}
+      {/* Logo — two variants; the overlay auto-picks by contrast at gen time */}
       <div className="mt-4">
         <p className="eyebrow">Logo poster</p>
-        <p className="mt-1 text-xs text-[#7b8698]">PNG transparan. Distamp di kiri-atas setiap poster yang dijana. Max 2MB.</p>
-        <div className="mt-3 flex items-center gap-4">
-          <div
-            className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--line-2)]"
-            style={{ background: "repeating-conic-gradient(#eef0f4 0% 25%, #fff 0% 50%) 50% / 16px 16px" }}
-          >
-            {previewSrc ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={previewSrc} alt={`${brand.name} logo`} className="max-h-full max-w-full object-contain" />
-            ) : (
-              <span className="text-[10px] text-[#a6aebb]">Tiada logo</span>
-            )}
+        <p className="mt-1 text-xs text-[#7b8698]">
+          PNG transparan, distamp kiri-atas poster. Upload dua versi — sistem pilih yang kontras dengan background poster automatik. Max 2MB.
+        </p>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <LogoSlot
+            slug={brand.slug}
+            variant="dark"
+            label="Untuk background gelap"
+            hint="logo cerah / putih"
+            previewBg="#0b1c73"
+            initialUrl={brand.logoUrlDark}
+            onMsg={setMsg}
+          />
+          <LogoSlot
+            slug={brand.slug}
+            variant="light"
+            label="Untuk background terang"
+            hint="logo gelap"
+            previewBg="#ffffff"
+            initialUrl={brand.logoUrlLight}
+            onMsg={setMsg}
+          />
+        </div>
+      </div>
+
+      {/* Logo placement — size + corner, saved per brand */}
+      <div className="mt-5">
+        <p className="eyebrow">Kedudukan logo</p>
+        <p className="mt-1 text-xs text-[#7b8698]">Saiz &amp; sudut logo pada poster. Disimpan untuk brand ini.</p>
+        <div className="mt-3 flex flex-wrap items-start gap-x-8 gap-y-3">
+          <div>
+            <span className="text-xs font-medium text-[#7b8698]">Saiz</span>
+            <div className="mt-1.5 flex gap-2">
+              {SIZE_OPTS.map((o) => (
+                <button
+                  key={o.v}
+                  type="button"
+                  disabled={savingPlacement}
+                  onClick={() => { setSize(o.v); void savePlacement({ logoSize: o.v }); }}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition disabled:opacity-40 ${
+                    size === o.v ? "border-[var(--brand)] bg-[var(--brand-soft)] text-foreground" : "border-[var(--line-2)] text-[#7b8698] hover:bg-[var(--card-2)]"
+                  }`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
           </div>
           <div>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/png"
-              className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadLogo(f); e.target.value = ""; }}
-            />
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="rounded-xl border border-[var(--line-2)] px-4 py-2 text-sm font-semibold text-[#33414f] transition hover:bg-[var(--card-2)] disabled:opacity-40"
-            >
-              {uploading ? "Memuat naik…" : previewSrc ? "Tukar logo" : "Upload logo PNG"}
-            </button>
+            <span className="text-xs font-medium text-[#7b8698]">Sudut</span>
+            <div className="mt-1.5 flex gap-2">
+              {CORNER_OPTS.map((o) => (
+                <button
+                  key={o.v}
+                  type="button"
+                  disabled={savingPlacement}
+                  onClick={() => { setCorner(o.v); void savePlacement({ logoCorner: o.v }); }}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition disabled:opacity-40 ${
+                    corner === o.v ? "border-[var(--brand)] bg-[var(--brand-soft)] text-foreground" : "border-[var(--line-2)] text-[#7b8698] hover:bg-[var(--card-2)]"
+                  }`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -151,5 +194,86 @@ export function BrandFurnitureForm({ brand }: { brand: BrandFurniture }) {
         </p>
       )}
     </section>
+  );
+}
+
+// One logo variant upload (light- or dark-background version). Previews on a
+// representative background so the admin can see contrast; posts with `variant`.
+function LogoSlot({
+  slug, variant, label, hint, previewBg, initialUrl, onMsg,
+}: {
+  slug: string;
+  variant: "light" | "dark";
+  label: string;
+  hint: string;
+  previewBg: string;
+  initialUrl: string | null;
+  onMsg: (m: { kind: "ok" | "err"; text: string }) => void;
+}) {
+  const [url, setUrl] = useState(initialUrl);
+  const [bust, setBust] = useState(0); // cache-bust preview after re-upload (path is stable)
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+
+  async function upload(file: File) {
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.set("slug", slug);
+      form.set("variant", variant);
+      form.set("file", file);
+      const res = await fetch("/api/brand/logo", { method: "POST", body: form });
+      const data = (await res.json()) as { logoUrl?: string; error?: string };
+      if (res.ok && data.logoUrl) {
+        setUrl(data.logoUrl);
+        setBust(Date.now());
+        onMsg({ kind: "ok", text: `Logo (${label.toLowerCase()}) dikemaskini.` });
+      } else {
+        onMsg({ kind: "err", text: data.error ?? "Gagal upload logo." });
+      }
+    } catch {
+      onMsg({ kind: "err", text: "Ralat rangkaian semasa upload." });
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  const previewSrc = url ? `${url}${bust ? `?v=${bust}` : ""}` : null;
+
+  return (
+    <div className="rounded-2xl border border-[var(--line)] p-3">
+      <p className="text-xs font-semibold text-[#00262a]">{label}</p>
+      <p className="text-[11px] text-[#a6aebb]">{hint}</p>
+      <div className="mt-2 flex items-center gap-3">
+        <div
+          className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--line-2)]"
+          style={{ background: previewBg }}
+        >
+          {previewSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={previewSrc} alt={`${label} logo`} className="max-h-full max-w-full object-contain" />
+          ) : (
+            <span className="text-[10px] text-[#a6aebb]" style={{ mixBlendMode: "difference", color: "#888" }}>—</span>
+          )}
+        </div>
+        <div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/png"
+            className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload(f); e.target.value = ""; }}
+          />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            className="rounded-xl border border-[var(--line-2)] px-3 py-1.5 text-sm font-semibold text-[#33414f] transition hover:bg-[var(--card-2)] disabled:opacity-40"
+          >
+            {uploading ? "Memuat naik…" : previewSrc ? "Tukar" : "Upload PNG"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

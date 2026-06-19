@@ -6,6 +6,27 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## [Unreleased]
 
 ### Added
+- **Manual logo placement (size + corner)** (`feat/visual-intake-overhaul`): each brand can set the poster logo **size** (`sm`/`md`/`lg`) and **corner** (`tl`/`tr`/`tc`) from the admin furniture form; saved via `PATCH /api/brand`, applied at stamp time. New `Brand.logoSize` / `logoCorner` columns (migration `add_brand_logo_placement`). The luminance sample box follows the chosen corner so the contrasting variant is still picked correctly.
+
+### Changed
+- **Poster logo overlay — placement & contrast fixes** (`feat/visual-intake-overhaul`):
+  - **Trim transparent margin** off the uploaded logo PNG before stamping, so the real mark sits flush at the corner instead of floating inward; corner padding tightened (3.3% → 2.5%).
+  - **Robust variant auto-pick** — luminance is now sampled from a small clean corner box (not the full footprint, which the rendered headline was polluting and flipping the choice).
+  - **Stronger top-left reservation** in the image prompt — hard-reserve the top-left ~28%×16% and place the headline in the center / lower-center, so the stamped logo no longer collides with the rendered headline.
+
+### Added
+- **Light/dark brand logo variants with auto-pick** (`feat/visual-intake-overhaul`): a brand can now hold two transparent logo PNGs — one for light backgrounds (dark-ink logo) and one for dark backgrounds (light/white logo). At stamp time the overlay samples the mean luminance of the top-left logo zone and stamps the contrasting variant automatically (falls back to whichever variant exists, then the legacy single logo). New `Brand.logoUrlLight` / `logoUrlDark` columns (migration `add_brand_logo_variants`); `POST /api/brand/logo` takes a `variant` (`light`|`dark`) and stores `<slug>-logo-<variant>.png`; admin form (`/dashboard/settings/brands`) now has two upload slots each previewed on a representative background.
+- **Conversational Studio — single-chat flow** (`feat/visual-intake-overhaul`): the Studio entry is now one chat instead of separate picker screens. AI greets → pick **brand** (chips) → pick **output** (chips); Poster continues into the guided brief/Creative Spec inside the same conversation, other output types run their Q&A as chat bubbles. Auto-copy (caption/CTA/hashtags/strategy note) is generated alongside the poster and shown under it.
+  - New shared chat primitives (`chat-ui.tsx`: `ChatBubble`/`Chip`/`CustomChip`/`TypingDots`), `ChatConversation` (generic per-output Q&A as bubbles), and `GuidedPosterFlow` `embedded` mode.
+  - Replaces the old picker components (`BrandPicker`, `OutputTypePicker`, `ConversationStep`, `BriefReview` — removed).
+
+### Changed
+- **Studio result no longer nests card-in-card** — once the poster reaches the generate/result phase, the chat collapses into a compact breadcrumb (`Brand / Output · ↻ Mula semula`) and the wrapper card is dropped, so the poster + copy panels render as clean standalone cards instead of nested inside the chat shell.
+
+### Removed
+- Dead Studio picker components (`BrandPicker`, `OutputTypePicker`, `ConversationStep`, `BriefReview`) superseded by the conversational chat flow.
+
+### Added (visual intake)
 - **Visual intake overhaul — guided poster brief → Creative Spec → generate** (`feat/visual-intake-overhaul`): the Poster output now uses a guided flow instead of the scripted Q&A:
   - Free-text brief + objective chips → AI synthesises a **Creative Spec** (angle, objective, style, mood, headline, accent, CTA, concept, ratio) anchored to the brief's angle
   - Editable **headline / accent / CTA** rendered verbatim into the image, each with **↻ Jana semula** (single-field regenerate); style/mood/ratio pickable via chips; concept/angle editable

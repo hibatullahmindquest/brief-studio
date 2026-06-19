@@ -12,7 +12,11 @@ export type BrandContext = {
    *  designer's real posters. Kept separate from promptBlock so it never pollutes copy gen. */
   visualDna: string;
   /** Brand furniture for the post-generation overlay (read at gen time). */
-  logoPath?: string | null;
+  logoPath?: string | null;       // legacy single logo (fallback)
+  logoPathLight?: string | null;  // logo for light backgrounds
+  logoPathDark?: string | null;   // logo for dark backgrounds
+  logoSize?: "sm" | "md" | "lg" | null;
+  logoCorner?: "tl" | "tr" | "tc" | null;
   footerLeft?: string | null;
   footerRight?: string | null;
 };
@@ -60,6 +64,10 @@ export async function getBrandContext(slug: string): Promise<BrandContext | null
     promptBlock: lines.join("\n"),
     visualDna: VISUAL_DNA[brand.slug] ?? GENERIC_DNA,
     logoPath: brand.logoUrl ?? null,
+    logoPathLight: brand.logoUrlLight ?? null,
+    logoPathDark: brand.logoUrlDark ?? null,
+    logoSize: (brand.logoSize as "sm" | "md" | "lg") ?? "md",
+    logoCorner: (brand.logoCorner as "tl" | "tr" | "tc") ?? "tl",
     footerLeft: brand.posterFooterLeft ?? null,
     footerRight: brand.posterFooterRight ?? null,
   };

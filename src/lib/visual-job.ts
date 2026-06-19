@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "fs/promises";
 import path from "path";
 import { getBrandContext } from "@/lib/brand-context";
+import { generateCopy } from "@/lib/openai";
 import { getFeatureRunOwned, updateFeatureRunOutput, setFeatureRunStatus } from "@/lib/feature-store";
 import { planVisual, renderImage, kindForOutputType, buildPosterPromptFromSpec, type VisualSpec, type Aspect } from "@/lib/visual";
 import { applyBrandOverlay } from "@/lib/visual-overlay";
@@ -170,7 +171,9 @@ export async function runVisualJob(args: { featureRunId: string; userId: string 
       try {
         const abs = path.join(process.cwd(), "public", image.urlPath.replace(/^\/+/, ""));
         const stamped = await applyBrandOverlay(await readFile(abs), {
-          logoPath: brand.logoPath, footerLeft: brand.footerLeft, footerRight: brand.footerRight,
+          logoPath: brand.logoPath, logoPathLight: brand.logoPathLight, logoPathDark: brand.logoPathDark,
+          logoSize: brand.logoSize, logoCorner: brand.logoCorner,
+          footerLeft: brand.footerLeft, footerRight: brand.footerRight,
         });
         await writeFile(abs, stamped);
       } catch (e) {
@@ -184,6 +187,27 @@ export async function runVisualJob(args: { featureRunId: string; userId: string 
       module: "visual", model: "gpt-image-2",
       imageCount: image.imageCount, imageSize: image.size,
     });
+
+    // Guided-brief flow: also generate the social copy (caption / CTA / hashtags /
+    // strategy note) so a poster carries the full post, not just the image.
+    // Best-effort — a copy failure must not fail the (already rendered) poster.
+    let copyFields: Partial<StoredOutput> = {};
+    if (spec) {
+      try {
+        const product = spec.brief?.trim() || spec.angle || brand.name;
+        const { copy, usage } = await generateCopy(brand, product, "Poster", 1, {
+          angle: spec.angle, objective: spec.objective, style: spec.style, mood: spec.mood,
+          headline: spec.headline, accent: spec.accent, cta: spec.cta, concept: spec.concept,
+        });
+        copyFields = copy;
+        await logUsage({
+          userId, brandId: brand.id, featureRunId,
+          module: "copy", model: usage.model, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens,
+        });
+      } catch (e) {
+        await logError({ source: "visual.copy", error: e, userId, brandId: brand.id, featureRunId, context: {} });
+      }
+    }
 
     // Total cost for the run, persisted into its output so Semakan Lepas shows it.
     // P11: sum every AI call logged against this run — spec synthesis + per-field
@@ -210,7 +234,13 @@ export async function runVisualJob(args: { featureRunId: string; userId: string 
       generatedMs,
       costMyr,
     };
-    await updateFeatureRunOutput(featureRunId, { ...output, image: visual, visualPlan: { kind: plan.kind, scenes: plan.scenes } });
+    await updateFeatureRunOutput(featureRunId, {
+      ...output,
+      ...copyFields,
+      generatedAt: output.generatedAt ?? new Date().toISOString(),
+      image: visual,
+      visualPlan: { kind: plan.kind, scenes: plan.scenes },
+    });
     await setFeatureRunStatus(featureRunId, "generated");
 
     return {
