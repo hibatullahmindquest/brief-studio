@@ -6,6 +6,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## [Unreleased]
 
 ### Added
+- **Conversational Studio — single-chat flow** (`feat/visual-intake-overhaul`): the Studio entry is now one chat instead of separate picker screens. AI greets → pick **brand** (chips) → pick **output** (chips); Poster continues into the guided brief/Creative Spec inside the same conversation, other output types run their Q&A as chat bubbles. Auto-copy (caption/CTA/hashtags/strategy note) is generated alongside the poster and shown under it.
+  - New shared chat primitives (`chat-ui.tsx`: `ChatBubble`/`Chip`/`CustomChip`/`TypingDots`), `ChatConversation` (generic per-output Q&A as bubbles), and `GuidedPosterFlow` `embedded` mode.
+  - Replaces the old picker components (`BrandPicker`, `OutputTypePicker`, `ConversationStep`, `BriefReview` — removed).
+
+### Changed
+- **Studio result no longer nests card-in-card** — once the poster reaches the generate/result phase, the chat collapses into a compact breadcrumb (`Brand / Output · ↻ Mula semula`) and the wrapper card is dropped, so the poster + copy panels render as clean standalone cards instead of nested inside the chat shell.
+
+### Removed
+- Dead Studio picker components (`BrandPicker`, `OutputTypePicker`, `ConversationStep`, `BriefReview`) superseded by the conversational chat flow.
+
+### Added (visual intake)
 - **Visual intake overhaul — guided poster brief → Creative Spec → generate** (`feat/visual-intake-overhaul`): the Poster output now uses a guided flow instead of the scripted Q&A:
   - Free-text brief + objective chips → AI synthesises a **Creative Spec** (angle, objective, style, mood, headline, accent, CTA, concept, ratio) anchored to the brief's angle
   - Editable **headline / accent / CTA** rendered verbatim into the image, each with **↻ Jana semula** (single-field regenerate); style/mood/ratio pickable via chips; concept/angle editable
