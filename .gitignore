@@ -50,6 +50,12 @@ next-env.d.ts
 !.claude/**
 .claude/settings.local.json
 
+# local-only skill packs (installed via `skills add`) — keep on disk, out of git.
+# Project skills (bs-*) stay tracked; external packs (Matt Pocock etc.) are local.
+skills-lock.json
+.claude/skills/*
+!.claude/skills/bs-*/
+
 # Generated images (created at runtime)
 /public/uploads/generated/*
 !/public/uploads/generated/.gitkeep
