@@ -72,7 +72,7 @@ async function main() {
     }
     if (j.status === "succeeded") {
       console.log(`\n✅ SUCCEEDED — resultKind=${j.resultKind}, costMyr=RM${j.costMyr.toFixed(2)}`);
-      const fresh = await prisma.featureRun.findUnique({ where: { id: run.id } });
+      const fresh = await prisma.creativeRun.findUnique({ where: { id: run.id } });
       const out = JSON.parse(fresh?.outputJson ?? "{}") as { image?: { urlPath?: string; kind?: string; scenes?: unknown[] } };
       const urlPath = out.image?.urlPath;
       console.log(`   image.kind=${out.image?.kind}, urlPath=${urlPath}`);

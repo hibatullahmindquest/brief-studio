@@ -31,7 +31,7 @@ async function main() {
   const { spec, usage } = await planSpec({ brief, brand, outputTypeId: "poster" });
   console.log("✓ SPEC:", { angle: spec.angle, headline: spec.headline, accent: spec.accent, cta: spec.cta, ratio: spec.ratio, style: spec.style, mood: spec.mood });
 
-  const run = await prisma.featureRun.create({
+  const run = await prisma.creativeRun.create({
     data: {
       userId: user.id,
       brandId: brand.id,
@@ -59,7 +59,7 @@ async function main() {
 
   const abs = path.join(process.cwd(), "public", result.image.urlPath.replace(/^\/+/, ""));
   await access(abs);
-  const fresh = await prisma.featureRun.findUnique({ where: { id: run.id }, select: { status: true, outputJson: true } });
+  const fresh = await prisma.creativeRun.findUnique({ where: { id: run.id }, select: { status: true, outputJson: true } });
   console.log("\n✓ image on disk:", abs);
   console.log("✓ run status   :", fresh?.status, "(expected: generated)");
   console.log("✓ costMyr      : RM", result.costMyr);

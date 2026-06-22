@@ -2,24 +2,23 @@
 
 ## ▶ NEXT SESSION — START HERE (handover 2026-06-22)
 
-**Where we are:** Executing the **revamp plan** (`creative-hub/docs/revamp/`). **Module 0 (generic worker/queue) is DONE + all gates passed**, on branch `feat/module-0-generic-queue`. Nothing pushed yet.
+**Where we are:** Executing the **revamp plan** (`creative-hub/docs/revamp/`). **Module 0 MERGED.** **Module 1 Phase A (data model) BUILT + all gates passed** on branch `feat/module-1-data-model` — committed, NOT pushed yet.
 
-**Branch / git state (NOT pushed):**
-- On branch **`feat/module-0-generic-queue`** — 13 commits ahead of `origin/master` (M0 ×8 + gitignore + rules + 3 bookkeeping/changelog). Working tree clean.
-- **`master`** also has **2 unpushed** housekeeping commits: gitignore `26ea9b2`, rules `6cfc69a`. Push these too when publishing.
+**Branch / git state:**
+- On **`feat/module-1-data-model`** — Module 1 Phase A committed. `master` @ `40eaef1` (M0 merged via PR #13).
 - ⚠️ FORK repo — ALWAYS pin: `gh pr create --repo hibatullahmindquest/brief-studio --base master` (guard hook enforces).
 
-**Gates done:** `m0-verify.ts` ALL PASS · lint+build green · `/bs-review` PASS (0 critical) · CHANGELOG updated. **NOT done:** live poster smoke (needs dev+worker+OpenAI $).
+**Gates done (M1-A):** migration applied (additive, FeatureRun preserved via @@map) · `seed-m1.ts` ran (2 brands + 5 experts + 3 recipes) · `m1a-verify.ts` ALL PASS (17 asserts) · lint+tsc+build green · `/bs-review` PASS (0 critical).
 
 **Immediate next actions (in order):**
-1. *(optional)* **Live smoke M0** — 2 terminals: `npm run dev` + `npm run worker:interactive`; generate a poster in Studio → confirm it lands in history; (already cost-free boot-verified).
-2. **Push + open PR** for Module 0:
-   `git push -u origin feat/module-0-generic-queue`
-   `gh pr create --repo hibatullahmindquest/brief-studio --base master`
-   Then push master's 2 housekeeping commits (`git checkout master && git push`).
-3. **Module 1 Phase A (data model)** — detail + execute per `creative-hub/docs/revamp/module-1-implementation.md` (7-entity model). This is the real next build phase.
+1. **Push + PR** Module 1 Phase A: `git push -u origin feat/module-1-data-model` then `gh pr create --repo hibatullahmindquest/brief-studio --base master`.
+2. **Module 1 Phase B (Admin)** — experts/recipes/brands/teams CRUD per `module-1-implementation.md` Phase B. (Or C Router — but B needed to author experts/recipes before D/E.)
 
-**Env state:** Docker `brief-studio-db` RUNNING. Dev server + worker STOPPED. DB URL `postgresql://postgres:postgres@localhost:5432/brief_studio`.
+**M1-A scope notes (carry forward):** Expert model named `Expert` (roleKey), not `Role` (avoid auth collision). Legacy/new Brand field duplication (dontSay/doNot, logoUrl/logoPath, footer, colors) is intentional — consolidate + backfill in a later phase. CreativeRun.outputJson still required — Phase D/F Artifact writers must pass `outputJson:"{}"` or relax column. Prisma 4: omit Json fields (or use `Prisma.DbNull`) — never pass literal `null`.
+
+**Explainer:** `C:\claude\temp\module-1-revamp-explainer.html` (revamp overview + 7-entity detail + interactions).
+
+**Env state:** Docker Desktop + `brief-studio-db` RUNNING (had to relaunch Docker this session). Dev + worker STOPPED. DB URL `postgresql://postgres:postgres@localhost:5432/brief_studio`.
 
 **Gotchas carried (also in MEMORY.md):** Prisma 4 needs `Prisma.JsonNull` to write null to a Json column. `@@map` rename = zero data migration but grep every old `prisma.<model>` call-site. External skill packs are gitignored local-only (`.claude/skills/*` except `bs-*`) — run `/reload-plugins` after install; many are user-invoke only (`disable-model-invocation`).
 
