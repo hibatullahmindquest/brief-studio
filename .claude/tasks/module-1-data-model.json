@@ -1,0 +1,76 @@
+{
+  "id": "module-1-data-model",
+  "route": "feature",
+  "created": "2026-06-22T06:40:32Z",
+  "branch": "feat/module-1-data-model",
+  "description": "Module 1 Phase A — creative-journey data model (7 entities): enrich Brand + User, add Recipe + Role/Expert, rename FeatureRun->CreativeRun and add Artifact, plus seed (brands + base experts + base recipes).",
+  "steps": [
+    {
+      "name": "brainstorm",
+      "status": "skipped",
+      "at": "2026-06-22T06:40:32Z",
+      "reason": "user: use revamp doc as spec (module-1-design.md LOCKED + module-1-implementation.md)"
+    },
+    {
+      "name": "prd",
+      "status": "skipped",
+      "at": "2026-06-22T06:40:32Z",
+      "reason": "user: revamp docs are the spec — creative-hub/docs/revamp/module-1-design.md (LOCKED) §11 data model + module-1-implementation.md Phase A"
+    },
+    {
+      "name": "ux",
+      "status": "skipped",
+      "at": "2026-06-22T06:40:32Z",
+      "reason": "data-layer phase, no UI — UI is Module 1 Phase G (studio-mockup.html)"
+    },
+    {
+      "name": "build-prompts",
+      "status": "done",
+      "at": "2026-06-22T06:45:00Z",
+      "evidence": "Phase A detailed into 9 tasks (A1-A9) + explainer at C:/claude/temp/module-1-revamp-explainer.html. Scope decision: FULL per design (user-approved) — rename FeatureRun->CreativeRun via @@map + add Artifact + all 7 entities. Helper fn names in feature-store.ts kept (stable API, out of design scope). Expert model named 'Expert' (roleKey field) to avoid auth-role collision."
+    },
+    {
+      "name": "build",
+      "status": "done",
+      "at": "2026-06-22T07:50:00Z",
+      "evidence": "Schema: User.team, Brand enrich (10 fields), FeatureRun->CreativeRun (@@map, +7 M1 fields), new Recipe/Expert/Artifact. Migration 20260622074439_m1_creative_journey_data_model applied (fully additive, FeatureRun table preserved). feature-store.ts repointed to prisma.creativeRun. seed-m1.ts (2 brands + 5 experts + 3 recipes) ran OK. m1a-verify.ts ALL PASS (17 asserts incl FK round-trip + cascade)."
+    },
+    {
+      "name": "verify",
+      "status": "done",
+      "at": "2026-06-22T07:58:00Z",
+      "evidence": { "lint": "passed", "tsc": "passed", "build": "passed (27 routes)" }
+    },
+    {
+      "name": "review",
+      "status": "done",
+      "at": "2026-06-22T08:02:00Z",
+      "evidence": {
+        "stage1_spec_compliance": "passed",
+        "stage2_code_quality": "passed",
+        "critical_issues": 0,
+        "notes": "All 7 entities + relations match design §11. Migration fully additive, FeatureRun preserved via @@map. Warns: Recipe.steps/Brand.templates untyped Json (validate at read); legacy/new field duplication to consolidate later; outputJson still required."
+      }
+    },
+    {
+      "name": "release-notes",
+      "status": "done",
+      "at": "2026-06-22T08:05:00Z",
+      "evidence": "CHANGELOG.md [Unreleased] > Added — Module 1 Phase A data model entry."
+    },
+    { "name": "commit", "status": "in_progress", "at": "2026-06-22T08:05:00Z" },
+    { "name": "push", "status": "pending" }
+  ],
+  "metadata": {
+    "outputType": null,
+    "brand": null,
+    "affectedFiles": [],
+    "buildPromptsFile": null,
+    "currentPrompt": null,
+    "totalPrompts": null,
+    "specDocs": [
+      "creative-hub/docs/revamp/module-1-design.md",
+      "creative-hub/docs/revamp/module-1-implementation.md"
+    ]
+  }
+}

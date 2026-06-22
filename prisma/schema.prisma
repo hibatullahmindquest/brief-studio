@@ -18,9 +18,10 @@ model User {
   username  String   @unique
   teamRole  String   @default("marketing") // "marketing" | "creative"
   isAdmin   Boolean  @default(false)
+  team      String   @default("single") // lens scope: "single" | "multi" (HOD) | "all" (admin)
   createdAt DateTime @default(now())
   stats          Stats?
-  featureRuns    FeatureRun[]
+  creativeRuns   CreativeRun[]
   notes          Note[]
   campaigns      Campaign[]
   calendarEvents CalendarEvent[]
@@ -67,12 +68,18 @@ model Stats {
   createdAt       DateTime @default(now())
 }
 
-model FeatureRun {
+// One creative-journey run: input -> intent -> recipe -> artifacts. Renamed from
+// FeatureRun (Module 1); @@map keeps the existing "FeatureRun" table -> zero data
+// migration. Legacy columns (feature/inputJson/outputJson/feedback) kept for
+// back-compat with the current visual-generation path; Module 1 fields added.
+model CreativeRun {
   id          String   @id @default(cuid())
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      String
   brand       Brand?   @relation(fields: [brandId], references: [id])
   brandId     String?
+  recipe      Recipe?  @relation(fields: [recipeId], references: [id])
+  recipeId    String?
   feature     String   // "poster" | "copy" | "storyboard" | "script" | "shooting_plan" | "ideas" | "plan" | "virality"
   subtype     String?
   title       String   @default("")
@@ -81,10 +88,65 @@ model FeatureRun {
   feedback    Int?     // 1 = thumbs up, -1 = thumbs down, null = no feedback
   feedbackNote String?
   status      String   @default("generated") // "draft" | "confirmed" | "generated" — visual-intake lifecycle
+  // ── Module 1: creative-journey fields ──
+  lens        String?  // "marketing" | "social" | "social_memo" — interpretation context
+  inputText   String?  // raw describe/brief text
+  inputUploads String[] @default([]) // uploaded asset paths/urls
+  intent      String?  // classified task purpose
+  spec        Json?    // structured brief filled after gap-check
+  contextUsed Json?    // grounding slot — signals (M4) + Meta findings (M3), empty for now
   createdAt   DateTime @default(now())
+  artifacts   Artifact[]
 
+  @@map("FeatureRun")
   @@index([userId, feature, createdAt])
   @@index([userId, brandId, feature, createdAt])
+  @@index([recipeId])
+}
+
+// A recipe = the pipeline for one task type: an ordered lineup of experts.
+// Router picks a recipe; the recipe drives which experts run, in order.
+model Recipe {
+  id           String   @id @default(cuid())
+  taskType     String   @unique // "poster" | "caption" | "marketing_plan" | ...
+  group        String   @default("") // "creative" | "copy" | "strategy" | "intelligence" | "compound"
+  steps        Json     @default("[]") // [{ roleKey, modelTier? }, ...] — ordered expert lineup
+  outputFormat String   @default("") // "image" | "text" | "pdf" | "carousel"
+  lenses       String[] @default([]) // lenses this recipe applies to
+  enabled      Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  creativeRuns CreativeRun[]
+}
+
+// An expert = an admin-editable system prompt run as one recipe step. Output
+// off? Edit the prompt in admin, not the code. (Design calls this "Role / Expert".)
+model Expert {
+  id           String   @id @default(cuid())
+  roleKey      String   @unique // "strategist" | "copywriter" | "art_director" | "social" | "brand_guardian"
+  name         String
+  systemPrompt String   @default("")
+  modelTier    String   @default("standard") // "fast" | "standard" | "premium"
+  enabled      Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// One output of a run. A run can yield many artifacts (poster + caption, etc.).
+// Replaces the single outputJson blob; also carries the 👍/👎 feedback signal.
+model Artifact {
+  id           String      @id @default(cuid())
+  run          CreativeRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  runId        String
+  type         String      // "image" | "copy" | "caption" | "storyboard" | "script" | "plan" | "pdf"
+  content      Json        @default("{}")
+  exportFormat String      @default("") // "png" | "pdf" | "txt" | ...
+  mediaPath    String?     // filesystem path for media artifacts (images/pdf)
+  feedback     Int?        // 1 = thumbs up, -1 = thumbs down, null = none
+  feedbackNote String?
+  createdAt    DateTime    @default(now())
+
+  @@index([runId, createdAt])
 }
 
 model Brand {
@@ -110,9 +172,20 @@ model Brand {
   facebookHandle  String?
   tiktokHandle    String?
   isActive    Boolean  @default(true)
+  // ── Module 1: enriched brand knowledge (grounding for expert pipeline) ──
+  contentPillars      String[] @default([]) // core content themes
+  audienceSegments    String[] @default([]) // distinct audience groups
+  doNot               String[] @default([]) // structured do-not list (supersedes legacy dontSay)
+  signaturePhrases    String[] @default([]) // brand voice phrases to favour
+  religiousGuidelines String   @default("") // e.g. Islamic compliance notes (NakNgaji)
+  logoPath            String?               // canonical logo asset (supersedes legacy logoUrl)
+  footer              String?               // canonical overlay footer text
+  colors              String[] @default([]) // brand palette (hex), beyond primary/secondary
+  fonts               String[] @default([]) // brand font stack
+  templates           Json     @default("[]") // structured brand templates (wired later)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  featureRuns FeatureRun[]
+  creativeRuns CreativeRun[]
   metaConnections MetaConnection[]
   organicPosts    OrganicPost[]
   adCreatives     AdCreative[]

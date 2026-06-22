@@ -29,7 +29,7 @@ function safeParse<T>(value: string | null | undefined): T | null {
 }
 
 export async function saveFeatureRun(params: SaveFeatureRunParams) {
-  return prisma.featureRun.create({
+  return prisma.creativeRun.create({
     data: {
       userId: params.userId,
       feature: params.feature,
@@ -41,18 +41,18 @@ export async function saveFeatureRun(params: SaveFeatureRunParams) {
 }
 
 export async function getFeatureRunOwned(runId: string, userId: string) {
-  return prisma.featureRun.findFirst({ where: { id: runId, userId } });
+  return prisma.creativeRun.findFirst({ where: { id: runId, userId } });
 }
 
 export async function updateFeatureRunOutput(runId: string, output: unknown) {
-  await prisma.featureRun.update({
+  await prisma.creativeRun.update({
     where: { id: runId },
     data: { outputJson: safeStringify(output) },
   });
 }
 
 export async function updateFeatureRunInput(runId: string, input: unknown) {
-  await prisma.featureRun.update({
+  await prisma.creativeRun.update({
     where: { id: runId },
     data: { inputJson: safeStringify(input) },
   });
@@ -61,7 +61,7 @@ export async function updateFeatureRunInput(runId: string, input: unknown) {
 export type RunStatus = "draft" | "confirmed" | "generated";
 
 export async function setFeatureRunStatus(runId: string, status: RunStatus) {
-  await prisma.featureRun.update({
+  await prisma.creativeRun.update({
     where: { id: runId },
     data: { status },
   });
@@ -124,7 +124,7 @@ export async function getRecentFeatureRuns(
   limit = 10,
   cursor?: string
 ): Promise<HistoryRun[]> {
-  const rows = await prisma.featureRun.findMany({
+  const rows = await prisma.creativeRun.findMany({
     where: { userId, feature: "generate" },
     orderBy: { createdAt: "desc" },
     take: limit,
@@ -187,7 +187,7 @@ export async function getLatestFeatureRun<TOutput = unknown, TInput = unknown>(p
       ? { userId: params.userId, feature: params.feature, subtype: params.subtype }
       : { userId: params.userId, feature: params.feature };
 
-  const row = await prisma.featureRun.findFirst({
+  const row = await prisma.creativeRun.findFirst({
     where,
     orderBy: { createdAt: "desc" },
   });

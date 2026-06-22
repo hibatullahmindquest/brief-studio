@@ -1,5 +1,5 @@
 {
-  "activeTask": "visual-intake-overhaul",
-  "taskFile": ".claude/tasks/visual-intake-overhaul.json",
+  "activeTask": "module-1-data-model",
+  "taskFile": ".claude/tasks/module-1-data-model.json",
   "route": "feature"
 }
