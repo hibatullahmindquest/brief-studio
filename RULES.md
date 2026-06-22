@@ -53,3 +53,12 @@
 25. **Update `GOALS.md` active task** — set current phase, what was done, what's next, any blockers.
 26. **Run `/bs-save-session`** — save any non-obvious learnings to `.claude/memory/`.
 27. **If a technical gotcha was discovered** — add to `.claude/memory/` with date and context.
+
+
+## Progress Reporting Rules
+
+28. **Checklist after every step** — for any multi-step task (a plan, a workflow route, or anything with ≥3 ordered steps), after completing each step output a compact status checklist so the user always knows where we are. Format:
+    - A table (or bullet list) of **all** steps **in order**, each marked: ✅ done · ⏳ in progress · ❌ not started · ⏭️ skipped.
+    - End with a one-line **Next:** pointing at the immediate next step.
+    - Keep it terse — the checklist, not a re-explanation of the work.
+    - Skip only for trivial one-off tasks (single edit, single question). When in doubt, show it.
