@@ -144,13 +144,13 @@ export async function getRecentFeatureRuns(
   const ids = parsed.map((p) => p.row.id);
   const latestStatus = new Map<string, string>();
   if (ids.length > 0) {
-    const jobs = await prisma.generationJob.findMany({
+    const jobs = await prisma.job.findMany({
       where: { featureRunId: { in: ids } },
       orderBy: { createdAt: "desc" },
       select: { featureRunId: true, status: true },
     });
     for (const j of jobs) {
-      if (!latestStatus.has(j.featureRunId)) latestStatus.set(j.featureRunId, j.status); // first = latest
+      if (j.featureRunId && !latestStatus.has(j.featureRunId)) latestStatus.set(j.featureRunId, j.status); // first = latest
     }
   }
 

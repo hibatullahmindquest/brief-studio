@@ -169,11 +169,20 @@ Semua implementation plans disimpan di `docs/plans/`:
 
 ## Active Task (update every session)
 
-> Last updated: 2026-06-19 (evening)
+> Last updated: 2026-06-22
 
 **⚠️ DEPLOYMENT PLAN (do not re-debate):** brief-studio is the **build/prototype ground**. Once a feature is validated here, it is **migrated into `creative-hub`** — creative-hub is the product that runs on **KVM8**. brief-studio itself is **NOT** deployed to KVM8. (Earlier "deploy brief-studio to KVM8" notes are obsolete.)
 
-**Phase:** Visual Intake Overhaul (Phase 1: poster) — **SHIPPED TO `master`.** Wave A + B + conversational chat rewrite + brand-logo system all DONE, merged, validated. Now on `master`; feature branches deleted. **Next = migrate feature into `creative-hub` (the KVM8 product).**
+**Phase:** **Revamp execution** (plan: `creative-hub/docs/revamp/`). Module 0 (generic worker/queue) built here in brief-studio.
+**Task:** Module 0 — turn poster-only `GenerationJob` queue into a generic kind/lane/payload/retry worker substrate. Plan: `creative-hub/docs/revamp/module-0-implementation-plan.md`.
+**Status:** ✅ **Module 0 DONE + gates passed** on branch `feat/module-0-generic-queue`. All 8 plan tasks complete; `m0-verify.ts` ALL PASS; lint+build green; `grep generationJob src/` empty; worker boots clean per-lane. Migration `20260622030550_generic_job_queue` applied (`@@map("GenerationJob")`, no data migration). **`/bs-review` PASS** (0 critical; 2 WARN noted — old `kind="visual"` rows have no handler [none active]; visual failures now retry ≤3× backoff, intended). **CHANGELOG updated.** See STATUS.md "Module 0" for full file list.
+**Next:** (1) Optional live smoke (dev + `worker:interactive` + real OpenAI poster) — NOT run. (2) **Push + open fork-pinned PR** for Module 0 (`gh pr create --repo hibatullahmindquest/brief-studio --base master`). NOTE also push master's 2 housekeeping commits (gitignore `26ea9b2`, rules `6cfc69a`). (3) Then **Module 1 Phase A** (data model) per `creative-hub/docs/revamp/module-1-implementation.md`.
+**Blockers:** None. Dev DB (`brief-studio-db`) running. Dev server + worker NOT started this session.
+
+**Skills housekeeping (2026-06-22):** Installed Matt Pocock skills pack (`skills add mattpocock/skills`). External packs kept **local-only** (gitignored: `.claude/skills/*` except `bs-*`, + `skills-lock.json`, + `.agents/`); project `bs-*` skills stay tracked. To use them: `/reload-plugins` then `/teach` etc. (most have `disable-model-invocation: true` → user-invoke only). gitignore rule committed on both `master` (`26ea9b2`) and feat (`dc5fc55`); both UNPUSHED.
+
+---
+**— Earlier: Visual Intake Overhaul (Phase 1: poster) — SHIPPED TO `master` via PR #12. History below. Deferred: migrate feature → creative-hub; headline≠brand-name fix. —**
 
 **MERGE STATE (2026-06-19):** Today's 4 commits (`a636d33` chat rewrite, `757bb2c` logo variants, `bffbe59` placement+overlay fixes, `0bea3eb` test scripts) merged to `master` via **PR #12** (`gh pr merge 12 --repo hibatullahmindquest/brief-studio --merge` → merge commit `7b22fba`). NOTE: PR #11 was already squash-merged yesterday (`e00ff44`); the branch was kept + committed on, so today's work needed a fresh clean branch (cherry-picked off `master`) → PR #12, not a re-merge of #11. Old branches `feat/visual-intake-overhaul` + `feat/studio-chat-and-brand-logos` deleted (local + remote). Only `master` remains.
 **What it is:** guided brief (free-text angle) → editable Creative Spec (headline/accent/CTA, each ↻ regenerate) → Sahkan → Generate. Render-in-image (gpt-image-2) + brand DNA + logo/footer overlay from brand settings. Draft lifecycle. Plans in `.claude/plans/` + `docs/plans/`. Mockup: `C:\claude\temp\studio-flow-approaches.html` (tab C).

@@ -1,5 +1,49 @@
 # STATUS — brief-studio
 
+## ▶ NEXT SESSION — START HERE (handover 2026-06-22)
+
+**Where we are:** Executing the **revamp plan** (`creative-hub/docs/revamp/`). **Module 0 (generic worker/queue) is DONE + all gates passed**, on branch `feat/module-0-generic-queue`. Nothing pushed yet.
+
+**Branch / git state (NOT pushed):**
+- On branch **`feat/module-0-generic-queue`** — 13 commits ahead of `origin/master` (M0 ×8 + gitignore + rules + 3 bookkeeping/changelog). Working tree clean.
+- **`master`** also has **2 unpushed** housekeeping commits: gitignore `26ea9b2`, rules `6cfc69a`. Push these too when publishing.
+- ⚠️ FORK repo — ALWAYS pin: `gh pr create --repo hibatullahmindquest/brief-studio --base master` (guard hook enforces).
+
+**Gates done:** `m0-verify.ts` ALL PASS · lint+build green · `/bs-review` PASS (0 critical) · CHANGELOG updated. **NOT done:** live poster smoke (needs dev+worker+OpenAI $).
+
+**Immediate next actions (in order):**
+1. *(optional)* **Live smoke M0** — 2 terminals: `npm run dev` + `npm run worker:interactive`; generate a poster in Studio → confirm it lands in history; (already cost-free boot-verified).
+2. **Push + open PR** for Module 0:
+   `git push -u origin feat/module-0-generic-queue`
+   `gh pr create --repo hibatullahmindquest/brief-studio --base master`
+   Then push master's 2 housekeeping commits (`git checkout master && git push`).
+3. **Module 1 Phase A (data model)** — detail + execute per `creative-hub/docs/revamp/module-1-implementation.md` (7-entity model). This is the real next build phase.
+
+**Env state:** Docker `brief-studio-db` RUNNING. Dev server + worker STOPPED. DB URL `postgresql://postgres:postgres@localhost:5432/brief_studio`.
+
+**Gotchas carried (also in MEMORY.md):** Prisma 4 needs `Prisma.JsonNull` to write null to a Json column. `@@map` rename = zero data migration but grep every old `prisma.<model>` call-site. External skill packs are gitignored local-only (`.claude/skills/*` except `bs-*`) — run `/reload-plugins` after install; many are user-invoke only (`disable-model-invocation`).
+
+**Working rhythm (Rule #28, new):** after each completed step in multi-step work, show an ordered ✅/⏳/❌ checklist + a `Next:` line.
+
+---
+
+## Module 0 — Generic Worker / Queue (2026-06-22) — branch `feat/module-0-generic-queue`
+Turned the poster-only `GenerationJob` queue into a generic worker substrate (kind/lane/payload/retry).
+- **Schema:** `GenerationJob` model → `Job` (`@@map("GenerationJob")`, no data migration). New cols: kind, lane, payload, dedupeKey, attempts, maxAttempts, scheduledAt, result. featureRunId/userId now nullable. Migration `20260622030550_generic_job_queue` applied.
+- **Helpers:** `src/lib/job-kinds.ts` (lane map) + `src/lib/job-backoff.ts` (30s→10min exp backoff).
+- **Store** (`src/lib/job-store.ts`): generic `enqueue(kind, …)` w/ dedupeKey idempotency, lane-scoped `claimNextJob(lane)`, `markFailedOrRetry` (re-queue w/ backoff else terminal), `sweepStaleJobs` via retry path. `enqueueVisualJob` kept as thin wrapper (kind=generate, dedupeKey=featureRunId). Also repointed `feature-store.ts` history badge to `prisma.job`.
+- **Dispatcher:** `src/worker/dispatch.ts` (kind→handler registry) + `src/worker/handlers/generate.ts` (wraps `runVisualJob`).
+- **Worker:** `src/worker/loop.ts` now lane-aware via `WORKER_LANE` env. New scripts `worker:interactive` / `worker:background` (cross-env devDep added).
+- **Verify:** `scripts/m0-verify.ts` → ALL PASS (dedupe, lane isolation, success, retry+backoff, terminal, non-retryable). `npm run lint` + `npm run build` green. `grep generationJob src/` empty.
+- **PENDING:** manual live smoke (enqueue via /api/generate/visual → worker:interactive → /api/jobs poll) NOT yet run — needs dev+worker+OpenAI. Then push + PR (pin fork).
+
+### KVM8 deploy note (Module 0) — TWO PM2 worker processes
+```bash
+pm2 start npm --name brief-studio-worker-interactive -- run worker:interactive
+pm2 start npm --name brief-studio-worker-background  -- run worker:background
+```
+Both share the same DB/queue; lane scoping keeps user generates fast while slow background jobs (meta_sync/analyze/video/signal — later modules) never block them.
+
 ## PR #6 MERGED (2026-06-16) — Async visual generation + Semakan Lepas status/cost/time
 - **PR #6 MERGED** to master (681b1ef). Bundled 4 stacked commits + chore:
   - `039ba5a` async visual generation via worker (close-tab-safe + resumable)

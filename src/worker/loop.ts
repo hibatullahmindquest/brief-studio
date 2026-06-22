@@ -1,67 +1,47 @@
-// SCIS visual generation worker — poll loop.
-//
-// Concurrency 1: claim one queued job, run it to completion, then claim the
-// next. Each loop first sweeps stale `processing` jobs (watchdog). The web app
-// never runs OpenAI calls — it only enqueues; all heavy work happens here, so a
-// closed browser tab can't drop a generation.
-import { claimNextQueuedJob, markSucceeded, markFailed, sweepStaleJobs } from "../lib/job-store";
-import { runVisualJob } from "../lib/visual-job";
+// Generic worker poll loop, scoped to one lane (WORKER_LANE env).
+import { claimNextJob, markSucceeded, markFailedOrRetry, sweepStaleJobs } from "../lib/job-store";
+import { dispatch } from "./dispatch";
+import type { Lane } from "../lib/job-kinds";
 
+const LANE = (process.env.WORKER_LANE as Lane) || "interactive";
 const POLL_MS = 2_000;
-const STALE_MS = 5 * 60 * 1_000; // watchdog: processing > 5 min → failed(stale)
+const STALE_MS = 5 * 60 * 1_000;
 
 let running = true;
-const stop = (sig: string) => {
-  console.log(`[worker] ${sig} received — finishing current job then stopping`);
-  running = false;
-};
+const stop = (sig: string) => { console.log(`[worker:${LANE}] ${sig} — finishing then stopping`); running = false; };
 process.on("SIGINT", () => stop("SIGINT"));
 process.on("SIGTERM", () => stop("SIGTERM"));
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-function sleep(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-// One iteration. Returns true if a job was processed (so the caller loops
-// immediately to drain the queue), false if the queue was empty.
 async function tick(): Promise<boolean> {
   const swept = await sweepStaleJobs(STALE_MS);
-  if (swept > 0) console.log(`[worker] watchdog marked ${swept} stale job(s) failed`);
+  if (swept > 0) console.log(`[worker:${LANE}] watchdog swept ${swept} stale`);
 
-  const job = await claimNextQueuedJob();
+  const job = await claimNextJob(LANE);
   if (!job) return false;
 
-  console.log(`[worker] claimed job ${job.id} (run ${job.featureRunId})`);
-  const result = await runVisualJob({ featureRunId: job.featureRunId, userId: job.userId });
+  console.log(`[worker:${LANE}] claimed ${job.id} kind=${job.kind} attempt=${job.attempts + 1}`);
+  const r = await dispatch(job);
 
-  if (result.ok && result.shouldRender) {
-    await markSucceeded(job.id, { resultKind: "image", costMyr: result.costMyr });
-    console.log(`[worker] job ${job.id} ✓ image (RM${result.costMyr.toFixed(2)})`);
-  } else if (result.ok) {
-    await markSucceeded(job.id, { resultKind: "skipped" });
-    console.log(`[worker] job ${job.id} ✓ skipped (AI: no image needed)`);
+  if (r.ok) {
+    await markSucceeded(job.id, { resultKind: r.resultKind, result: r.result, costMyr: r.costMyr });
+    console.log(`[worker:${LANE}] ${job.id} ✓ (RM${(r.costMyr ?? 0).toFixed(2)})`);
   } else {
-    await markFailed(job.id, result.reason, result.retryable);
-    console.log(`[worker] job ${job.id} ✗ failed — ${result.reason}`);
+    const { requeued } = await markFailedOrRetry(job.id, r.reason ?? "unknown", r.retryable ?? false);
+    console.log(`[worker:${LANE}] ${job.id} ✗ ${r.reason} — ${requeued ? "re-queued" : "failed"}`);
   }
   return true;
 }
 
 async function main() {
-  console.log(`[worker] SCIS visual worker started — poll ${POLL_MS}ms, stale ${STALE_MS / 60000}min`);
+  console.log(`[worker:${LANE}] started — poll ${POLL_MS}ms, stale ${STALE_MS / 60000}min`);
   while (running) {
     let processed = false;
-    try {
-      processed = await tick();
-    } catch (err) {
-      // A thrown tick (e.g. DB blip) leaves any claimed job in `processing`;
-      // the watchdog will reclaim it as stale. Log and keep the loop alive.
-      console.error("[worker] tick error:", err);
-    }
+    try { processed = await tick(); }
+    catch (err) { console.error(`[worker:${LANE}] tick error:`, err); }
     if (!processed) await sleep(POLL_MS);
   }
-  console.log("[worker] stopped cleanly");
+  console.log(`[worker:${LANE}] stopped cleanly`);
   process.exit(0);
 }
-
 void main();

@@ -6,6 +6,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## [Unreleased]
 
 ### Added
+- **Generic worker / job queue (Module 0)** (`feat/module-0-generic-queue`): the poster-only job queue becomes a generic worker substrate any module can ride. The `GenerationJob` model is evolved in place into a generic `Job` (`@@map("GenerationJob")` keeps the table — no data migration) with `kind` (generate | meta_sync | analyze | video | signal | export), `lane` (interactive | background), JSON `payload`, `dedupeKey`, `attempts`/`maxAttempts`, `scheduledAt`, and a generic `result` — `featureRunId`/`userId` are now nullable for system jobs. Migration `generic-job-queue`.
+  - `enqueue({ kind, … })` with `dedupeKey` idempotency (reuses an active job); `enqueueVisualJob` kept as a thin wrapper (one active generate per run). Lane-scoped `claimNextJob(lane)` (race-safe), `markFailedOrRetry` (re-queue with exponential backoff 30s→10min, else terminal), `sweepStaleJobs` routes stuck jobs back through the retry path.
+  - Worker dispatcher (`src/worker/dispatch.ts`) maps `kind`→handler; `generate` wraps the existing poster pipeline. Worker loop is lane-aware via `WORKER_LANE`; new `worker:interactive` / `worker:background` scripts (KVM8 runs two PM2 processes). Helpers `src/lib/job-kinds.ts` (lane map) + `src/lib/job-backoff.ts`.
+  - Verified by `scripts/m0-verify.ts` (dedupe, lane isolation, success, retry+backoff, terminal, non-retryable) — ALL PASS; lint + build green.
 - **Manual logo placement (size + corner)** (`feat/visual-intake-overhaul`): each brand can set the poster logo **size** (`sm`/`md`/`lg`) and **corner** (`tl`/`tr`/`tc`) from the admin furniture form; saved via `PATCH /api/brand`, applied at stamp time. New `Brand.logoSize` / `logoCorner` columns (migration `add_brand_logo_placement`). The luminance sample box follows the chosen corner so the contrasting variant is still picked correctly.
 
 ### Changed
