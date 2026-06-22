@@ -5,6 +5,24 @@ Add entries via `/bs-save-session` at end of each session.
 
 ---
 
+## 2026-06-22 (session 2) — `@@map` model rename: blast-radius hides in `scripts/`, not just `src/`
+**Context:** Module 1 Phase A renamed `FeatureRun` → `CreativeRun` via `@@map("FeatureRun")`. Grepped `prisma.featureRun` in `src/` → only 7 hits, all in `feature-store.ts` (well-encapsulated data layer). Repointed those, lint+build of the app passed.
+**Discovery:** `npx tsc --noEmit` then failed on TWO leftover dev/test scripts — `scripts/live-poster-e2e.mts` + `scripts/test-async-visual.ts` — still calling `prisma.featureRun.*`. `next build` does NOT typecheck loose scripts under `scripts/`, so the build was green while tsc was red. The standalone `tsc --noEmit` gate is what caught them.
+**Impact:** After any `prisma.<model>` rename, grep the WHOLE repo (incl. `scripts/`), not just `src/`. Keep `tsc --noEmit` as its own verify gate — `next build` alone misses non-bundled files.
+**Source:** debugging (tsc) this session.
+
+## 2026-06-22 (session 2) — Prisma 4 rejects literal `null` on nullable Json even in plain `create` data
+**Context:** `m1a-verify.ts` round-trip created a `CreativeRun` with `contextUsed: null` (a nullable `Json?` column) to assert NULL persists.
+**Discovery:** Runtime `PrismaClientValidationError`: "Argument `contextUsed` ... must not be null. Please use undefined instead." Same rule as the write-path TS error noted earlier, but here it surfaces at RUNTIME in a script (no tsc catch because the object was loosely typed). Fix: omit the field entirely (stays NULL) or pass `Prisma.DbNull`. Never pass JS `null`.
+**Impact:** Reinforces the standing Prisma-4 Json rule — applies to seed/verify scripts too, not just lib write helpers. Default to OMITTING optional Json fields.
+**Source:** debugging (runtime) this session.
+
+## 2026-06-22 (session 2) — Docker Desktop daemon can be down even when STATUS says "DB running"
+**Context:** Handover STATUS said "Docker `brief-studio-db` RUNNING", but `docker ps` at session start errored: daemon not reachable (`npipe ... dockerDesktopLinuxEngine`). Migration/seed need Postgres.
+**Discovery:** STATUS reflects the PRIOR session's end state; Docker Desktop may have been closed since. Recipe to recover: `Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"`, then poll `docker info` until it returns 0 (came up in ~5s once launched). The `brief-studio-db` container has `--restart unless-stopped`, so it auto-starts with the daemon (was "Up 47s" without manual `docker start`).
+**Impact:** At session start, verify the daemon live (`docker info`) before trusting STATUS; relaunch Docker Desktop + poll rather than assuming.
+**Source:** observed this session.
+
 ## 2026-06-22 — Prisma 4 rejects `null` for a nullable Json column on write
 **Context:** Module 0 — generalized `markSucceeded` to write a generic `result Json?` field; passed `result: (out.result ?? null) as object | null`.
 **Discovery:** Prisma 4 typechecks the Json input as `InputJsonValue | NullableJsonNullValueInput` — a bare `null` is NOT assignable (`tsc` error TS2322). To write SQL NULL you must use `Prisma.JsonNull` (or `Prisma.DbNull`), imported from `@prisma/client`. Cleanest pattern: only include the field when the caller passed it, mapping null → `Prisma.JsonNull`: `...(out.result === undefined ? {} : { result: out.result === null ? Prisma.JsonNull : (out.result as Prisma.InputJsonValue) })`.

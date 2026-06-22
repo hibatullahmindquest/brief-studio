@@ -2,17 +2,16 @@
 
 ## ▶ NEXT SESSION — START HERE (handover 2026-06-22)
 
-**Where we are:** Executing the **revamp plan** (`creative-hub/docs/revamp/`). **Module 0 MERGED.** **Module 1 Phase A (data model) BUILT + all gates passed** on branch `feat/module-1-data-model` — committed, NOT pushed yet.
+**Where we are:** Executing the **revamp plan** (`creative-hub/docs/revamp/`). **Module 0 MERGED (PR #13).** **Module 1 Phase A (data model) DONE + MERGED (PR #14).** On `master`, clean.
 
 **Branch / git state:**
-- On **`feat/module-1-data-model`** — Module 1 Phase A committed. `master` @ `40eaef1` (M0 merged via PR #13).
+- On **`master`** @ `4cc049d` (M1 Phase A squash-merged via PR #14). M0 = `40eaef1` (PR #13). No open PRs / feature branches.
 - ⚠️ FORK repo — ALWAYS pin: `gh pr create --repo hibatullahmindquest/brief-studio --base master` (guard hook enforces).
 
 **Gates done (M1-A):** migration applied (additive, FeatureRun preserved via @@map) · `seed-m1.ts` ran (2 brands + 5 experts + 3 recipes) · `m1a-verify.ts` ALL PASS (17 asserts) · lint+tsc+build green · `/bs-review` PASS (0 critical).
 
-**Immediate next actions (in order):**
-1. **Push + PR** Module 1 Phase A: `git push -u origin feat/module-1-data-model` then `gh pr create --repo hibatullahmindquest/brief-studio --base master`.
-2. **Module 1 Phase B (Admin)** — experts/recipes/brands/teams CRUD per `module-1-implementation.md` Phase B. (Or C Router — but B needed to author experts/recipes before D/E.)
+**Immediate next action:**
+1. **Module 1 Phase B (Admin)** — experts/recipes/brands/teams CRUD + system_prompt editor + logo/colors upload per `module-1-implementation.md` Phase B. B blocks D/E (author experts/recipes before pipeline). Route via `/bs-task-router`; detail Phase B into bite-sized TDD tasks first.
 
 **M1-A scope notes (carry forward):** Expert model named `Expert` (roleKey), not `Role` (avoid auth collision). Legacy/new Brand field duplication (dontSay/doNot, logoUrl/logoPath, footer, colors) is intentional — consolidate + backfill in a later phase. CreativeRun.outputJson still required — Phase D/F Artifact writers must pass `outputJson:"{}"` or relax column. Prisma 4: omit Json fields (or use `Prisma.DbNull`) — never pass literal `null`.
 

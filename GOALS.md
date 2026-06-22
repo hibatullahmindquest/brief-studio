@@ -169,15 +169,16 @@ Semua implementation plans disimpan di `docs/plans/`:
 
 ## Active Task (update every session)
 
-> Last updated: 2026-06-22
+> Last updated: 2026-06-22 (session 2)
 
 **⚠️ DEPLOYMENT PLAN (do not re-debate):** brief-studio is the **build/prototype ground**. Once a feature is validated here, it is **migrated into `creative-hub`** — creative-hub is the product that runs on **KVM8**. brief-studio itself is **NOT** deployed to KVM8. (Earlier "deploy brief-studio to KVM8" notes are obsolete.)
 
-**Phase:** **Revamp execution** (plan: `creative-hub/docs/revamp/`). Module 0 (generic worker/queue) built here in brief-studio.
-**Task:** Module 0 — turn poster-only `GenerationJob` queue into a generic kind/lane/payload/retry worker substrate. Plan: `creative-hub/docs/revamp/module-0-implementation-plan.md`.
-**Status:** ✅ **Module 0 DONE + gates passed** on branch `feat/module-0-generic-queue`. All 8 plan tasks complete; `m0-verify.ts` ALL PASS; lint+build green; `grep generationJob src/` empty; worker boots clean per-lane. Migration `20260622030550_generic_job_queue` applied (`@@map("GenerationJob")`, no data migration). **`/bs-review` PASS** (0 critical; 2 WARN noted — old `kind="visual"` rows have no handler [none active]; visual failures now retry ≤3× backoff, intended). **CHANGELOG updated.** See STATUS.md "Module 0" for full file list.
-**Next:** (1) Optional live smoke (dev + `worker:interactive` + real OpenAI poster) — NOT run. (2) **Push + open fork-pinned PR** for Module 0 (`gh pr create --repo hibatullahmindquest/brief-studio --base master`). NOTE also push master's 2 housekeeping commits (gitignore `26ea9b2`, rules `6cfc69a`). (3) Then **Module 1 Phase A** (data model) per `creative-hub/docs/revamp/module-1-implementation.md`.
-**Blockers:** None. Dev DB (`brief-studio-db`) running. Dev server + worker NOT started this session.
+**Phase:** **Revamp execution** (plan: `creative-hub/docs/revamp/`). Module 0 ✅ merged. Module 1 (creative journey) in progress — Phase A done.
+**Task:** Module 1 Phase A — creative-journey data model (7 entities) per `creative-hub/docs/revamp/module-1-design.md` (LOCKED) §11 + `module-1-implementation.md` Phase A.
+**Status:** ✅ **Module 0 MERGED** (PR #13 → master `40eaef1`). ✅ **Module 1 Phase A DONE + MERGED** (PR #14 → master `4cc049d`). 7 entities: `FeatureRun→CreativeRun` (`@@map`, zero data migration) + new `Recipe`/`Expert`/`Artifact` + `Brand` enrich + `User.team`. Migration `20260622074439_m1_creative_journey_data_model` (fully additive). `seed-m1.ts` (2 brands + 5 experts + 3 recipes) + `m1a-verify.ts` ALL PASS (17 asserts). All gates green (lint+tsc+build, `/bs-review` 0 critical, CHANGELOG). Data layer only — no behaviour change. Explainer: `C:\claude\temp\module-1-revamp-explainer.html`.
+**Next:** **Module 1 Phase B — Admin** (CRUD experts/recipes/brands/teams + system_prompt editor + logo/colors upload + team assignment) per `module-1-implementation.md` Phase B. B blocks D/E (need experts/recipes authored before pipeline). Detail Phase B into bite-sized TDD tasks first (route via `/bs-task-router`).
+**Carry-forward (M1-A):** Expert model named `Expert` (roleKey), not `Role` (auth collision). Legacy/new Brand field duplication (dontSay/doNot, logoUrl/logoPath, footer, colors) intentional → consolidate + backfill later phase. `CreativeRun.outputJson` still required — Phase D/F Artifact writers pass `outputJson:"{}"` or relax column. Prisma 4: omit nullable Json (or `Prisma.DbNull`) — never literal `null`.
+**Blockers:** None. On `master`, clean. Docker Desktop + `brief-studio-db` running (relaunched this session — was down at start). Dev + worker STOPPED.
 
 **Skills housekeeping (2026-06-22):** Installed Matt Pocock skills pack (`skills add mattpocock/skills`). External packs kept **local-only** (gitignored: `.claude/skills/*` except `bs-*`, + `skills-lock.json`, + `.agents/`); project `bs-*` skills stay tracked. To use them: `/reload-plugins` then `/teach` etc. (most have `disable-model-invocation: true` → user-invoke only). gitignore rule committed on both `master` (`26ea9b2`) and feat (`dc5fc55`); both UNPUSHED.
 
