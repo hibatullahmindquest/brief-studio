@@ -1,5 +1,22 @@
 # STATUS — brief-studio
 
+## Module 0 — Generic Worker / Queue (2026-06-22) — branch `feat/module-0-generic-queue`
+Turned the poster-only `GenerationJob` queue into a generic worker substrate (kind/lane/payload/retry).
+- **Schema:** `GenerationJob` model → `Job` (`@@map("GenerationJob")`, no data migration). New cols: kind, lane, payload, dedupeKey, attempts, maxAttempts, scheduledAt, result. featureRunId/userId now nullable. Migration `20260622030550_generic_job_queue` applied.
+- **Helpers:** `src/lib/job-kinds.ts` (lane map) + `src/lib/job-backoff.ts` (30s→10min exp backoff).
+- **Store** (`src/lib/job-store.ts`): generic `enqueue(kind, …)` w/ dedupeKey idempotency, lane-scoped `claimNextJob(lane)`, `markFailedOrRetry` (re-queue w/ backoff else terminal), `sweepStaleJobs` via retry path. `enqueueVisualJob` kept as thin wrapper (kind=generate, dedupeKey=featureRunId). Also repointed `feature-store.ts` history badge to `prisma.job`.
+- **Dispatcher:** `src/worker/dispatch.ts` (kind→handler registry) + `src/worker/handlers/generate.ts` (wraps `runVisualJob`).
+- **Worker:** `src/worker/loop.ts` now lane-aware via `WORKER_LANE` env. New scripts `worker:interactive` / `worker:background` (cross-env devDep added).
+- **Verify:** `scripts/m0-verify.ts` → ALL PASS (dedupe, lane isolation, success, retry+backoff, terminal, non-retryable). `npm run lint` + `npm run build` green. `grep generationJob src/` empty.
+- **PENDING:** manual live smoke (enqueue via /api/generate/visual → worker:interactive → /api/jobs poll) NOT yet run — needs dev+worker+OpenAI. Then push + PR (pin fork).
+
+### KVM8 deploy note (Module 0) — TWO PM2 worker processes
+```bash
+pm2 start npm --name brief-studio-worker-interactive -- run worker:interactive
+pm2 start npm --name brief-studio-worker-background  -- run worker:background
+```
+Both share the same DB/queue; lane scoping keeps user generates fast while slow background jobs (meta_sync/analyze/video/signal — later modules) never block them.
+
 ## PR #6 MERGED (2026-06-16) — Async visual generation + Semakan Lepas status/cost/time
 - **PR #6 MERGED** to master (681b1ef). Bundled 4 stacked commits + chore:
   - `039ba5a` async visual generation via worker (close-tab-safe + resumable)
