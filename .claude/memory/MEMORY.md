@@ -5,6 +5,25 @@ Add entries via `/bs-save-session` at end of each session.
 
 ---
 
+## 2026-06-22 — Prisma 4 rejects `null` for a nullable Json column on write
+**Context:** Module 0 — generalized `markSucceeded` to write a generic `result Json?` field; passed `result: (out.result ?? null) as object | null`.
+**Discovery:** Prisma 4 typechecks the Json input as `InputJsonValue | NullableJsonNullValueInput` — a bare `null` is NOT assignable (`tsc` error TS2322). To write SQL NULL you must use `Prisma.JsonNull` (or `Prisma.DbNull`), imported from `@prisma/client`. Cleanest pattern: only include the field when the caller passed it, mapping null → `Prisma.JsonNull`: `...(out.result === undefined ? {} : { result: out.result === null ? Prisma.JsonNull : (out.result as Prisma.InputJsonValue) })`.
+**Impact:** Any new nullable Json column write needs this; don't cast `null as object`. Affects future module result payloads (meta_sync/analyze/etc.).
+**Source:** debugging (tsc) this session.
+
+## 2026-06-22 — `@@map` lets you rename a Prisma model with ZERO data migration
+**Context:** Module 0 renamed `GenerationJob` → generic `Job`, but the table holds live poster-job rows we didn't want to move.
+**Discovery:** Adding `@@map("GenerationJob")` to the renamed `Job` model keeps the physical table name. `prisma migrate dev` then only ADDs the new columns + ALTERs nullability — no table rename, no data copy. The client API becomes `prisma.job.*` (was `prisma.generationJob.*`); every call-site must be repointed (tsc finds them). Gotcha: a non-obvious call-site lived in `feature-store.ts` (history visual-badge query) — the plan missed it; tsc caught it. Also `featureRunId` became nullable → guard `if (j.featureRunId && ...)` before using as a Map key.
+**Impact:** Safe model-rename recipe. Always `grep` the old `prisma.<model>` name after a rename; the build won't be green until every call-site moves.
+**Source:** executing Module 0 plan.
+
+## 2026-06-22 — `skills add` writes into the repo's `.claude/skills/` → git-tracked = branch-coupled
+**Context:** Ran `skills add mattpocock/skills` from the brief-studio dir. It dropped ~30 skill dirs into `.claude/skills/` + `skills-lock.json` + a gitignored `.agents/` mirror.
+**Discovery:** brief-studio's `.gitignore` force-includes `.claude/**` (for the project harness), so the new external skills were tracked. Committing them to ONE branch then `git checkout`-ing to another **deletes them from disk** (they live only in the branch's commit) — they vanished when switching from master to the feature branch. Two further gotchas: (a) newly-installed skills need `/reload-plugins` (or restart) before Claude Code registers them; (b) many matt skills have `disable-model-invocation: true` → the MODEL can't invoke them, user must type `/teach` etc.
+**Fix:** Keep external packs local-only — `.gitignore`: `.claude/skills/*` + `!.claude/skills/bs-*/` (keep project skills tracked) + `skills-lock.json`. Files become untracked → persist on disk across branches (not owned by any commit).
+**Impact:** Don't commit `skills add` output into a frequently-branched repo; gitignore it so it's stable on disk regardless of branch.
+**Source:** user-stated preference + debugging the disappear-on-checkout behaviour.
+
 ## 2026-06-19 (evening) — Squash-merged PR + kept branch → new commits need a FRESH PR, not a re-merge
 **Context:** Asked to "merge PR #11", but `gh pr view 11` showed state=MERGED (squash-merged yesterday → `e00ff44` on master). The branch `feat/visual-intake-overhaul` had been kept and committed to (4 more commits today).
 **Discovery:** A squash merge puts a NEW single commit on master; the branch's original commits never become ancestors of master. So after a squash-merge, `git log origin/master..branch` still lists ALL the old commits, and any new commits are NOT in the (now-closed) PR. You cannot re-merge a merged PR.
