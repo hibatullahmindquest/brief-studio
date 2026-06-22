@@ -169,14 +169,31 @@ Semua implementation plans disimpan di `docs/plans/`:
 
 ## Active Task (update every session)
 
-> Last updated: 2026-06-18
+> Last updated: 2026-06-19 (evening)
 
-**Phase:** Visual Intake Overhaul (Phase 1: poster) — branch `feat/visual-intake-overhaul`. **Wave A (backend) DONE & verified; Wave B (UI) NEXT.**
-**What it is:** replace the basic "pick type → generate" visual flow with a guided brief (free-text angle + AI-suggested chip questions) → editable Creative Spec (headline/accent/CTA, each ↻ regenerate) → Sahkan Idea → Generate. Render-in-image (gpt-image-2) + brand DNA injection + thin logo/footer overlay from brand settings. Preserves all async/history/cost infra; adds a Draft state. Plans: brainstorm + PRD + build-prompts (P1–P11) in `.claude/plans/` + `docs/plans/`. Mockup: `C:\claude\temp\studio-flow-approaches.html` (tab C). Decisions locked: render-in-image, FeatureRun.status column, 2-field footer, gpt-5 director, local-FS logo.
-**Wave A shipped (commits on branch):**
-- `ceada13` P1 schema+migration (`FeatureRun.status` draft/confirmed/generated · `Brand.posterFooterLeft/Right` · reuse `Brand.logoUrl`) + P2 `BrandContext.visualDna`
-- `118c3f0` P3 `planSpec` director (gpt-5, angle-aware, strips `<>`) + `POST /api/studio/visual-spec`; P4 `regenerateSpecText` + `/regenerate-text`; P5 `/confirm-spec`; P6 `runVisualJob` builds prompt from `VisualSpec` (skips 2nd director call) + status=generated; P7 `visual-overlay.ts` (sharp logo+footer, no-op-safe) post-render. feature-store: `updateFeatureRunInput`/`setFeatureRunStatus` + draft VisualStatus.
-- Verified: lint+tsc green + `scripts/verify-wave-a.mts` (angle-aware spec, prompt reserves zones, overlay stamps footer).
-**Next (resume here) — Wave B (UI):** P8 brand settings logo upload + footer fields (admin); P9 Studio guided-brief UI (build tab-C flow: chat + Brief panel + Spec card w/ regenerate + Sahkan→Generate gate); P10 Semakan Lepas right-drawer Draft state (Edit/Generate); P11 cost rollup → then verify · review · release-notes · commit · PR (pin fork, squash --delete-branch).
-**Blockers:** None. (Local dev: `npm run dev` + `npm run worker`. Stop both before any `prisma generate`/build — Windows EPERM.)
-**Reminder:** repo is a FORK — always `gh pr create --repo hibatullahmindquest/brief-studio --base master` (guard hook enforces this).
+**⚠️ DEPLOYMENT PLAN (do not re-debate):** brief-studio is the **build/prototype ground**. Once a feature is validated here, it is **migrated into `creative-hub`** — creative-hub is the product that runs on **KVM8**. brief-studio itself is **NOT** deployed to KVM8. (Earlier "deploy brief-studio to KVM8" notes are obsolete.)
+
+**Phase:** Visual Intake Overhaul (Phase 1: poster) — **SHIPPED TO `master`.** Wave A + B + conversational chat rewrite + brand-logo system all DONE, merged, validated. Now on `master`; feature branches deleted. **Next = migrate feature into `creative-hub` (the KVM8 product).**
+
+**MERGE STATE (2026-06-19):** Today's 4 commits (`a636d33` chat rewrite, `757bb2c` logo variants, `bffbe59` placement+overlay fixes, `0bea3eb` test scripts) merged to `master` via **PR #12** (`gh pr merge 12 --repo hibatullahmindquest/brief-studio --merge` → merge commit `7b22fba`). NOTE: PR #11 was already squash-merged yesterday (`e00ff44`); the branch was kept + committed on, so today's work needed a fresh clean branch (cherry-picked off `master`) → PR #12, not a re-merge of #11. Old branches `feat/visual-intake-overhaul` + `feat/studio-chat-and-brand-logos` deleted (local + remote). Only `master` remains.
+**What it is:** guided brief (free-text angle) → editable Creative Spec (headline/accent/CTA, each ↻ regenerate) → Sahkan → Generate. Render-in-image (gpt-image-2) + brand DNA + logo/footer overlay from brand settings. Draft lifecycle. Plans in `.claude/plans/` + `docs/plans/`. Mockup: `C:\claude\temp\studio-flow-approaches.html` (tab C).
+**Shipped & in PR #11 (commit `a9eba6d`, pinned to fork):**
+- Wave A (`ceada13`,`118c3f0`): schema/status, brand visualDna, planSpec/regenerateSpecText, render-in-image prompt, sharp overlay.
+- Wave B (`a9eba6d`): P8 brand furniture admin (`POST /api/brand/logo` + `PATCH /api/brand` + `/dashboard/settings/brands` + `BrandFurnitureForm`); P9 `GuidedPosterFlow` (brief→spec→generate, `visual-spec` GET/POST/PUT); P10 Semakan Lepas Draft state (○Draft + Edit/Generate); P11 cost rollup (`sumRunCostMyr`).
+- Verified: lint+tsc+build green; review PASS; **live E2E poster verified** (gpt-5 spec → gpt-image-2 → logo+footer overlay; RM0.42; draft→generated). Scripts: `scripts/live-poster-e2e.mts`, `scripts/test-overlay-live.mts`.
+**COMMITTED this session (`71e19e7`, branch `feat/visual-intake-overhaul`, lint+tsc+build green):**
+- Conversational Studio chat rewrite: `chat-ui.tsx` (ChatBubble/Chip/CustomChip/TypingDots) + `ChatConversation.tsx` (non-poster Q&A as bubbles) + `GuidedPosterFlow` `embedded` mode + `StudioWizard` chat shell. Auto copy-gen with poster (`runVisualJob` → gpt-4o `generateCopy`; `CopyResult` + `GET /api/studio/run-output`).
+- **UI usability fix**: poster result no longer nests card-in-card — on the generate/result phase the chat collapses to a compact breadcrumb (`Brand / Output · ↻ Mula semula`) and the wrapper card is dropped, so VisualPanel + CopyResult render as standalone cards. Done via `GuidedPosterFlow onPhaseChange` → `StudioWizard` `collapsed` state.
+- Removed dead pickers (BrandPicker, OutputTypePicker, ConversationStep, BriefReview). `.gitignore` now ignores `public/uploads/brand/*` (runtime logo uploads) + `.gitkeep`.
+- NOT committed (left in working tree on purpose): GOALS/MEMORY/task json (session bookkeeping), `docs/reports/` PDF, `scripts/*e2e*.mts` test scripts.
+**ALSO committed (`c413586`):** Light/dark brand logo variants + luminance auto-pick. `Brand.logoUrlLight`/`logoUrlDark` (migration `add_brand_logo_variants`); overlay samples luminance → stamps contrasting logo (fallback: other variant → legacy `logoUrl`). Upload route takes `variant` (light|dark); admin form has 2 slots.
+**ALSO committed (`5c8e141`) — poster overlay fixes + manual logo placement:**
+- Manual per-brand logo **size** (`sm`/`md`/`lg`) + **corner** (`tl`/`tr`/`tc`) — admin furniture form chips, `PATCH /api/brand` validates, migration `add_brand_logo_placement`. `Brand.logoSize`/`logoCorner`. Luminance sample box follows the chosen corner.
+- Overlay fixes (root cause: gpt-image-2 ignored the reserved corner): (a) **trim** transparent margin off the logo PNG so it sits flush (pad 3.3%→2.5%); (b) sample luminance from a small **clean corner box** not the headline-polluted footprint (was flipping variant); (c) image prompt now **hard-reserves top-left ~28%×16%** + headline center/lower-center.
+- `.gitignore`: `public/uploads/brand/*`, `docs/reports/*.pdf`. Report README tracked.
+**Logos:** user uploaded BOTH SifuTutor variants via admin (dark-bg = white wordmark+icon; light-bg = black wordmark). Verified placement on blue bg (white variant, snug corner).
+**DEFERRED by user (revisit):** headline currently echoes brand name → brand shows twice (rendered headline + logo). Fix = spec-synthesis prompt makes headline the campaign message, not brand name. NOT done.
+**Next (resume here):** (1) **Migrate feature → creative-hub** — port the visual-intake Studio (conversational chat flow + guided poster brief/Creative Spec) + brand-logo system (variants, placement, overlay) into `creative-hub`, which is the product on KVM8. brief-studio is the build ground only. (2) Optional: headline≠brand-name fix (see DEFERRED). (3) Phase 1 = poster only; variations / true 9:16 crop-pad / storyboard+script intake still deferred.
+**Blockers:** None. Dev + worker STOPPED this session (safe for build/prisma). On `master`, clean working tree except recovery files (GOALS/MEMORY/task json — uncommitted by design).
+**Reminder:** repo is a FORK — always `gh pr create/merge --repo hibatullahmindquest/brief-studio --base master` (guard hook enforces).
+**Reports:** `docs/reports/brief-studio-status-2026-06-19.pdf` (today, 3-section; gitignored). Built via `creative-hub/.claude/skills/report/build.ps1` (headless Edge). Yesterday: `...-2026-06-18.pdf`.
