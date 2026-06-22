@@ -333,22 +333,31 @@ model ErrorLog {
 // the worker process (claim → run OpenAI → persist). Tracks PROCESS only; the
 // actual image stays in FeatureRun.outputJson. Loose featureRunId (no FK),
 // matching APIUsageLog/ErrorLog convention.
-model GenerationJob {
+model Job {
   id           String    @id @default(cuid())
-  featureRunId String    // the run whose visual we generate
-  userId       String    // submitter (ownership checks on poll)
-  brandId      String?   // usage/cost attribution
-  kind         String    @default("visual") // future-proof: only "visual" for now
-  status       String    @default("queued") // queued | processing | succeeded | failed
-  resultKind   String    @default("") // on success: "image" (rendered) | "skipped" (AI said no image needed)
-  costMyr      Float     @default(0)  // total MYR cost of the generation (director + image), set on success
-  reason       String?   // failure category + message (from classifyVisualError)
+  kind         String    @default("generate")     // generate | meta_sync | analyze | video | signal | export
+  lane         String    @default("interactive")  // interactive | background
+  payload      Json      @default("{}")
+  dedupeKey    String?                              // active-job dedup (e.g. featureRunId, "meta_sync:<acc>:<date>")
+  status       String    @default("queued")        // queued | processing | succeeded | failed
+  attempts     Int       @default(0)
+  maxAttempts  Int       @default(3)
+  scheduledAt  DateTime?                            // eligible when null OR <= now (delay + backoff)
+  claimedAt    DateTime?
+  resultKind   String    @default("")              // kept for visual poll back-compat ("image"|"skipped")
+  result       Json?                                // generic richer result for non-visual kinds
+  costMyr      Float     @default(0)
+  reason       String?
   retryable    Boolean   @default(true)
-  claimedAt    DateTime? // set on claim; basis for watchdog staleness
+  featureRunId String?                              // visual jobs only (was required)
+  userId       String?                              // null for system jobs (meta_sync)
+  brandId      String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  @@index([status, createdAt])
+  @@map("GenerationJob")                            // keep the existing table — no data migration
+  @@index([lane, status, scheduledAt])
+  @@index([dedupeKey])
   @@index([featureRunId, createdAt])
 }
 
