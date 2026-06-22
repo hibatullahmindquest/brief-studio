@@ -58,7 +58,12 @@
       "at": "2026-06-22T08:05:00Z",
       "evidence": "CHANGELOG.md [Unreleased] > Added — Module 1 Phase A data model entry."
     },
-    { "name": "commit", "status": "in_progress", "at": "2026-06-22T08:05:00Z" },
+    {
+      "name": "commit",
+      "status": "done",
+      "at": "2026-06-22T08:08:00Z",
+      "evidence": "22a8310 — feat(m1): creative-journey data model (Phase A) — 7 entities (12 files)"
+    },
     { "name": "push", "status": "pending" }
   ],
   "metadata": {
