@@ -1,108 +1,184 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { laneForKind, type Lane } from "@/lib/job-kinds";
+import { nextScheduledAt } from "@/lib/job-backoff";
 
-// Queue between the web app (enqueue) and the worker (claim → run → mark).
+// Generic queue between the web app (enqueue) and the worker (claim → run → mark).
 // Status: queued | processing | succeeded | failed.
-
 const ACTIVE = ["queued", "processing"];
 
 export type JobRow = {
   id: string;
-  featureRunId: string;
-  userId: string;
-  brandId: string | null;
   kind: string;
+  lane: string;
+  payload: unknown;
+  dedupeKey: string | null;
   status: string;
+  attempts: number;
+  maxAttempts: number;
+  scheduledAt: Date | null;
+  claimedAt: Date | null;
   resultKind: string;
+  result: unknown;
   costMyr: number;
   reason: string | null;
   retryable: boolean;
-  claimedAt: Date | null;
+  featureRunId: string | null;
+  userId: string | null;
+  brandId: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
 
-// Idempotent: if an active (queued|processing) job already exists for this run,
-// return it instead of creating a duplicate. Otherwise create a queued job.
-export async function enqueueVisualJob(args: {
-  featureRunId: string;
-  userId: string;
+// Generic enqueue. Idempotent on dedupeKey: if an active (queued|processing) job
+// with the same dedupeKey exists, reuse it instead of creating a duplicate.
+export async function enqueue(args: {
+  kind: string;
+  payload?: unknown;
+  dedupeKey?: string | null;
+  lane?: Lane;
+  userId?: string | null;
   brandId?: string | null;
+  featureRunId?: string | null;
+  maxAttempts?: number;
+  scheduledAt?: Date | null;
 }): Promise<{ job: JobRow; reused: boolean }> {
-  const existing = await prisma.generationJob.findFirst({
-    where: { featureRunId: args.featureRunId, status: { in: ACTIVE } },
-    orderBy: { createdAt: "desc" },
-  });
-  if (existing) return { job: existing as JobRow, reused: true };
-
-  const job = await prisma.generationJob.create({
+  if (args.dedupeKey) {
+    const existing = await prisma.job.findFirst({
+      where: { dedupeKey: args.dedupeKey, status: { in: ACTIVE } },
+      orderBy: { createdAt: "desc" },
+    });
+    if (existing) return { job: existing as JobRow, reused: true };
+  }
+  const job = await prisma.job.create({
     data: {
-      featureRunId: args.featureRunId,
-      userId: args.userId,
+      kind: args.kind,
+      lane: args.lane ?? laneForKind(args.kind),
+      payload: (args.payload ?? {}) as object,
+      dedupeKey: args.dedupeKey ?? null,
+      userId: args.userId ?? null,
       brandId: args.brandId ?? null,
-      kind: "visual",
+      featureRunId: args.featureRunId ?? null,
+      maxAttempts: args.maxAttempts ?? 3,
+      scheduledAt: args.scheduledAt ?? null,
       status: "queued",
     },
   });
   return { job: job as JobRow, reused: false };
 }
 
-// Latest job for a run, scoped to the owner (for poll + resume).
+// Thin wrapper preserving the visual flow's call-site + per-run idempotency.
+export async function enqueueVisualJob(args: {
+  featureRunId: string;
+  userId: string;
+  brandId?: string | null;
+}): Promise<{ job: JobRow; reused: boolean }> {
+  return enqueue({
+    kind: "generate",
+    lane: "interactive",
+    dedupeKey: args.featureRunId, // one active generate per run (unchanged behaviour)
+    featureRunId: args.featureRunId,
+    userId: args.userId,
+    brandId: args.brandId ?? null,
+    payload: { featureRunId: args.featureRunId, userId: args.userId },
+  });
+}
+
+// Latest job for a run, scoped to owner (visual poll + resume).
 export async function getLatestJobForRun(featureRunId: string, userId: string): Promise<JobRow | null> {
-  const job = await prisma.generationJob.findFirst({
+  const job = await prisma.job.findFirst({
     where: { featureRunId, userId },
     orderBy: { createdAt: "desc" },
   });
   return (job as JobRow) ?? null;
 }
 
-// Atomically claim the oldest queued job. Returns the claimed row, or null if
-// none available. The conditional updateMany on status='queued' guarantees only
-// one worker wins a given row (a loser sees count===0 and the caller retries).
-export async function claimNextQueuedJob(): Promise<JobRow | null> {
-  const candidate = await prisma.generationJob.findFirst({
-    where: { status: "queued" },
-    orderBy: { createdAt: "asc" },
+// Atomically claim the oldest eligible queued job IN A LANE. Eligible =
+// status queued AND (scheduledAt null OR <= now). The conditional updateMany on
+// status='queued' guarantees a single worker wins the row.
+export async function claimNextJob(lane: Lane): Promise<JobRow | null> {
+  const now = new Date();
+  const candidate = await prisma.job.findFirst({
+    where: {
+      lane,
+      status: "queued",
+      OR: [{ scheduledAt: null }, { scheduledAt: { lte: now } }],
+    },
+    orderBy: [{ scheduledAt: "asc" }, { createdAt: "asc" }],
   });
   if (!candidate) return null;
 
-  const claim = await prisma.generationJob.updateMany({
+  const claim = await prisma.job.updateMany({
     where: { id: candidate.id, status: "queued" },
-    data: { status: "processing", claimedAt: new Date() },
+    data: { status: "processing", claimedAt: now },
   });
   if (claim.count !== 1) return null; // lost the race — caller loops
 
-  const claimed = await prisma.generationJob.findUnique({ where: { id: candidate.id } });
+  const claimed = await prisma.job.findUnique({ where: { id: candidate.id } });
   return (claimed as JobRow) ?? null;
 }
 
 export async function markSucceeded(
   jobId: string,
-  result: { resultKind: "image" | "skipped"; costMyr?: number },
+  out: { resultKind?: string; result?: unknown; costMyr?: number },
 ): Promise<void> {
-  await prisma.generationJob.update({
+  await prisma.job.update({
     where: { id: jobId },
-    data: { status: "succeeded", reason: null, resultKind: result.resultKind, costMyr: result.costMyr ?? 0 },
-  });
-}
-
-export async function markFailed(jobId: string, reason: string, retryable: boolean): Promise<void> {
-  await prisma.generationJob.update({
-    where: { id: jobId },
-    data: { status: "failed", reason, retryable },
-  });
-}
-
-// Watchdog: any job stuck in `processing` whose claim is older than maxAgeMs is
-// marked failed(stale) so the user can re-generate. Returns how many were swept.
-export async function sweepStaleJobs(maxAgeMs: number): Promise<number> {
-  const cutoff = new Date(Date.now() - maxAgeMs);
-  const res = await prisma.generationJob.updateMany({
-    where: { status: "processing", claimedAt: { lt: cutoff } },
     data: {
-      status: "failed",
-      reason: "Generation tersangkut terlalu lama (stale) — cuba jana semula.",
-      retryable: true,
+      status: "succeeded",
+      reason: null,
+      resultKind: out.resultKind ?? "",
+      costMyr: out.costMyr ?? 0,
+      // Only touch the Json column when the caller passed a result; null → SQL NULL.
+      ...(out.result === undefined
+        ? {}
+        : { result: out.result === null ? Prisma.JsonNull : (out.result as Prisma.InputJsonValue) }),
     },
   });
-  return res.count;
+}
+
+// Retry-aware failure. If retryable and we have attempts left, re-queue with a
+// backoff delay (attempts++). Otherwise mark terminally failed.
+export async function markFailedOrRetry(
+  jobId: string,
+  reason: string,
+  retryable: boolean,
+): Promise<{ requeued: boolean }> {
+  const job = await prisma.job.findUnique({ where: { id: jobId } });
+  if (!job) return { requeued: false };
+  const attempts = job.attempts + 1;
+
+  if (retryable && attempts < job.maxAttempts) {
+    await prisma.job.update({
+      where: { id: jobId },
+      data: {
+        status: "queued",
+        attempts,
+        reason,
+        retryable,
+        claimedAt: null,
+        scheduledAt: nextScheduledAt(attempts),
+      },
+    });
+    return { requeued: true };
+  }
+  await prisma.job.update({
+    where: { id: jobId },
+    data: { status: "failed", attempts, reason, retryable },
+  });
+  return { requeued: false };
+}
+
+// Watchdog: jobs stuck in `processing` past maxAgeMs are pushed back through the
+// retry path (so they re-queue if attempts remain, else fail).
+export async function sweepStaleJobs(maxAgeMs: number): Promise<number> {
+  const cutoff = new Date(Date.now() - maxAgeMs);
+  const stale = await prisma.job.findMany({
+    where: { status: "processing", claimedAt: { lt: cutoff } },
+    select: { id: true },
+  });
+  for (const s of stale) {
+    await markFailedOrRetry(s.id, "Job stuck too long (stale) — re-queued.", true);
+  }
+  return stale.length;
 }
