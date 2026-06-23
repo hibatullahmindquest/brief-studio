@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { BrandFurnitureForm, type BrandFurniture } from "@/components/BrandFurnitureForm";
+import { BrandKnowledgeForm, type BrandKnowledge } from "@/components/admin/BrandKnowledgeForm";
 
 export const metadata: Metadata = {
   title: "Brand Furniture",
@@ -13,11 +14,17 @@ export default async function BrandFurniturePage() {
   await requireAdmin();
 
   let brands: BrandFurniture[] = [];
+  let knowledge: BrandKnowledge[] = [];
   try {
     const rows = await prisma.brand.findMany({
       where: { isActive: true },
       orderBy: { name: "asc" },
-      select: { slug: true, name: true, logoUrlLight: true, logoUrlDark: true, logoSize: true, logoCorner: true, posterFooterLeft: true, posterFooterRight: true, primaryColor: true },
+      select: {
+        slug: true, name: true, logoUrlLight: true, logoUrlDark: true, logoSize: true, logoCorner: true,
+        posterFooterLeft: true, posterFooterRight: true, primaryColor: true,
+        contentPillars: true, audienceSegments: true, doNot: true, signaturePhrases: true,
+        colors: true, fonts: true, religiousGuidelines: true, footer: true, logoPath: true,
+      },
     });
     brands = rows.map((b) => ({
       slug: b.slug,
@@ -29,6 +36,20 @@ export default async function BrandFurniturePage() {
       posterFooterLeft: b.posterFooterLeft ?? "",
       posterFooterRight: b.posterFooterRight ?? "",
       primaryColor: b.primaryColor,
+    }));
+    knowledge = rows.map((b) => ({
+      slug: b.slug,
+      name: b.name,
+      primaryColor: b.primaryColor,
+      contentPillars: b.contentPillars,
+      audienceSegments: b.audienceSegments,
+      doNot: b.doNot,
+      signaturePhrases: b.signaturePhrases,
+      colors: b.colors,
+      fonts: b.fonts,
+      religiousGuidelines: b.religiousGuidelines,
+      footer: b.footer ?? "",
+      logoPath: b.logoPath ?? "",
     }));
   } catch {
     // Keep the page available even when the DB is unreachable.
@@ -56,7 +77,15 @@ export default async function BrandFurniturePage() {
           Tiada brand aktif.
         </p>
       ) : (
-        brands.map((b) => <BrandFurnitureForm key={b.slug} brand={b} />)
+        brands.map((b) => {
+          const k = knowledge.find((x) => x.slug === b.slug);
+          return (
+            <div key={b.slug} className="space-y-6">
+              <BrandFurnitureForm brand={b} />
+              {k && <BrandKnowledgeForm brand={k} />}
+            </div>
+          );
+        })
       )}
     </div>
   );
