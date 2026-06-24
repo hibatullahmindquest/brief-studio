@@ -64,5 +64,9 @@ skills-lock.json
 /public/uploads/brand/*
 !/public/uploads/brand/.gitkeep
 
+# Exported PDFs (created at runtime — Phase F)
+/public/uploads/exports/*
+!/public/uploads/exports/.gitkeep
+
 # Generated status report PDFs (local artifacts — keep the README)
 /docs/reports/*.pdf
