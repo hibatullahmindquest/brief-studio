@@ -1,0 +1,35 @@
+{
+  "id": "m1-phase-d-recipe-engine",
+  "route": "feature",
+  "created": "2026-06-24T10:20:00Z",
+  "branch": "feat/m1-phase-d-recipe-engine",
+  "description": "Module 1 Phase D — Recipe engine: run the experts in the recipe the Phase C router selected. Worker runs recipe steps[] sequentially (each step = LLM call: Expert system_prompt + brand grounding + prior step outputs), Brand Guardian QA (pass/flag/retry), cost per expert logged. Generic across all recipes; poster is the acceptance smoke.",
+  "steps": [
+    { "n": 1, "step": "brainstorm", "status": "done", "evidence": ".claude/plans/2026-06-24-m1-phase-d-recipe-engine-brainstorm.md (Approach C; locked A+A: defer image render to spec+copy, build thin confirm route)" },
+    { "n": 2, "step": "prd", "status": "done", "evidence": "docs/plans/2026-06-24-m1-phase-d-recipe-engine-prd.md (engine contract, 9 decisions resolved, AC-1..8)" },
+    { "n": 3, "step": "ux", "status": "done", "evidence": "docs/plans/2026-06-24-m1-phase-d-recipe-engine-ux.md (confirm route API contract + worker branch + status lifecycle; no UI this phase)" },
+    { "n": 4, "step": "build-prompts", "status": "done", "evidence": "docs/plans/2026-06-24-m1-phase-d-recipe-engine-build-prompts.md (6 prompts: expert → grounding → recipe-run engine → handler branch → confirm route → live smoke)" },
+    { "n": 5, "step": "build", "status": "done", "subSteps": [
+      { "p": 1, "name": "expert.ts + usage module tag", "status": "done", "evidence": "m1d-expert 17/17" },
+      { "p": 2, "name": "grounding.ts (+ m1d-grounding)", "status": "done", "evidence": "m1d-grounding 14/14" },
+      { "p": 3, "name": "recipe-run.ts engine (+ m1d-recipe)", "status": "done", "evidence": "m1d-recipe 20/20 (injected fake LLM)" },
+      { "p": 4, "name": "worker handler branch", "status": "done", "evidence": "generate.ts branches on recipeId; legacy path unchanged" },
+      { "p": 5, "name": "confirm route + gap guard (+ m1d-confirm)", "status": "done", "evidence": "m1d-confirm 7/7; POST /api/studio/[runId]/confirm" },
+      { "p": 6, "name": "live smoke m1d-smoke", "status": "done", "evidence": "LIVE poster recipe: strategy+copy+visual_direction+social, guardian pass, RM0.13, 5 expert usage rows" }
+    ] },
+    { "n": 6, "step": "verify", "status": "done", "at": "2026-06-24", "evidence": { "lint": "passed (fixed prefer-const on guardian)", "tsc": "passed", "build": "passed — /api/studio/[runId]/confirm in route tree" } },
+    { "n": 7, "step": "review", "status": "done", "at": "2026-06-24", "evidence": "Stage 1 spec PASS (AC-1..8 all met; live poster proves AC-1/2/3; m1d-recipe AC-4/6; m1d-confirm AC-7; legacy branch AC-5; no migration AC-8). Stage 2 PASS, 0 critical. Applied: dedupe skip-notices on guardian retry; combine usage import; document guardian-always-last semantics. Brand grounding read live from DB (no hardcoded values); confirm route authed+owner-checked; engine errors classified retryable vs config(non-retryable)." },
+    { "n": 8, "step": "release-notes", "status": "done", "at": "2026-06-24", "evidence": "CHANGELOG.md [Unreleased] ### Added — Recipe engine (Module 1, Phase D) with engine/grounding/expert/worker-branch/confirm sub-bullets" },
+    { "n": 9, "step": "commit", "status": "in_progress" },
+    { "n": 10, "step": "push", "status": "pending" }
+  ],
+  "metadata": {
+    "outputType": "all",
+    "brand": "none",
+    "plan": "creative-hub/docs/revamp/module-1-implementation.md §Phase D",
+    "scope": "Goal: execute the selected recipe. Rides Module 0 queue — enqueue kind=generate (recipeId + spec); worker runs recipe steps[] sequentially (each step = LLM call: Expert system_prompt + grounding + prior step outputs); grounding = brand knowledge (getBrandContext + contextUsed slot); Brand Guardian QA (do-not/tone/religious → pass/flag/retry); cost per expert → usage log. Input: draft CreativeRun (recipeId+spec+lens+brandId) from Phase C. Output: Artifact rows per step/result. Acceptance: poster recipe runs Strategist→Copywriter→Art Director→Brand-Guardian, produces spec+copy; cost logged per expert. Generic across all recipes, not poster-only.",
+    "deps": "Phase A (data model: CreativeRun, Artifact, Expert, Recipe) + Phase B (admin-editable experts/recipes/brands) + Phase C (intent router persists draft CreativeRun) DONE & merged.",
+    "carryForward": "deep-lib + thin-handler + inject-the-IO patterns (house style). Read experts/recipes LIVE (admin-editable) — don't hardcode lineups. CreativeRun.outputJson still required (pass '{}'). Prisma 4: omit nullable Json (or Prisma.DbNull) — never literal null. Optional from Phase C review: dedupe the two getBrandContext calls per intake.",
+    "affectedFiles": []
+  }
+}
