@@ -5,6 +5,84 @@ Add entries via `/bs-save-session` at end of each session.
 
 ---
 
+## 2026-06-23 (session 6) — user-supplied file paths are a path-traversal sink even under /public
+**Context:** Phase C intake accepts `uploads[]` (asset paths) from the request body; `ingest.ts` + `router.ts` read them from `public/<path>` to parse docs / encode images.
+**Discovery:** Stripping only the leading slash (`p.replace(/^\/+/, "")`) does NOT stop `..` — an authed user could POST `uploads:["/../../.env.local.pdf"]`, the parser reads it, and the content flows into the LLM brief → its `intent`/`extracted` echo can exfiltrate it. Caught in review. Fix = `safePublicPath()`: `path.resolve(base, rel)` then assert the result is `=== base` or starts with `base + path.sep`; else return null → skip. Applied to BOTH the doc reader and the image-data-URL reader; added a traversal regression test (parser must never be called).
+**Impact:** Any time you resolve a user-provided path under a root dir, resolve-then-verify-prefix — `replace(/^\//,'')` is not a guard. Treat upload paths from the request body as untrusted even when "they should come from our upload endpoint".
+**Source:** Stage-2 security review this session (CRITICAL, fixed before merge).
+
+## 2026-06-23 (session 6) — pdf-parse's inner module path needs `turbopackIgnore` to survive `next build`
+**Context:** Used `import("pdf-parse/lib/pdf-parse.js")` (the inner module) to dodge pdf-parse's top-level debug block (it reads a missing test PDF when `module.parent` is falsy under tsx/ESM). Worked under `tsx`; `npm run build` failed.
+**Discovery:** Turbopack statically analyses dynamic `import()` specifiers and tries to resolve `pdf-parse/lib/pdf-parse.js` at build time — the package's `exports` don't expose that inner path → `Module not found`. tsx resolved it fine at runtime, so it only breaks the production build. Fix = `import(/* turbopackIgnore: true */ "pdf-parse/lib/pdf-parse.js")` — keeps it a runtime import the bundler leaves alone; resolves from node_modules at run time. (`@ts-expect-error` still needed for the missing types.)
+**Impact:** For Node-only server libs whose deep/inner paths the bundler can't resolve, `turbopackIgnore` (Next 16 / Turbopack) is the escape hatch — verify with a full `next build`, not just `tsx`, because runtime-vs-build resolution differ.
+**Source:** verify-gate build failure this session.
+
+## 2026-06-23 (session 6) — inject the IO (LLM, parsers) so the deterministic shell is the hard gate
+**Context:** Phase C router has one gpt-4o call + pdf/docx parsing — both flaky/expensive/binary-fixture-hungry to test directly.
+**Discovery:** Made `runIntake(user, body, deps?)`, `ingestUploads(paths, parsers?)`, and `gapCheck(…, phraser?)` all take their IO as injectable params (default = real). The DB-backed verify (`m1c-router` 26/26) injects a fixed classification + no-op ingest to exercise persistence, the confidence-clarification branch, lens-incompat → clarification, and the 400 paths — zero LLM calls, fully deterministic. The real LLM is covered separately by key-gated `m1c-classify`/`benchmark`/`smoke` (loose assertions: enum membership, ≥9/10, shape match — never exact wording). Doc parsing tested with STUB parsers + scratch fixtures (no committed binaries).
+**Impact:** Standard shape for any LLM/IO-bearing lib here: inject the IO, make the orchestration + branching the deterministic gate, keep the model behind a key-gated loose-assertion script that skips cleanly offline. The verify gate stays green without a network or an API key.
+**Source:** design pattern applied across Phase C this session.
+
+## 2026-06-23 (session 6) — steer LLM confidence with the prompt, then pick the threshold from observed calibration
+**Context:** Phase C "don't guess" rule needs a confidence cutoff: ambiguous briefs must fall below it, clear briefs above.
+**Discovery:** First prompt left ambiguous "buat sesuatu untuk raya" at 0.6 (above a 0.5 cutoff → wrongly proceeded). Two-part fix: (1) tie confidence to a concrete signal in the prompt — "set confidence ≤ 0.4 when the brief does NOT name or strongly imply an output format (poster/caption/plan or a platform like IG)" pushed ambiguous to 0.3–0.4; (2) set `CLARIFY_THRESHOLD = 0.7` since clear briefs land 0.9–1.0 and ambiguous 0.3–0.6 — 0.7 separates cleanly with margin. Benchmark then hit 10/10.
+**Impact:** Don't fight the model's raw calibration with a magic number alone — anchor confidence to an explicit, checkable criterion in the prompt, observe the resulting distribution, then place the threshold in the gap. Keep the threshold a named const shared by lib + tests.
+**Source:** live benchmark iteration this session.
+
+## 2026-06-23 (session 5) — verify-script guards that read a global DB count must control the whole precondition deterministically
+**Context:** `m1b-users.ts` tests the last-admin guard (block demoting `isAdmin` if it would drop admin count to 0). First version branched on `prisma.user.count({isAdmin:true})` — if real admins existed it took the "demotion succeeds" path and the 409 guard path **never ran**.
+**Discovery:** A guard keyed on a *global* count can't be exercised by just creating a throwaway admin — real seeded admins keep the count >1. Fix: capture the real admin ids up front, `updateMany` them to `isAdmin:false` so the test user is genuinely the sole admin, assert the 409, then **restore the real admins in `finally`** (so a mid-test crash can't leave the DB with zero admins). Made the 409 deterministic regardless of DB state.
+**Impact:** When a verify script targets logic gated on an aggregate over a shared table, neutralise the pre-existing rows for the duration (and always restore in `finally`) — don't branch around them, or the critical path silently goes untested.
+**Source:** caught during self-review this session (first run's PASS was hollow).
+
+## 2026-06-23 (session 5) — validate booleans explicitly in admin libs: a non-boolean both bypasses the guard AND 500s
+**Context:** `updateUser` last-admin guard checks `input.isAdmin === false`. Review found `isAdmin` was never type-checked.
+**Discovery:** A non-boolean (e.g. JSON `"false"` string) makes `=== false` false → guard **skipped**, then `data.isAdmin = "false"` hits Prisma → `PrismaClientValidationError` → unmapped 500. Two bugs from one missing check. Added `if (typeof input.isAdmin !== "boolean") throw new AdminError(400, …)` before the guard. Enum fields (teamRole/team) were already safe via `.includes()`, but booleans have no enum to lean on.
+**Impact:** In the deep-lib validation layer, explicitly `typeof`-check boolean inputs — a strict `=== false`/`=== true` guard silently no-ops on the wrong type instead of erroring, which is worse than a 400. Turns a security-relevant bypass + 500 into a clean 400.
+**Source:** Stage-2 code review this session.
+
+## 2026-06-23 (session 5) — squash a WIP checkpoint into a clean feature commit via `git reset --soft` (interactive rebase unavailable)
+**Context:** Session opened on an uncommitted P1–P5 working tree; made a WIP checkpoint commit (`66839ad`) to protect work, then finished P6–P8. Wanted one clean `feat:` commit for the PR.
+**Discovery:** The Bash tool env blocks interactive rebase (`rebase -i`), so the squash path is `git reset --soft <base>` (moves branch pointer back to before the WIP, keeps every change staged, loses nothing), then re-stage selectively + one clean commit. Also: files edited *after* the checkpoint (here `settings/page.tsx` from P8 + `CHANGELOG.md`) show as unstaged ` M` after the soft reset — must be re-`git add`ed or they silently miss the commit.
+**Impact:** Checkpoint-commit-then-squash is the safe rhythm for long uncommitted multi-step work on Windows. Remember soft-reset only re-stages what the *collapsed commit* contained; anything touched afterward needs an explicit add. Also: PowerShell here-string `@'…'@` is a literal `@` in the Bash tool (POSIX sh) — use `git commit -F <file>` for multi-line messages, not heredocs/here-strings.
+**Source:** done + debugged this session (first checkpoint commit got a stray `@` line from a misused here-string).
+
+## 2026-06-22 (session 4) — native `<input type=color>` gives valid-by-construction hex (no client regex)
+**Context:** P5 brand knowledge form needed a `colors[]` palette editor where "invalid hex is rejected" (UX spec).
+**Discovery:** Instead of a free-text chip input + client-side `#rrggbb` regex, used a native `<input type="color">` swatch picker + "add" button. The browser only ever emits a valid 7-char `#rrggbb`, so the chip list is valid-by-construction — no client validation path to write/maintain. Server (`lib/admin/brands.ts`) still validates hex independently (defense in depth; API is the trust boundary). Swatch chips show the colour via `style={{backgroundColor:c}}`.
+**Impact:** For constrained-format inputs, prefer a native input that can only produce valid values over text+validation. Less UI code, no invalid-state UX to design.
+**Source:** design decision this session.
+
+## 2026-06-22 (session 4) — folding an existing inline-validated route into the deep-lib pattern (keep old fields working)
+**Context:** P5 had to ADD enriched-knowledge fields to `PATCH /api/brand`, which already validated overlay fields (footer/logoSize/logoCorner) inline in the route — not tsx-testable, unlike the session-3 admin libs.
+**Discovery:** Cleanest path = extract ALL of the route's logic (old overlay + new knowledge) into `lib/admin/brands.ts` `updateBrand(input)` throwing `AdminError`, then make the route a thin gate→lib→`adminErrorResponse`. The verify script (`m1b-brands.ts`) then explicitly asserts the OLD overlay fields still update (parity check) alongside the new ones — so the refactor can't silently regress the existing feature. 16/16 PASS confirmed overlay + knowledge both work.
+**Impact:** When deepening a route that already has inline logic, move the whole thing to the lib (not just the new bits) and add a parity assertion for the pre-existing behaviour. One validated path, one trust boundary, regression-proof.
+**Source:** design decision + observed this session.
+
+## 2026-06-22 (session 4) — verify scripts that mutate a real, unique-keyed table use a throwaway row
+**Context:** `m1b-brands.ts` tests `updateBrand` against a Brand, but Brand rows are real seeded data (sifututor/nakngaji) with `@unique` name+slug — patching them in a test would corrupt live brand config.
+**Discovery:** Created a throwaway `zztest-brand-<rand>` Brand (only name+slug required; everything else defaults), patched + asserted against it, then `deleteMany({ slug: { startsWith: "zztest-brand-" } })` in `finally`. Brand has no slug-format validator (unlike Expert.roleKey), so the `zztest-` slug is accepted. Avoids save/restore-original gymnastics on real rows.
+**Impact:** Pattern for verify scripts on tables without natural temp scoping: spin a throwaway row, never touch real ones, clean by prefix in `finally`. Pair with the session-3 rule (tags must satisfy any column format validators).
+**Source:** design decision this session.
+
+## 2026-06-22 (session 3) — admin route logic must live in a lib to be tsx-testable (assertAdmin uses next/headers)
+**Context:** Module 1 Phase B admin CRUD. Wanted tsx integration scripts (`scripts/m1b-*.ts`) to test route behaviour (dup→409, delete-guards) without spinning a server.
+**Discovery:** Route handlers can't be called directly from a tsx script — `assertAdmin()` → `getCurrentUserWithRole()` → `cookies()` from `next/headers`, which throws outside a request scope. Solution: put all validation + referential-guard logic in a plain lib (`src/lib/admin/{experts,recipes}.ts`); the route is a thin `assertAdmin` + HTTP-mapping wrapper. Scripts import the lib functions and assert against the live DB. Cleaner module boundary AND testable.
+**Impact:** Standard shape for all admin CRUD: deep lib (throws typed `AdminError{status}`) + thin route (`adminErrorResponse(e)` maps to NextResponse). Reuse for P5/P6 (brands/users).
+**Source:** design decision + observed this session.
+
+## 2026-06-22 (session 3) — `assertAdmin()` THROWS a Response, it does not return one
+**Context:** Writing `/api/admin/*` route gates.
+**Discovery:** `assertAdmin()` (in `lib/session.ts`) throws `new Response(..., {status:401|403})` on failure. Next.js does NOT auto-return a thrown Response from a route handler — you must catch it: `try { await assertAdmin() } catch (e) { if (e instanceof Response) return e; throw e }`. (Existing `/api/usage` route already used this pattern.) Wrapped it in a local `gate()` helper returning `Response|null`.
+**Impact:** Every admin route needs the catch-and-return; forgetting it turns a 403 into an unhandled 500.
+**Source:** observed (existing pattern) this session.
+
+## 2026-06-22 (session 3) — test-row tags must satisfy slug validators (no leading underscore)
+**Context:** `m1b-experts.ts` used the common `__test_*` throwaway-row prefix for a temp Expert.
+**Discovery:** `createExpert` validates `roleKey` with `/^[a-z][a-z0-9_]*$/` (must start with a letter) → the `__test_expert_…` tag was rejected with a 400 before the test could run. Switched temp tags to a letter-leading prefix `zztest_*` (still greppable + self-cleaned via `deleteMany startsWith`).
+**Impact:** When a model field has a format validator, the verify-script tag convention must conform to it — don't reuse `__test_` blindly for slug/key columns.
+**Source:** debugging (script exit 1) this session.
+
 ## 2026-06-22 (session 2) — `@@map` model rename: blast-radius hides in `scripts/`, not just `src/`
 **Context:** Module 1 Phase A renamed `FeatureRun` → `CreativeRun` via `@@map("FeatureRun")`. Grepped `prisma.featureRun` in `src/` → only 7 hits, all in `feature-store.ts` (well-encapsulated data layer). Repointed those, lint+build of the app passed.
 **Discovery:** `npx tsc --noEmit` then failed on TWO leftover dev/test scripts — `scripts/live-poster-e2e.mts` + `scripts/test-async-visual.ts` — still calling `prisma.featureRun.*`. `next build` does NOT typecheck loose scripts under `scripts/`, so the build was green while tsc was red. The standalone `tsc --noEmit` gate is what caught them.

@@ -1,0 +1,41 @@
+{
+  "id": "m1-phase-c-intent-router",
+  "route": "feature",
+  "created": "2026-06-23T08:00:00Z",
+  "branch": "feat/m1-phase-c-intent-router",
+  "description": "Module 1 Phase C — Intent router: input → understood task ({task_type, lens, recipe, gaps}) via lens resolve, upload parse, LLM classify, gap-check",
+  "steps": [
+    { "n": 1, "step": "brainstorm", "status": "done", "evidence": ".claude/plans/2026-06-23-m1-phase-c-intent-router-brainstorm.md" },
+    { "n": 2, "step": "prd", "status": "done", "evidence": "docs/plans/2026-06-23-m1-phase-c-intent-router-prd.md" },
+    { "n": 3, "step": "ux", "status": "done", "evidence": "docs/plans/2026-06-23-m1-phase-c-intent-router-ux.md (API contract — Phase C is API+libs, no UI)" },
+    { "n": 4, "step": "build-prompts", "status": "done", "evidence": "docs/plans/2026-06-23-m1-phase-c-intent-router-build-prompts.md (6 prompts: lens → ingest → recipe/gap → classify → route → benchmark)" },
+    { "n": 5, "step": "build", "status": "done", "evidence": "All 6 prompts: lens (m1c-lens 9/9) · ingest (m1c-ingest 10/10) · recipe+gap+orchestration (m1c-router 26/26) · classify (m1c-classify live PASS) · route POST /api/studio · benchmark (m1c-benchmark 10/10 live) + smoke (m1c-smoke 2/2 roadmap E2E live)" },
+    { "n": 6, "step": "verify", "status": "done", "at": "2026-06-23", "evidence": { "lint": "passed (0/0)", "tsc": "passed", "build": "passed (incl /api/studio); fixed pdf-parse inner import via turbopackIgnore" } },
+    { "n": 7, "step": "review", "status": "done", "at": "2026-06-23", "evidence": "Stage 1 spec PASS (US-1..6, both roadmap cases live E2E, brand-grounded, auth+lens-scope). Stage 2 PASS after fixing 1 CRITICAL: path-traversal/LFI in upload handling — added safePublicPath() guard in ingest + imageDataUrl + regression test. Re-verified lint/tsc/build green. Non-blocking SUGGEST: getBrandContext called twice/request." },
+    { "n": 8, "step": "release-notes", "status": "done", "at": "2026-06-23", "evidence": "CHANGELOG.md [Unreleased] ### Added — Intent router (Module 1, Phase C); notes pdf-parse/mammoth deps + path-traversal guard" },
+    { "n": 9, "step": "commit", "status": "done", "at": "2026-06-23", "evidence": "8842928 feat(m1): intent router — Phase C (19 files)" },
+    { "n": 10, "step": "push", "status": "done", "at": "2026-06-23", "evidence": "pushed origin/feat/m1-phase-c-intent-router; PR #16 https://github.com/hibatullahmindquest/brief-studio/pull/16 (pinned fork, base master)" }
+  ],
+  "metadata": {
+    "outputType": "none",
+    "brand": "none",
+    "plan": "creative-hub/docs/revamp/module-1-implementation.md §Phase C",
+    "scope": "Goal: input → understood task. Files: src/app/api/studio/route.ts, src/lib/{router,lens,ingest}.ts. Tasks: lens resolve (pick > account default > probe; HOD/admin picker) · upload parse (doc/OCR/multimodal; URL/video via yt-dlp+ffmpeg) → raw brief · LLM classify task_type + purpose → select recipe · gap-check. Acceptance: 'Ad poster … IG' → {task: poster, lens: marketing, recipe, gaps}; marketing-plan brief → {task: marketing_plan, recipe, gaps}.",
+    "deps": "Phase A (data model) + Phase B (admin: experts/recipes/brands editable) DONE & merged. Feeds Phase D (recipe engine).",
+    "affectedFiles": [
+      "src/lib/studio-error.ts",
+      "src/lib/lens.ts",
+      "src/lib/ingest.ts",
+      "src/lib/router.ts",
+      "src/lib/usage.ts",
+      "src/app/api/studio/route.ts",
+      "scripts/m1c-lens.ts",
+      "scripts/m1c-ingest.ts",
+      "scripts/m1c-router.ts",
+      "scripts/m1c-classify.ts",
+      "scripts/m1c-benchmark.ts",
+      "scripts/m1c-smoke.ts",
+      "package.json (mammoth + pdf-parse)"
+    ]
+  }
+}

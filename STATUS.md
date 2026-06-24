@@ -1,27 +1,62 @@
 # STATUS — brief-studio
 
-## ▶ NEXT SESSION — START HERE (handover 2026-06-22)
+## ▶ NEXT SESSION — START HERE (handover 2026-06-23 session 6)
 
-**Where we are:** Executing the **revamp plan** (`creative-hub/docs/revamp/`). **Module 0 MERGED (PR #13).** **Module 1 Phase A (data model) DONE + MERGED (PR #14).** On `master`, clean.
+**Where we are:** Executing the **revamp plan**. Module 0 ✅ + Module 1 Phase A ✅ merged · **Phase B (Admin) ✅ MERGED** (PR #15 → master `4b757a8`) · **Phase C (Intent Router) ✅ DONE — PR #16 OPEN** (https://github.com/hibatullahmindquest/brief-studio/pull/16, pinned fork, base `master`). Awaiting merge.
+
+**Immediate next:**
+1. **Merge PR #16** when reviewed: `gh pr merge 16 --repo hibatullahmindquest/brief-studio --squash --delete-branch` (PIN FORK — guard hook enforces). Then `git checkout master && git pull` + delete local `feat/m1-phase-c-intent-router`.
+2. Then **Module 1 Phase D — Recipe engine** (`creative-hub/docs/revamp/module-1-implementation.md` §Phase D): run the experts in the recipe the router selected. Rides Module 0 queue — enqueue `kind="generate"` (recipe_id + spec); worker runs recipe steps sequentially (each step = LLM call: role `system_prompt` + grounding + prior outputs); grounding = brand knowledge; **Brand Guardian** QA (do-not/tone/religious → pass/flag/retry); cost per expert → usage log. Files: `src/worker/handlers/generate.ts` (expand) + `src/lib/{recipe-run,grounding,expert}.ts`. Acceptance: poster recipe runs Strategist→Copywriter→Art Director→QA, produces spec+copy; cost logged per expert.
+
+**Env:** Docker `brief-studio-db` up. Dev server + worker **STOPPED** (killed for the build). Restart with `npm run dev` / `npm run worker:interactive`. **Stop them before any `npm run build`/`prisma generate`** (Windows EPERM on Prisma DLL — today 3 zombie `next dev` procs caused it; kill stray brief-studio node procs first via `Get-CimInstance Win32_Process -Filter "Name='node.exe'" | ? { $_.CommandLine -match 'brief-studio' }`).
+
+**Phase C summary (all 10 feature-route steps done):** `POST /api/studio` (`runIntake`): `resolveLens` → `ingestUploads` → gpt-4o `classify` → confidence-gate/`selectRecipe` → `gapCheck` → persist draft `CreativeRun`. Files `src/lib/{lens,ingest,router,studio-error}.ts` + thin route. Lens = `marketing`/`social` (social_memo parked). Uploads = text+image+pdf/docx (`safePublicPath` traversal guard). Clarify threshold 0.7. **Zero schema/seed change.** Tests: lens 9/9 · ingest(+traversal) · router 26/26 · live classify/benchmark 10/10/smoke 2/2. Review PASS (fixed CRITICAL path-traversal LFI). Deps: pdf-parse, mammoth. Commit `8842928`. **Bookkeeping (GOALS/STATUS/MEMORY/task-json) left uncommitted by design** — finalised via this save-session.
+
+**Superseded handovers below (sessions 3 & 5) — kept for history:**
+
+---
+
+## ▶ (OLD) NEXT SESSION — START HERE (handover 2026-06-23 session 5)
+
+**Module 1 Phase B (Admin) ✅ DONE** — committed `114e60a`, PR #15 (since MERGED → `4b757a8`). 8 build prompts: Experts/Recipes API+UI, Brands enriched, Users/Teams API+UI, Settings hub. Pattern: deep lib `src/lib/admin/*` throws `AdminError{status}`; thin `assertAdmin` route. Verify scripts: experts 9/9 · recipes 14/14 · brands 16/16 · users 10/10.
+
+**Superseded handover below (session 3, Phase B mid-build) — kept for history:**
+
+---
+
+## ▶ (OLD) NEXT SESSION — START HERE (handover 2026-06-22 session 3)
+
+**Where we are:** Executing the **revamp plan**. Module 0 ✅ + Module 1 Phase A ✅ merged. **Module 1 Phase B (Admin) IN PROGRESS** on a feature branch — 5 of 8 build prompts done, NOTHING committed yet.
 
 **Branch / git state:**
-- On **`master`** @ `4cc049d` (M1 Phase A squash-merged via PR #14). M0 = `40eaef1` (PR #13). No open PRs / feature branches.
+- On **`feat/m1-phase-b-admin`** (branched off `master` `4cc049d`). **Uncommitted working tree** — 10 new files (see `.claude/tasks/m1-phase-b-admin.json` → `metadata.affectedFiles`) + planning docs + STATUS/GOALS/MEMORY/task-json bookkeeping.
+- `master` unchanged @ `4cc049d`. No open PRs.
 - ⚠️ FORK repo — ALWAYS pin: `gh pr create --repo hibatullahmindquest/brief-studio --base master` (guard hook enforces).
 
-**Gates done (M1-A):** migration applied (additive, FeatureRun preserved via @@map) · `seed-m1.ts` ran (2 brands + 5 experts + 3 recipes) · `m1a-verify.ts` ALL PASS (17 asserts) · lint+tsc+build green · `/bs-review` PASS (0 critical).
+**Phase B progress (route=feature, task `.claude/tasks/m1-phase-b-admin.json`):**
+- Planning gates DONE: brainstorm + PRD + UX + build-prompts. Files:
+  `.claude/plans/2026-06-22-m1-phase-b-admin-brainstorm.md` + `docs/plans/2026-06-22-m1-phase-b-admin-{prd,ux,build-prompts}.md`.
+- Build (8 prompts): **P1 Experts API ✅ (m1b-experts 9/9) · P2 Experts UI ✅ · P3 Recipes API ✅ (m1b-recipes 14/14) · P4 Recipes UI ✅ · P5 Brands enriched ✅ (m1b-brands 16/16)**. `tsc --noEmit` exit 0 + `npm run lint` clean after P5. (Full `npm run build` deferred to the verify gate.)
+- Built files: `src/lib/admin/{errors,experts,recipes,brands}.ts` · `src/app/api/admin/{experts,recipes}/route.ts` + extended `src/app/api/brand/route.ts` · `src/components/admin/{InlineConfirm,ExpertsAdmin,ChipListInput,RecipeStepsBuilder,RecipesAdmin,BrandKnowledgeForm}.tsx` · `src/app/dashboard/settings/{experts,recipes,brands}/page.tsx` · `scripts/m1b-{experts,recipes,brands}.ts`.
+- **P4 notes:** `ChipListInput` = shared chip editor (lenses + brand knowledge reuse). `SaveBar` NOT extracted — admin components inline Save/Cancel. `RecipeStepsBuilder` reorders via ▲▼ (no drag lib), tier `""`=inherit (dropped on serialise), red ⚠ on disabled/unknown roleKey (kept selectable).
+- **P5 notes:** No schema change — all enriched `Brand` fields already existed (M1-A). Extracted `src/lib/admin/brands.ts` `updateBrand(input)` (overlay + knowledge in one validated path; throws `AdminError`); `PATCH /api/brand` is now a thin gate→lib→`adminErrorResponse` (overlay fields still work, m1b-brands proves it). `BrandKnowledgeForm` reuses `ChipListInput` (doNot = `tone="danger"`); colours use a native `<input type=color>` swatch picker so only valid `#rrggbb` ever enters (server still validates hex). Two BrandKnowledgeForm + BrandFurnitureForm stacked per brand on the brands page.
 
-**Immediate next action:**
-1. **Module 1 Phase B (Admin)** — experts/recipes/brands/teams CRUD + system_prompt editor + logo/colors upload per `module-1-implementation.md` Phase B. B blocks D/E (author experts/recipes before pipeline). Route via `/bs-task-router`; detail Phase B into bite-sized TDD tasks first.
+**Immediate next action — resume at P6** (see `docs/plans/2026-06-22-m1-phase-b-admin-build-prompts.md` §Prompt 6):
+1. **P6 Users (Teams) API** — `scripts/m1b-users.ts` (red first) → `src/app/api/admin/users/route.ts` (`GET` list id/name/email/teamRole/team/isAdmin; `PATCH ?id=` only assignment fields — never password/email/username; **last-admin guard**: block if PATCH drops admin count to 0). Follow the deep-lib pattern: put logic in `src/lib/admin/users.ts`, thin route. `assertAdmin()`.
+2. P7 Users UI (`UsersAdmin.tsx` + page; per-row Save; self-row highlight; surface last-admin 409) · P8 settings hub nav+counts.
+3. Then gates: verify (lint+tsc+build) → `/bs-review` → `/bs-release-notes` → `/bs-commit` → push (ask) → PR (pin fork).
 
-**M1-A scope notes (carry forward):** Expert model named `Expert` (roleKey), not `Role` (avoid auth collision). Legacy/new Brand field duplication (dontSay/doNot, logoUrl/logoPath, footer, colors) is intentional — consolidate + backfill in a later phase. CreativeRun.outputJson still required — Phase D/F Artifact writers must pass `outputJson:"{}"` or relax column. Prisma 4: omit Json fields (or use `Prisma.DbNull`) — never pass literal `null`.
+**LOCKED this session:** admin path = **`/dashboard/settings/{experts,recipes,users,brands}`** + `/api/admin/{experts,recipes,users}` (NOT `src/app/admin/*`). Locked into `creative-hub/docs/revamp/module-1-implementation.md` §Phase B for future phases. Pattern: deep lib `src/lib/admin/*` throws `AdminError{status,message}`; route is thin `assertAdmin` gate + `adminErrorResponse(e)` mapping. Lifecycle = soft-disable first; hard delete guarded (expert-in-recipe / recipe-in-run → 409).
 
-**Explainer:** `C:\claude\temp\module-1-revamp-explainer.html` (revamp overview + 7-entity detail + interactions).
+**Run verify scripts:** `DATABASE_URL="postgresql://postgres:postgres@localhost:5432/brief_studio" npx tsx scripts/m1b-<x>.ts` (needs `brief-studio-db` + seeded experts via `scripts/seed-m1.ts`).
 
-**Env state:** Docker Desktop + `brief-studio-db` RUNNING (had to relaunch Docker this session). Dev + worker STOPPED. DB URL `postgresql://postgres:postgres@localhost:5432/brief_studio`.
+**M1-A scope notes (still active):** Expert model = `Expert` (roleKey), not `Role`. Legacy/new Brand field duplication intentional — consolidate later. CreativeRun.outputJson still required (pass `"{}"`). Prisma 4: omit nullable Json (or `Prisma.DbNull`) — never literal `null`.
 
-**Gotchas carried (also in MEMORY.md):** Prisma 4 needs `Prisma.JsonNull` to write null to a Json column. `@@map` rename = zero data migration but grep every old `prisma.<model>` call-site. External skill packs are gitignored local-only (`.claude/skills/*` except `bs-*`) — run `/reload-plugins` after install; many are user-invoke only (`disable-model-invocation`).
+**Gotchas this session (also MEMORY.md, newest entries):** (1) admin route logic must live in a lib to be tsx-testable — `assertAdmin`→`cookies()` throws outside a request scope, so can't call handlers directly. (2) `assertAdmin()` THROWS a Response — route must `catch (e) { if (e instanceof Response) return e; throw e }`. (3) verify-script temp tags must satisfy slug validators (roleKey regex starts-with-letter) — used `zztest_*` not `__test_*`.
 
-**Working rhythm (Rule #28, new):** after each completed step in multi-step work, show an ordered ✅/⏳/❌ checklist + a `Next:` line.
+**Env state:** Docker Desktop + `brief-studio-db` RUNNING. Dev + worker STOPPED. DB URL `postgresql://postgres:postgres@localhost:5432/brief_studio`.
+
+**Working rhythm (Rule #28):** after each completed step in multi-step work, show an ordered ✅/⏳/❌ checklist + a `Next:` line.
 
 ---
 
