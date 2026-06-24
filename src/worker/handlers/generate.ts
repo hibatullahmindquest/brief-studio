@@ -2,6 +2,7 @@ import type { JobRow } from "@/lib/job-store";
 import { prisma } from "@/lib/prisma";
 import { runVisualJob } from "@/lib/visual-job";
 import { runRecipe } from "@/lib/recipe-run";
+import { renderFromRun } from "@/lib/visual-render";
 import { isRecipeConfigError } from "@/lib/studio-error";
 import type { HandlerResult } from "../dispatch";
 
@@ -34,11 +35,25 @@ export async function runGenerateHandler(job: JobRow): Promise<HandlerResult> {
           feature: run.feature,
           userId: run.userId,
         });
+
+        // Phase E — terminal render seam. Only when the recipe produced a visual_direction
+        // artifact (image-producing recipe); text-only recipes skip it. A render failure does
+        // NOT fail the job — the text artifacts are valuable and already persisted; we surface
+        // the reason as a notice. (No separate render-retry this phase.)
+        const notices = [...result.notices];
+        let costMyr = result.costMyr;
+        let image: { mediaPath: string; ratio: string } | undefined;
+        if (result.artifacts.some((a) => a.type === "visual_direction")) {
+          const r = await renderFromRun({ runId: run.id, userId: run.userId });
+          if (!r.ok) notices.push(`image render failed (${r.category}): ${r.reason}`);
+          else if (!r.skipped) { costMyr = r.costMyr; image = { mediaPath: r.mediaPath, ratio: r.ratio }; }
+        }
+
         return {
           ok: true,
           resultKind: "recipe",
-          result: { artifacts: result.artifacts, guardian: result.guardian, notices: result.notices },
-          costMyr: result.costMyr,
+          result: { artifacts: result.artifacts, guardian: result.guardian, notices, image },
+          costMyr,
         };
       } catch (e) {
         // misconfigured recipe (no recipe/grounding/producing experts) won't fix on
