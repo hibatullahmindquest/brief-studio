@@ -6,10 +6,12 @@ import { NextResponse } from "next/server";
 export class StudioError extends Error {
   status: number;
   retryable: boolean;
-  constructor(status: number, message: string, retryable = false) {
+  extra?: Record<string, unknown>;
+  constructor(status: number, message: string, retryable = false, extra?: Record<string, unknown>) {
     super(message);
     this.status = status;
     this.retryable = retryable;
+    this.extra = extra;
     this.name = "StudioError";
   }
 }
@@ -22,9 +24,24 @@ export function isStudioError(e: unknown): e is StudioError {
 // so the caller can rethrow (real 500s stay loud).
 export function studioErrorResponse(e: unknown): NextResponse | null {
   if (isStudioError(e)) {
-    const body: { error: string; retryable?: boolean } = { error: e.message };
+    const body: { error: string; retryable?: boolean } & Record<string, unknown> = { error: e.message };
     if (e.retryable) body.retryable = true;
+    if (e.extra) Object.assign(body, e.extra);
     return NextResponse.json(body, { status: e.status });
   }
   return null;
+}
+
+// Recipe-engine config failure (no recipe / no grounding / no enabled producing
+// experts). Distinct from transient OpenAI errors so the worker handler can mark it
+// NON-retryable (a re-run won't fix a misconfigured recipe). Mirrors StudioError.
+export class RecipeConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RecipeConfigError";
+  }
+}
+
+export function isRecipeConfigError(e: unknown): e is RecipeConfigError {
+  return e instanceof RecipeConfigError;
 }

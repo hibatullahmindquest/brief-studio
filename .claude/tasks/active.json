@@ -1,5 +1,5 @@
 {
-  "activeTask": "m1-phase-c-intent-router",
-  "taskFile": ".claude/tasks/m1-phase-c-intent-router.json",
+  "activeTask": "m1-phase-d-recipe-engine",
+  "taskFile": ".claude/tasks/m1-phase-d-recipe-engine.json",
   "route": "feature"
 }

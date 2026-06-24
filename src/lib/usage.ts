@@ -5,7 +5,7 @@ export type LogUsageInput = UsageInput & {
   userId: string;
   brandId?: string | null;
   featureRunId?: string | null;
-  module: "visual" | "copy" | "router";
+  module: "visual" | "copy" | "router" | "expert";
 };
 
 // Records one AI call's usage + cost. Never throws — logging must not break
