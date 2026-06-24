@@ -1,0 +1,52 @@
+{
+  "id": "m1-phase-b-admin",
+  "route": "feature",
+  "created": "2026-06-22T08:24:46Z",
+  "branch": "feat/m1-phase-b-admin",
+  "description": "Module 1 Phase B (Admin): CRUD experts/recipes/brands/teams + system_prompt editor + logo/colors upload + team assignment, per creative-hub/docs/revamp/module-1-implementation.md Phase B",
+  "steps": [
+    { "n": 1, "step": "brainstorm", "status": "done", "evidence": ".claude/plans/2026-06-22-m1-phase-b-admin-brainstorm.md" },
+    { "n": 2, "step": "prd", "status": "done", "evidence": "docs/plans/2026-06-22-m1-phase-b-admin-prd.md" },
+    { "n": 3, "step": "ux", "status": "done", "evidence": "docs/plans/2026-06-22-m1-phase-b-admin-ux.md" },
+    { "n": 4, "step": "build-prompts", "status": "done", "evidence": "docs/plans/2026-06-22-m1-phase-b-admin-build-prompts.md" },
+    { "n": 5, "step": "build", "status": "done", "evidence": "P1-P8 all complete; verify scripts m1b-{experts 9/9, recipes 14/14, brands 16/16, users 10/10} PASS" },
+    { "n": 6, "step": "verify", "status": "done", "at": "2026-06-23", "evidence": { "lint": "passed", "tsc": "passed", "build": "passed (39 routes incl /api/admin/{experts,recipes,users} + /dashboard/settings/{experts,recipes,users})" } },
+    { "n": 7, "step": "review", "status": "done", "at": "2026-06-23", "evidence": "Stage 1 spec PASS (all 8 prompts implemented; assertAdmin on every admin route; brand PATCH isAdmin-gated). Stage 2 quality PASS, 0 critical. Fixed: updateUser now 400s on non-boolean isAdmin (was 500). Noted non-blocking: last-admin guard is non-atomic (TOCTOU) — negligible for 7-user internal tool." },
+    { "n": 8, "step": "release-notes", "status": "done", "at": "2026-06-23", "evidence": "CHANGELOG.md [Unreleased] ### Added — Admin management UI (Module 1, Phase B)" },
+    { "n": 9, "step": "commit", "status": "done", "at": "2026-06-23", "evidence": "114e60a feat(m1): admin management UI — Phase B (30 files; WIP checkpoint 66839ad squashed via soft-reset)" },
+    { "n": 10, "step": "push", "status": "done", "at": "2026-06-23", "evidence": "pushed origin/feat/m1-phase-b-admin; PR #15 https://github.com/hibatullahmindquest/brief-studio/pull/15 (pinned to fork, base master)" }
+  ],
+  "metadata": {
+    "outputType": "none",
+    "brand": "both",
+    "buildProgress": "ALL 8 DONE — P1 Experts API ✅ (9/9) · P2 Experts UI ✅ · P3 Recipes API ✅ (14/14) · P4 Recipes UI ✅ · P5 Brands enriched ✅ (16/16) · P6 Users API ✅ (10/10) · P7 Users UI ✅ · P8 Settings hub ✅",
+    "verifySnapshot": "lint + tsc --noEmit exit 0 + npm run build PASS (2026-06-23)",
+    "affectedFiles": [
+      "src/lib/admin/errors.ts",
+      "src/lib/admin/experts.ts",
+      "src/lib/admin/recipes.ts",
+      "src/lib/admin/brands.ts",
+      "src/lib/admin/users.ts",
+      "src/app/api/admin/experts/route.ts",
+      "src/app/api/admin/recipes/route.ts",
+      "src/app/api/admin/users/route.ts",
+      "src/app/api/brand/route.ts",
+      "src/components/admin/InlineConfirm.tsx",
+      "src/components/admin/ExpertsAdmin.tsx",
+      "src/components/admin/ChipListInput.tsx",
+      "src/components/admin/RecipeStepsBuilder.tsx",
+      "src/components/admin/RecipesAdmin.tsx",
+      "src/components/admin/BrandKnowledgeForm.tsx",
+      "src/components/admin/UsersAdmin.tsx",
+      "src/app/dashboard/settings/page.tsx",
+      "src/app/dashboard/settings/experts/page.tsx",
+      "src/app/dashboard/settings/recipes/page.tsx",
+      "src/app/dashboard/settings/brands/page.tsx",
+      "src/app/dashboard/settings/users/page.tsx",
+      "scripts/m1b-experts.ts",
+      "scripts/m1b-recipes.ts",
+      "scripts/m1b-brands.ts",
+      "scripts/m1b-users.ts"
+    ]
+  }
+}
