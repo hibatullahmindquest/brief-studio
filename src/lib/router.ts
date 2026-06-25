@@ -124,7 +124,9 @@ async function imageDataUrl(p: string): Promise<string | null> {
   }
 }
 
-function buildSystemPrompt(brandPromptBlock: string, taskTypes: string[]): string {
+// Exported for unit testing the language-mirror contract (G4). The clarifying questions
+// must follow the brief's own language, not a fixed one.
+export function buildSystemPrompt(brandPromptBlock: string, taskTypes: string[]): string {
   return [
     "You are the intake router for a Malaysian creative studio. Read the user's brief (and any image) and decide what they want to make.",
     "Respond with ONLY valid JSON (no markdown), matching exactly:",
@@ -134,12 +136,12 @@ function buildSystemPrompt(brandPromptBlock: string, taskTypes: string[]): strin
     '  "confidence": <number 0..1, how sure you are of taskType>,',
     '  "suggestedLens": "marketing" | "social" | null,',
     `  "extracted": { ${ALL_FIELDS.map((f) => `"${f}": "<value or empty string>"`).join(", ")} },`,
-    '  "questions": { "<field>": "<short Malay question>" }',
+    '  "questions": { "<field>": "<short question in the SAME LANGUAGE as the user\'s brief>" }',
     "}",
     "Rules: pick the single best taskType from the list. `confidence` reflects how clearly the OUTPUT FORMAT is determined:",
     "set it at or below 0.4 when the brief does NOT name or strongly imply a specific output (e.g. 'poster'/image, 'caption'/post, 'marketing plan', or a platform like IG for a visual) — even though you still guess the closest taskType.",
     "Fill `extracted` only with values clearly present in the brief; leave a field as \"\" if absent.",
-    "For each field you left empty that matters, add a short Malay question to `questions` (key = field name).",
+    "For each field you left empty that matters, add a short question to `questions` (key = field name) — write it in the SAME LANGUAGE the user wrote their brief in (Malay brief → Malay question, English brief → English question, mixed → follow their lead).",
     "marketing = paid/campaign framing; social = organic publish-ready content.",
     "",
     "## Brand",

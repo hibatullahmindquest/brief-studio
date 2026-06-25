@@ -68,5 +68,9 @@ skills-lock.json
 /public/uploads/exports/*
 !/public/uploads/exports/.gitkeep
 
+# Uploaded brief attachments (uploaded via Studio front door at runtime — Phase G)
+/public/uploads/briefs/*
+!/public/uploads/briefs/.gitkeep
+
 # Generated status report PDFs (local artifacts — keep the README)
 /docs/reports/*.pdf

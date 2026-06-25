@@ -30,8 +30,15 @@ export type JobRow = {
   updatedAt: Date;
 };
 
-// Generic enqueue. Idempotent on dedupeKey: if an active (queued|processing) job
-// with the same dedupeKey exists, reuse it instead of creating a duplicate.
+// Generic enqueue. Idempotent on dedupeKey: if an active (queued|processing) job with the
+// same dedupeKey exists, reuse it instead of creating a duplicate.
+//
+// The dedupe is made RACE-SAFE with a per-key Postgres advisory lock inside a transaction:
+// two concurrent enqueues for the SAME dedupeKey (e.g. a double-fired Confirm, or a retry) are
+// serialized, so they can never both pass the "no active job" check and create two jobs. The
+// lock is PER-KEY, so DIFFERENT runs/users still enqueue fully in parallel — multi-user
+// concurrency is preserved. Retry-safe: a failed/succeeded job is not "active", so a later
+// enqueue for the same key creates a fresh job.
 export async function enqueue(args: {
   kind: string;
   payload?: unknown;
@@ -43,27 +50,35 @@ export async function enqueue(args: {
   maxAttempts?: number;
   scheduledAt?: Date | null;
 }): Promise<{ job: JobRow; reused: boolean }> {
+  const data = {
+    kind: args.kind,
+    lane: args.lane ?? laneForKind(args.kind),
+    payload: (args.payload ?? {}) as object,
+    dedupeKey: args.dedupeKey ?? null,
+    userId: args.userId ?? null,
+    brandId: args.brandId ?? null,
+    featureRunId: args.featureRunId ?? null,
+    maxAttempts: args.maxAttempts ?? 3,
+    scheduledAt: args.scheduledAt ?? null,
+    status: "queued",
+  };
+
   if (args.dedupeKey) {
-    const existing = await prisma.job.findFirst({
-      where: { dedupeKey: args.dedupeKey, status: { in: ACTIVE } },
-      orderBy: { createdAt: "desc" },
+    const key = args.dedupeKey;
+    return await prisma.$transaction(async (tx) => {
+      // serialize concurrent enqueues for this key only (advisory xact lock auto-releases on commit)
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${key})::bigint)`;
+      const existing = await tx.job.findFirst({
+        where: { dedupeKey: key, status: { in: ACTIVE } },
+        orderBy: { createdAt: "desc" },
+      });
+      if (existing) return { job: existing as JobRow, reused: true };
+      const job = await tx.job.create({ data });
+      return { job: job as JobRow, reused: false };
     });
-    if (existing) return { job: existing as JobRow, reused: true };
   }
-  const job = await prisma.job.create({
-    data: {
-      kind: args.kind,
-      lane: args.lane ?? laneForKind(args.kind),
-      payload: (args.payload ?? {}) as object,
-      dedupeKey: args.dedupeKey ?? null,
-      userId: args.userId ?? null,
-      brandId: args.brandId ?? null,
-      featureRunId: args.featureRunId ?? null,
-      maxAttempts: args.maxAttempts ?? 3,
-      scheduledAt: args.scheduledAt ?? null,
-      status: "queued",
-    },
-  });
+
+  const job = await prisma.job.create({ data });
   return { job: job as JobRow, reused: false };
 }
 

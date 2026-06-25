@@ -10,6 +10,7 @@ import { sumRunCostMyr } from "@/lib/usage";
 
 const IMAGE = "image";
 const PDF = "pdf";
+const VISUAL_DIRECTION = "visual_direction";
 // user-facing text artifact types — excludes `visual_direction` (internal render instruction).
 const TEXT_TYPES = ["strategy", "copy", "social", "text"];
 
@@ -28,6 +29,15 @@ export type RunArtifacts = {
   texts: ArtifactRow[]; // user-facing text, oldest first
   pdf: ArtifactRow | null; // latest exported PDF
   costMyr: number;
+  // grounding/guardian/notices the recipe run recorded ({ grounding?, guardian?, notices? }).
+  // The Phase G result screen reads guardian here for the on-brand QA verdict. null when the
+  // run never went through the recipe engine (e.g. still a draft).
+  contextUsed: Record<string, unknown> | null;
+  // run can still produce an image on demand: a visual_direction artifact exists but no image
+  // has been rendered yet (text-first flow → Result shows "Generate poster").
+  imageable: boolean;
+  // wall-clock of the recipe (text) job, ms — for the "time taken" badge. null if no finished job.
+  durationMs: number | null;
 };
 
 export type LibraryItem = {
@@ -45,7 +55,7 @@ export type LibraryItem = {
 export async function getRunArtifacts(runId: string, userId: string): Promise<RunArtifacts | null> {
   const run = await prisma.creativeRun.findFirst({
     where: { id: runId, userId },
-    select: { id: true, title: true, feature: true, status: true, createdAt: true, brand: { select: { slug: true } } },
+    select: { id: true, title: true, feature: true, status: true, createdAt: true, contextUsed: true, brand: { select: { slug: true } } },
   });
   if (!run) return null;
 
@@ -59,6 +69,20 @@ export async function getRunArtifacts(runId: string, userId: string): Promise<Ru
   const texts = rows.filter((r) => TEXT_TYPES.includes(r.type));
   const pdfs = rows.filter((r) => r.type === PDF);
   const pdf = pdfs.length ? pdfs[pdfs.length - 1] : null; // latest
+  // imageable: a render instruction exists but no image rendered yet.
+  const imageable = rows.some((r) => r.type === VISUAL_DIRECTION) && images.length === 0;
+
+  // Json column: keep only a plain object; arrays/scalars/null collapse to null.
+  const ctx = run.contextUsed;
+  const contextUsed = ctx && typeof ctx === "object" && !Array.isArray(ctx) ? (ctx as Record<string, unknown>) : null;
+
+  // "time taken" = the recipe (text) job's wall-clock. Owner-scoped via the run we already loaded.
+  const job = await prisma.job.findFirst({
+    where: { featureRunId: runId, kind: "generate" },
+    orderBy: { createdAt: "desc" },
+    select: { status: true, createdAt: true, updatedAt: true },
+  });
+  const durationMs = job && job.status === "succeeded" ? Math.max(0, job.updatedAt.getTime() - job.createdAt.getTime()) : null;
 
   return {
     run: { id: run.id, title: run.title, feature: run.feature, brandSlug: run.brand?.slug ?? null, status: run.status, createdAt: run.createdAt },
@@ -66,6 +90,9 @@ export async function getRunArtifacts(runId: string, userId: string): Promise<Ru
     texts,
     pdf,
     costMyr: await sumRunCostMyr(runId),
+    contextUsed,
+    imageable,
+    durationMs,
   };
 }
 

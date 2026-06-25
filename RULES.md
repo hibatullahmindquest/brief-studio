@@ -40,6 +40,14 @@
 20. **Never commit `.env*`** — not even accidentally. Check `git status` before every commit.
 
 
+## Flow & Concurrency Rules
+
+29. **Flow sign-off before building** — before implementing any new multi-step user flow (≥2 screens/steps), write the explicit numbered step sequence (input → … → output) and get the user's approval first. Pin it in the brainstorm/UX doc. Don't discover flow mismatches after the build.
+30. **Per-run locks, never global** — concurrency guards must be scoped to the unit of work (the run), never the whole system. Multiple users must always be able to generate in parallel. One run is processed exactly once (atomic job claim + per-key enqueue lock); different runs run concurrently.
+31. **One job per run, idempotent output** — enqueue is race-safe per `dedupeKey` (advisory lock); the worker claim is atomic; producing steps delete-then-write so a re-run never duplicates artifacts. Never rely on "only one worker exists" for correctness.
+32. **Restart workers with `npm run worker:restart`** — never kill `npm run worker*` directly: on Windows the tsx/node child survives and a stale-code worker keeps running. The script tree-kills then starts exactly one.
+
+
 ## Quality Gate Rules
 
 21. **Verify gate is unskippable** — `npm run lint` + `npm run build` + `npx tsc --noEmit` must pass zero errors.
