@@ -4,6 +4,7 @@ export type Lane = "interactive" | "background";
 
 const KIND_LANE: Record<string, Lane> = {
   generate: "interactive",
+  render: "interactive", // on-demand poster render — user is waiting, same lane as generate
   meta_sync: "background",
   analyze: "background",
   video: "background",

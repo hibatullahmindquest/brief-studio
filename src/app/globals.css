@@ -180,3 +180,13 @@ button {
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-fadeInUp { animation: fadeInUp 0.8s ease-out forwards; }
+
+/* Studio (Phase G) — gentle per-step cross-fade */
+@keyframes studioFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.studio-fade { animation: studioFade 200ms ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .studio-fade { animation: none; }
+}

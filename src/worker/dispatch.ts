@@ -1,5 +1,6 @@
 import type { JobRow } from "@/lib/job-store";
 import { runGenerateHandler } from "./handlers/generate";
+import { runRenderHandler } from "./handlers/render";
 
 export type HandlerResult = {
   ok: boolean;
@@ -14,6 +15,7 @@ type Handler = (job: JobRow) => Promise<HandlerResult>;
 
 const HANDLERS: Record<string, Handler> = {
   generate: runGenerateHandler,
+  render: runRenderHandler,
   // meta_sync, analyze, video, signal registered by their modules later
 };
 

@@ -37,6 +37,8 @@ export async function renderFromRun(args: {
   userId: string;
   /** opt into describe mode (use the run's own visual description). Worker uses auto (false). */
   useDescribe?: boolean;
+  /** override the output ratio (Result "Generate poster" picker); else spec/platform decides. */
+  ratio?: RenderRatio;
   deps?: RenderDeps;
 }): Promise<RenderOutcome> {
   const { runId, userId } = args;
@@ -64,11 +66,19 @@ export async function renderFromRun(args: {
   const brand = brandSlug ? await getBrandContext(brandSlug) : null;
   if (!brand) return { ok: false, retryable: false, reason: "Brand not found for render.", category: "no_brand" };
 
+  // an explicit ratio override is merged into the spec so resolveRatio picks it first.
+  const specForRender =
+    args.ratio && run.spec && typeof run.spec === "object" && !Array.isArray(run.spec)
+      ? { ...(run.spec as Record<string, unknown>), ratio: args.ratio }
+      : args.ratio
+        ? { ratio: args.ratio }
+        : run.spec;
+
   const contract = resolveVisualDirection({
     visualDirectionText: dirText,
     describeText: run.inputText,
     useDescribe: args.useDescribe,
-    spec: run.spec,
+    spec: specForRender,
     brand,
   });
 

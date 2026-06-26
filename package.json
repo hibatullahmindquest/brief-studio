@@ -10,6 +10,7 @@
     "worker:start": "tsx src/worker/index.ts",
     "worker:interactive": "cross-env WORKER_LANE=interactive tsx src/worker/index.ts",
     "worker:background": "cross-env WORKER_LANE=background tsx src/worker/index.ts",
+    "worker:restart": "powershell -NoProfile -File scripts/worker-restart.ps1",
     "lint": "eslint",
     "seed:m1": "tsx scripts/seed-m1.ts",
     "env:check": "node scripts/check-env.mjs"
