@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { RunArtifacts, ArtifactRow } from "@/lib/artifact-store";
+import { fixBrandCase, stripMarkdownBold } from "@/lib/copy-format";
 
 // Phase G — Step 5 result, shared by the live flow and the deep-link /studio/[runId] page.
 // Text-first flow: copy is shown first; for image-capable runs a "Generate poster" panel renders
@@ -148,17 +149,8 @@ export function ResultView({ runId, initial }: { runId: string; initial: RunArti
         {hasImages && ratioOf(art.images[imgIdx]) && <Badge>{ratioOf(art.images[imgIdx])}</Badge>}
       </div>
 
-      {/* copy first (text-first flow) */}
-      {hasText && (
-        <div className="mt-4 space-y-3">
-          {art.texts.map((t) => (
-            <CopyBlock key={t.id} label={TYPE_LABEL[t.type] ?? t.type} text={textOf(t)} />
-          ))}
-        </div>
-      )}
-
-      {/* image: carousel if rendered, else the on-demand generate panel */}
-      {hasImages ? (
+      {/* image first when one exists — see the poster before the copy */}
+      {hasImages && (
         <div className="mt-4">
           <div className="relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--bg-2)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -178,9 +170,21 @@ export function ResultView({ runId, initial }: { runId: string; initial: RunArti
             </div>
           )}
         </div>
-      ) : art.imageable ? (
+      )}
+
+      {/* copy (below the image when there is one; first for text-only / pre-render) */}
+      {hasText && (
+        <div className="mt-4 space-y-3">
+          {art.texts.map((t) => (
+            <CopyBlock key={t.id} label={TYPE_LABEL[t.type] ?? t.type} text={fixBrandCase(textOf(t), art.run.brandName)} />
+          ))}
+        </div>
+      )}
+
+      {/* on-demand generate — only while no image has been rendered yet (text-first review) */}
+      {!hasImages && art.imageable && (
         <GeneratePosterPanel busy={busy === "render"} secs={renderSecs} onGenerate={render} />
-      ) : null}
+      )}
 
       {/* guardian reasons + notices */}
       {(guardian?.reasons?.length || notices.length > 0) && (
@@ -326,10 +330,19 @@ function CarouselBtn({ dir, onClick }: { dir: "prev" | "next"; onClick: () => vo
   );
 }
 
+// render inline **bold** as <strong>; everything else stays plain (newlines via pre-wrap).
+function renderRich(text: string) {
+  return text.split(/(\*\*[^*]+?\*\*)/g).map((seg, i) => {
+    const m = /^\*\*([^*]+?)\*\*$/.exec(seg);
+    return m ? <strong key={i}>{m[1]}</strong> : <span key={i}>{seg}</span>;
+  });
+}
+
 function CopyBlock({ label, text }: { label: string; text: string }) {
   const [copied, setCopied] = useState(false);
   async function copy() {
-    try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* clipboard unavailable */ }
+    // copy clean text (no markdown markers)
+    try { await navigator.clipboard.writeText(stripMarkdownBold(text)); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* clipboard unavailable */ }
   }
   return (
     <div className="rounded-2xl border border-[var(--line)] bg-[var(--card-2)] p-3.5">
@@ -337,7 +350,7 @@ function CopyBlock({ label, text }: { label: string; text: string }) {
         <p className="mono text-[9px] uppercase tracking-[0.12em] text-[var(--muted)]">{label}</p>
         <button type="button" onClick={copy} className="text-[11px] font-medium text-[var(--brand)] hover:underline">{copied ? "Copied ✓" : "Copy"}</button>
       </div>
-      <p className="mt-1.5 whitespace-pre-wrap text-sm leading-7 text-[var(--foreground)]">{text}</p>
+      <p className="mt-1.5 whitespace-pre-wrap text-sm leading-7 text-[var(--foreground)]">{renderRich(text)}</p>
     </div>
   );
 }

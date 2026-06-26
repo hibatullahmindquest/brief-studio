@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getBrandContext } from "@/lib/brand-context";
 import { sumRunCostMyr } from "@/lib/usage";
 import { logError } from "@/lib/error-log";
+import { fixBrandCase, stripMarkdownBold } from "@/lib/copy-format";
 
 // Module 1 Phase F — PDF export.
 //
@@ -115,7 +116,8 @@ export async function buildPlanPdf(args: { meta: PlanMeta; texts: PlanText[]; br
     y -= 6;
     page.drawText(headingFor(t.type).toUpperCase(), { x: MARGIN, y, size: 11, font: bold, color: primary }); y -= 6;
     page.drawLine({ start: { x: MARGIN, y }, end: { x: A4[0] - MARGIN, y }, thickness: 1.5, color: FAINT }); y -= 16;
-    for (const ln of wrapLines(t.text, font, 11, contentW)) {
+    const body = stripMarkdownBold(fixBrandCase(t.text, brand.name));
+    for (const ln of wrapLines(body, font, 11, contentW)) {
       need(16);
       page.drawText(ln, { x: MARGIN, y, size: 11, font, color: INK }); y -= 16;
     }

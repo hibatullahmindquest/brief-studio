@@ -95,7 +95,7 @@ function RecentCard({ item, onNavigate }: { item: LibraryItem; onNavigate: () =>
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-[var(--foreground)]">{item.title || "Untitled run"}</p>
-        <p className="mono text-[9px] uppercase tracking-[0.1em] text-[var(--muted)]">{relTime(item.createdAt)}</p>
+        <p className="mono text-[9px] uppercase tracking-[0.1em] text-[var(--muted)]">{absDate(item.createdAt)}</p>
         <div className="mt-1 flex flex-wrap gap-1">
           {isDraft && <Tag>Draft</Tag>}
           {item.kinds.includes("image") && <Tag>🖼</Tag>}
@@ -110,12 +110,14 @@ function Tag({ children }: { children: React.ReactNode }) {
   return <span className="rounded-full bg-[var(--card-2)] px-1.5 py-0.5 mono text-[8px] uppercase tracking-[0.1em] text-[var(--ink-soft)]">{children}</span>;
 }
 
-function relTime(d: string | Date): string {
-  const t = new Date(d).getTime();
-  if (Number.isNaN(t)) return "";
-  const s = Math.floor((Date.now() - t) / 1000);
-  if (s < 60) return "just now";
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-  return `${Math.floor(s / 86400)}d ago`;
+// absolute date+time — a stable reference (e.g. "26 Jun, 4:30pm"), unlike a relative "2h ago".
+function absDate(d: string | Date): string {
+  const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return "";
+  const mon = dt.toLocaleString("en-US", { month: "short" });
+  let h = dt.getHours();
+  const m = dt.getMinutes().toString().padStart(2, "0");
+  const ap = h < 12 ? "am" : "pm";
+  h = h % 12 || 12;
+  return `${dt.getDate()} ${mon}, ${h}:${m}${ap}`;
 }
