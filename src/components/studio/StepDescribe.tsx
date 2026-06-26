@@ -20,8 +20,8 @@ const QUICK: { label: string; hint: string }[] = [
 ];
 
 export function StepDescribe({
-  lensOptions, defaultLens, onIntake,
-}: { lensOptions: Lens[]; defaultLens: Lens; onIntake: (resp: StudioResponse) => void }) {
+  lensOptions, defaultLens, onIntake, seed,
+}: { lensOptions: Lens[]; defaultLens: Lens; onIntake: (resp: StudioResponse) => void; seed?: string }) {
   const [text, setText] = useState("");
   const [brands, setBrands] = useState<Brand[]>([]);
   const [brandSlug, setBrandSlug] = useState("");
@@ -42,6 +42,9 @@ export function StepDescribe({
       })
       .catch(() => setBrands([]));
   }, []);
+
+  // pre-fill from a "Take it further" chaining click (arrives post-hydration)
+  useEffect(() => { if (seed) setText(seed); }, [seed]);
 
   const canSend = !!brandSlug && (text.trim().length > 0 || uploads.length > 0) && !submitting && !uploading;
 
@@ -97,7 +100,7 @@ export function StepDescribe({
     <section className="editorial-panel rounded-3xl p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="editorial-kicker">Front door</p>
+          <p className="editorial-kicker">{seed ? "Continuing from a previous run" : "Front door"}</p>
           <h1 className="editorial-title mt-2 text-2xl sm:text-3xl">What do you want to make?</h1>
         </div>
         {/* lens + brand pickers */}

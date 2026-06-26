@@ -70,7 +70,28 @@ export function StudioWorkspace({ lensOptions, defaultLens }: { lensOptions: Len
   const handleDone = (a: RunArtifacts) => setState((s) => ({ ...s, artifacts: a, step: "result" }));
 
   const goTo = (step: StepKey) => setState((s) => ({ ...s, step }));
-  const reset = () => setState(initialState);
+
+  // chaining pre-fill — a "Take it further" click stashed the source output in sessionStorage.
+  // Read it once on mount (post-hydration to avoid an SSR mismatch), clear it, seed the front door.
+  const [seed, setSeed] = useState("");
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("studio:seed");
+      if (!raw) return;
+      sessionStorage.removeItem("studio:seed");
+      const s = JSON.parse(raw) as { text?: string; type?: string };
+      if (!s.text) return;
+      const PREFIX: Record<string, string> = {
+        poster: "Make a poster from this:", caption: "Write captions from this:", marketing_plan: "Make a marketing plan from this:",
+      };
+      const lead = s.type && PREFIX[s.type] ? `${PREFIX[s.type]}\n\n` : "";
+      // one-shot read of a browser-only API after hydration — setState here is the intended pattern
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSeed(lead + s.text);
+    } catch { /* private mode / bad json — ignore */ }
+  }, []);
+
+  const reset = () => { setSeed(""); setState(initialState); };
 
   // move focus + scroll to the active step on transition (skip the very first render) so
   // keyboard/screen-reader users land on the new content.
@@ -102,7 +123,7 @@ export function StudioWorkspace({ lensOptions, defaultLens }: { lensOptions: Len
       {/* active step */}
       <div key={state.step} ref={stepRef} tabIndex={-1} className="studio-fade outline-none">
         {state.step === "describe" ? (
-          <StepDescribe lensOptions={lensOptions} defaultLens={defaultLens} onIntake={handleIntake} />
+          <StepDescribe lensOptions={lensOptions} defaultLens={defaultLens} onIntake={handleIntake} seed={seed} />
         ) : state.step === "understand" && state.intake && state.runId ? (
           <StepUnderstand
             runId={state.runId}

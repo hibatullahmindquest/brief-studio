@@ -14,7 +14,7 @@ const prisma = new PrismaClient();
 const BRANDS = [
   {
     slug: "sifututor",
-    name: "SifuTutor",
+    name: "Sifututor",
     tagline: "Belajar dengan sifu, capai keputusan cemerlang.",
     contentPillars: ["exam tips", "study motivation", "subject mastery", "parent trust"],
     audienceSegments: ["pelajar sekolah menengah", "ibu bapa", "guru tuisyen"],
@@ -26,7 +26,7 @@ const BRANDS = [
   },
   {
     slug: "nakngaji",
-    name: "NakNgaji",
+    name: "Nakngaji",
     tagline: "Mula mengaji, bila-bila masa, di mana-mana.",
     contentPillars: ["belajar al-Quran", "tajwid", "kisah inspirasi", "rutin harian Muslim"],
     audienceSegments: ["dewasa baru belajar mengaji", "ibu bapa untuk anak", "muallaf"],
@@ -118,7 +118,7 @@ async function main() {
     const { slug, name, ...enrich } = b;
     await prisma.brand.upsert({
       where: { slug },
-      update: enrich, // only fills the new M1 knowledge fields (added empty by migration)
+      update: { name, ...enrich }, // keep the canonical name in sync (e.g. casing corrections)
       create: { slug, name, ...enrich },
     });
     console.log(`✔ brand ${slug}`);

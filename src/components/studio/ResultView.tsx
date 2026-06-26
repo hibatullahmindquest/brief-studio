@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { RunArtifacts, ArtifactRow } from "@/lib/artifact-store";
+import { fixBrandCase, stripMarkdownBold } from "@/lib/copy-format";
 
 // Phase G — Step 5 result, shared by the live flow and the deep-link /studio/[runId] page.
 // Text-first flow: copy is shown first; for image-capable runs a "Generate poster" panel renders
@@ -29,6 +31,8 @@ export function ResultView({ runId, initial }: { runId: string; initial: RunArti
   const [busy, setBusy] = useState<"render" | "export" | null>(null);
   const [renderSecs, setRenderSecs] = useState(0);
   const [toast, setToast] = useState<{ kind: "ok" | "warn"; text: string } | null>(null);
+  const [fbBusy, setFbBusy] = useState(false);
+  const [noteDraft, setNoteDraft] = useState(initial.run.feedbackNote ?? "");
 
   const ctx = art.contextUsed as Ctx;
   const guardian = ctx?.guardian;
@@ -53,6 +57,29 @@ export function ResultView({ runId, initial }: { runId: string; initial: RunArti
   async function refetch() {
     const res = await fetch(`/api/studio/${runId}`);
     if (res.ok && mounted.current) setArt((await res.json()) as RunArtifacts);
+  }
+
+  // per-run 👍/👎. Optimistic (revert on error). value 0 = clear; a note rides on a -1.
+  async function postFeedback(value: number, note?: string) {
+    const prev = { feedback: art.run.feedback, feedbackNote: art.run.feedbackNote };
+    setArt((a) => ({ ...a, run: { ...a.run, feedback: value === 0 ? null : value, feedbackNote: value === -1 ? (note ?? a.run.feedbackNote ?? null) : null } }));
+    setFbBusy(true);
+    try {
+      const res = await fetch(`/api/studio/${runId}/feedback`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ value, note }) });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error ?? "save failed");
+      if (mounted.current) setArt((a) => ({ ...a, run: { ...a.run, feedback: d.feedback, feedbackNote: d.feedbackNote } }));
+    } catch {
+      if (mounted.current) { setArt((a) => ({ ...a, run: { ...a.run, ...prev } })); setToast({ kind: "warn", text: "Couldn't save feedback — try again." }); }
+    } finally {
+      if (mounted.current) setFbBusy(false);
+    }
+  }
+
+  // toggle: clicking the active thumb clears it
+  function toggleThumb(v: 1 | -1) {
+    const next = art.run.feedback === v ? 0 : v;
+    void postFeedback(next, next === -1 ? noteDraft : undefined);
   }
 
   // poll the render job to completion (async — the worker does the work). Returns the terminal
@@ -122,17 +149,8 @@ export function ResultView({ runId, initial }: { runId: string; initial: RunArti
         {hasImages && ratioOf(art.images[imgIdx]) && <Badge>{ratioOf(art.images[imgIdx])}</Badge>}
       </div>
 
-      {/* copy first (text-first flow) */}
-      {hasText && (
-        <div className="mt-4 space-y-3">
-          {art.texts.map((t) => (
-            <CopyBlock key={t.id} label={TYPE_LABEL[t.type] ?? t.type} text={textOf(t)} />
-          ))}
-        </div>
-      )}
-
-      {/* image: carousel if rendered, else the on-demand generate panel */}
-      {hasImages ? (
+      {/* image first when one exists — see the poster before the copy */}
+      {hasImages && (
         <div className="mt-4">
           <div className="relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--bg-2)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -152,9 +170,21 @@ export function ResultView({ runId, initial }: { runId: string; initial: RunArti
             </div>
           )}
         </div>
-      ) : art.imageable ? (
+      )}
+
+      {/* copy (below the image when there is one; first for text-only / pre-render) */}
+      {hasText && (
+        <div className="mt-4 space-y-3">
+          {art.texts.map((t) => (
+            <CopyBlock key={t.id} label={TYPE_LABEL[t.type] ?? t.type} text={fixBrandCase(textOf(t), art.run.brandName)} />
+          ))}
+        </div>
+      )}
+
+      {/* on-demand generate — only while no image has been rendered yet (text-first review) */}
+      {!hasImages && art.imageable && (
         <GeneratePosterPanel busy={busy === "render"} secs={renderSecs} onGenerate={render} />
-      ) : null}
+      )}
 
       {/* guardian reasons + notices */}
       {(guardian?.reasons?.length || notices.length > 0) && (
@@ -183,7 +213,7 @@ export function ResultView({ runId, initial }: { runId: string; initial: RunArti
 
       {/* actions */}
       <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-[var(--line)] pt-4">
-        <FeedbackButtons />
+        <FeedbackButtons feedback={art.run.feedback} busy={fbBusy} onThumb={toggleThumb} />
         {hasImages && (
           <button type="button" onClick={() => render()} disabled={busy !== null} className="editorial-button editorial-button-secondary disabled:opacity-50">
             {busy === "render" ? "Regenerating…" : "↻ Variation"}
@@ -200,15 +230,20 @@ export function ResultView({ runId, initial }: { runId: string; initial: RunArti
         )}
       </div>
 
-      {/* take it further (static this phase) */}
-      <div className="mt-4">
-        <p className="eyebrow">Take it further</p>
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {["Turn into a carousel", "Make an IG Story video", "Write more captions"].map((o) => (
-            <span key={o} title="Coming soon" className="cursor-default rounded-full border border-[var(--line-2)] px-3 py-1 text-xs text-[var(--muted)] opacity-70">{o}</span>
-          ))}
-        </div>
-      </div>
+      {/* optional note on a thumbs-down */}
+      {art.run.feedback === -1 && (
+        <input
+          type="text"
+          value={noteDraft}
+          onChange={(e) => setNoteDraft(e.target.value)}
+          onBlur={() => { if ((noteDraft.trim() || null) !== (art.run.feedbackNote ?? null)) void postFeedback(-1, noteDraft); }}
+          placeholder="Optional: what missed? (brand, tone, accuracy…)"
+          aria-label="Feedback note"
+          className="mt-2 w-full rounded-xl border border-[var(--line-2)] bg-[var(--bg-2)] px-3 py-2 text-sm outline-none focus:border-[var(--stop)] focus:ring-2 focus:ring-[var(--stop-soft)]"
+        />
+      )}
+
+      <ChainingOffer runId={runId} taskType={art.run.feature} texts={art.texts} />
     </section>
   );
 }
@@ -295,10 +330,19 @@ function CarouselBtn({ dir, onClick }: { dir: "prev" | "next"; onClick: () => vo
   );
 }
 
+// render inline **bold** as <strong>; everything else stays plain (newlines via pre-wrap).
+function renderRich(text: string) {
+  return text.split(/(\*\*[^*]+?\*\*)/g).map((seg, i) => {
+    const m = /^\*\*([^*]+?)\*\*$/.exec(seg);
+    return m ? <strong key={i}>{m[1]}</strong> : <span key={i}>{seg}</span>;
+  });
+}
+
 function CopyBlock({ label, text }: { label: string; text: string }) {
   const [copied, setCopied] = useState(false);
   async function copy() {
-    try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* clipboard unavailable */ }
+    // copy clean text (no markdown markers)
+    try { await navigator.clipboard.writeText(stripMarkdownBold(text)); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* clipboard unavailable */ }
   }
   return (
     <div className="rounded-2xl border border-[var(--line)] bg-[var(--card-2)] p-3.5">
@@ -306,17 +350,74 @@ function CopyBlock({ label, text }: { label: string; text: string }) {
         <p className="mono text-[9px] uppercase tracking-[0.12em] text-[var(--muted)]">{label}</p>
         <button type="button" onClick={copy} className="text-[11px] font-medium text-[var(--brand)] hover:underline">{copied ? "Copied ✓" : "Copy"}</button>
       </div>
-      <p className="mt-1.5 whitespace-pre-wrap text-sm leading-7 text-[var(--foreground)]">{text}</p>
+      <p className="mt-1.5 whitespace-pre-wrap text-sm leading-7 text-[var(--foreground)]">{renderRich(text)}</p>
     </div>
   );
 }
 
-function FeedbackButtons() {
+function FeedbackButtons({ feedback, busy, onThumb }: { feedback: number | null; busy: boolean; onThumb: (v: 1 | -1) => void }) {
   return (
-    <div className="flex items-center gap-1" title="Feedback — coming soon">
-      {["👍", "👎"].map((e) => (
-        <span key={e} className="grid h-9 w-9 cursor-default place-items-center rounded-full border border-[var(--line-2)] text-sm opacity-60">{e}</span>
-      ))}
+    <div className="flex items-center gap-1">
+      {([1, -1] as const).map((v) => {
+        const active = feedback === v;
+        const up = v === 1;
+        return (
+          <button
+            key={v}
+            type="button"
+            disabled={busy}
+            aria-pressed={active}
+            aria-label={up ? "Good result" : "Needs work"}
+            onClick={() => onThumb(v)}
+            className={`grid h-9 w-9 place-items-center rounded-full border text-sm transition-colors disabled:opacity-50 ${
+              active
+                ? up ? "border-[var(--ok)] bg-[var(--ok-soft)]" : "border-[var(--stop)] bg-[var(--stop-soft)]"
+                : "border-[var(--line-2)] hover:bg-[var(--card-2)]"
+            }`}
+          >
+            {up ? "👍" : "👎"}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// "Take it further" — light pre-fill chaining. Offers the OTHER enabled recipes; clicking stashes
+// this run's copy + the target type in sessionStorage and opens the front door pre-filled.
+const CHAIN_TARGETS: { type: string; label: string }[] = [
+  { type: "poster", label: "Make a poster" },
+  { type: "caption", label: "Write captions" },
+  { type: "marketing_plan", label: "Marketing plan" },
+];
+
+function ChainingOffer({ runId, taskType, texts }: { runId: string; taskType: string; texts: ArtifactRow[] }) {
+  const router = useRouter();
+  const seedText = texts.map(textOf).filter(Boolean).join("\n\n").trim();
+  if (!seedText) return null; // nothing to carry forward
+  const targets = CHAIN_TARGETS.filter((t) => t.type !== taskType);
+  if (targets.length === 0) return null;
+
+  function go(type: string) {
+    try { sessionStorage.setItem("studio:seed", JSON.stringify({ text: seedText, type, fromRunId: runId })); } catch { /* private mode — fall through */ }
+    router.push("/studio");
+  }
+
+  return (
+    <div className="mt-4">
+      <p className="eyebrow">Take it further</p>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {targets.map((t) => (
+          <button
+            key={t.type}
+            type="button"
+            onClick={() => go(t.type)}
+            className="rounded-full border border-[var(--line-2)] px-3 py-1 text-xs font-medium text-[var(--ink-soft)] transition-colors hover:border-[var(--brand)] hover:bg-[var(--brand-soft)] hover:text-[var(--brand)]"
+          >
+            {t.label} →
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
