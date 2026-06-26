@@ -24,7 +24,7 @@ export type ArtifactRow = {
 };
 
 export type RunArtifacts = {
-  run: { id: string; title: string; feature: string; brandSlug: string | null; status: string; createdAt: Date };
+  run: { id: string; title: string; feature: string; brandSlug: string | null; status: string; createdAt: Date; feedback: number | null; feedbackNote: string | null };
   images: ArtifactRow[]; // carousel / image-set, oldest first
   texts: ArtifactRow[]; // user-facing text, oldest first
   pdf: ArtifactRow | null; // latest exported PDF
@@ -55,7 +55,7 @@ export type LibraryItem = {
 export async function getRunArtifacts(runId: string, userId: string): Promise<RunArtifacts | null> {
   const run = await prisma.creativeRun.findFirst({
     where: { id: runId, userId },
-    select: { id: true, title: true, feature: true, status: true, createdAt: true, contextUsed: true, brand: { select: { slug: true } } },
+    select: { id: true, title: true, feature: true, status: true, createdAt: true, contextUsed: true, feedback: true, feedbackNote: true, brand: { select: { slug: true } } },
   });
   if (!run) return null;
 
@@ -85,7 +85,7 @@ export async function getRunArtifacts(runId: string, userId: string): Promise<Ru
   const durationMs = job && job.status === "succeeded" ? Math.max(0, job.updatedAt.getTime() - job.createdAt.getTime()) : null;
 
   return {
-    run: { id: run.id, title: run.title, feature: run.feature, brandSlug: run.brand?.slug ?? null, status: run.status, createdAt: run.createdAt },
+    run: { id: run.id, title: run.title, feature: run.feature, brandSlug: run.brand?.slug ?? null, status: run.status, createdAt: run.createdAt, feedback: run.feedback ?? null, feedbackNote: run.feedbackNote ?? null },
     images,
     texts,
     pdf,
