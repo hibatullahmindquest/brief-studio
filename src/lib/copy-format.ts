@@ -15,3 +15,21 @@ export function fixBrandCase(text: string, brandName?: string | null): string {
 export function stripMarkdownBold(text: string): string {
   return text ? text.replace(/\*\*/g, "") : text;
 }
+
+// Strip the common markdown markers for a clean plain-text copy-to-clipboard:
+// heading hashes, list bullets/numbers, and bold/italic emphasis. Leaves the words intact.
+export function stripMarkdown(text: string): string {
+  if (!text) return text;
+  return text
+    .split("\n")
+    .map((line) =>
+      line
+        .replace(/^\s{0,3}#{1,6}\s+/, "") // heading hashes
+        .replace(/^\s*[-*]\s+/, "• ") // unordered bullets → •
+        .replace(/^\s*(\d+)\.\s+/, "$1. "), // keep ordered numbering, normalise spacing
+    )
+    .join("\n")
+    .replace(/\*\*([^*]+?)\*\*/g, "$1") // bold
+    .replace(/(^|[^*])\*([^*\n]+?)\*/g, "$1$2") // italic *…*
+    .replace(/(^|[^_])_([^_\n]+?)_/g, "$1$2"); // italic _…_
+}
