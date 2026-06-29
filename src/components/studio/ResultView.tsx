@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import type { RunArtifacts, ArtifactRow } from "@/lib/artifact-store";
-import { fixBrandCase, stripMarkdownBold } from "@/lib/copy-format";
+import { fixBrandCase, stripMarkdown } from "@/lib/copy-format";
 
 // Phase G — Step 5 result, shared by the live flow and the deep-link /studio/[runId] page.
 // Text-first flow: copy is shown first; for image-capable runs a "Generate poster" panel renders
@@ -330,19 +330,92 @@ function CarouselBtn({ dir, onClick }: { dir: "prev" | "next"; onClick: () => vo
   );
 }
 
-// render inline **bold** as <strong>; everything else stays plain (newlines via pre-wrap).
-function renderRich(text: string) {
-  return text.split(/(\*\*[^*]+?\*\*)/g).map((seg, i) => {
-    const m = /^\*\*([^*]+?)\*\*$/.exec(seg);
-    return m ? <strong key={i}>{m[1]}</strong> : <span key={i}>{seg}</span>;
-  });
+// Inline markdown → React: **bold**, *italic* / _italic_. Bold is matched first so it
+// wins over the italic alternative when both markers are present.
+function renderInline(text: string, kp: string): ReactNode[] {
+  const out: ReactNode[] = [];
+  const re = /(\*\*[^*]+?\*\*|\*[^*\n]+?\*|_[^_\n]+?_)/g;
+  let last = 0;
+  let i = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) out.push(<span key={`${kp}t${i++}`}>{text.slice(last, m.index)}</span>);
+    const tok = m[0];
+    if (tok.startsWith("**")) out.push(<strong key={`${kp}b${i++}`}>{tok.slice(2, -2)}</strong>);
+    else out.push(<em key={`${kp}i${i++}`}>{tok.slice(1, -1)}</em>);
+    last = m.index + tok.length;
+  }
+  if (last < text.length) out.push(<span key={`${kp}t${i++}`}>{text.slice(last)}</span>);
+  return out;
+}
+
+const H_CLASS: Record<number, string> = {
+  1: "mt-3 first:mt-0 mb-1 text-[15px] font-semibold text-[var(--foreground)]",
+  2: "mt-2.5 first:mt-0 mb-1 text-sm font-semibold text-[var(--foreground)]",
+  3: "mt-2 first:mt-0 mb-0.5 text-[13px] font-semibold text-[var(--foreground)]",
+};
+
+// Block-level markdown → React: #/##/### headings, -/* and 1. lists, blank-line paragraphs.
+// Lightweight + dependency-free; no raw HTML (no dangerouslySetInnerHTML). Single newlines
+// inside a paragraph join with a space (standard markdown).
+function renderMarkdown(text: string): ReactNode[] {
+  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  const blocks: ReactNode[] = [];
+  let para: string[] = [];
+  let k = 0;
+  let i = 0;
+  const flush = () => {
+    if (para.length) {
+      const key = `p${k++}`;
+      blocks.push(<p key={key} className="leading-7">{renderInline(para.join(" "), key)}</p>);
+      para = [];
+    }
+  };
+  while (i < lines.length) {
+    const raw = lines[i];
+    const line = raw.trim();
+    if (!line) { flush(); i++; continue; }
+
+    const h = /^(#{1,3})\s+(.+)$/.exec(line);
+    if (h) {
+      flush();
+      const lvl = h[1].length;
+      const key = `h${k++}`;
+      blocks.push(<p key={key} className={H_CLASS[lvl]}>{renderInline(h[2], key)}</p>);
+      i++;
+      continue;
+    }
+
+    if (/^[-*]\s+/.test(line)) {
+      flush();
+      const items: string[] = [];
+      while (i < lines.length && /^[-*]\s+/.test(lines[i].trim())) { items.push(lines[i].trim().replace(/^[-*]\s+/, "")); i++; }
+      const key = `ul${k++}`;
+      blocks.push(<ul key={key} className="ml-4 list-disc space-y-1 leading-7 marker:text-[var(--muted)]">{items.map((it, idx) => <li key={`${key}-${idx}`}>{renderInline(it, `${key}-${idx}`)}</li>)}</ul>);
+      continue;
+    }
+
+    if (/^\d+\.\s+/.test(line)) {
+      flush();
+      const items: string[] = [];
+      while (i < lines.length && /^\d+\.\s+/.test(lines[i].trim())) { items.push(lines[i].trim().replace(/^\d+\.\s+/, "")); i++; }
+      const key = `ol${k++}`;
+      blocks.push(<ol key={key} className="ml-4 list-decimal space-y-1 leading-7 marker:text-[var(--muted)]">{items.map((it, idx) => <li key={`${key}-${idx}`}>{renderInline(it, `${key}-${idx}`)}</li>)}</ol>);
+      continue;
+    }
+
+    para.push(line);
+    i++;
+  }
+  flush();
+  return blocks;
 }
 
 function CopyBlock({ label, text }: { label: string; text: string }) {
   const [copied, setCopied] = useState(false);
   async function copy() {
     // copy clean text (no markdown markers)
-    try { await navigator.clipboard.writeText(stripMarkdownBold(text)); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* clipboard unavailable */ }
+    try { await navigator.clipboard.writeText(stripMarkdown(text)); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* clipboard unavailable */ }
   }
   return (
     <div className="rounded-2xl border border-[var(--line)] bg-[var(--card-2)] p-3.5">
@@ -350,7 +423,7 @@ function CopyBlock({ label, text }: { label: string; text: string }) {
         <p className="mono text-[9px] uppercase tracking-[0.12em] text-[var(--muted)]">{label}</p>
         <button type="button" onClick={copy} className="text-[11px] font-medium text-[var(--brand)] hover:underline">{copied ? "Copied ✓" : "Copy"}</button>
       </div>
-      <p className="mt-1.5 whitespace-pre-wrap text-sm leading-7 text-[var(--foreground)]">{renderRich(text)}</p>
+      <div className="mt-1.5 text-sm text-[var(--foreground)]">{renderMarkdown(text)}</div>
     </div>
   );
 }
